@@ -65,6 +65,9 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
     match(auth)
       .with(DocumentAccessAuth.ACCOUNT, () => Boolean(session.user))
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true)
+      // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
+      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 

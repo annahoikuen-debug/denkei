@@ -8,16 +8,45 @@ import type { DB } from './generated/types';
 import { getDatabaseUrl } from './helper';
 import { remember } from './utils/remember';
 
+const createPrismaClient = () =>
+  new PrismaClient({
+    datasourceUrl: getDatabaseUrl(),
+    transactionOptions: {
+      maxWait: 5000,
+      timeout: 10000,
+    },
+  });
+
 const prisma = remember(
   'prisma',
-  () =>
-    new PrismaClient({
-      datasourceUrl: getDatabaseUrl(),
-      transactionOptions: {
-        maxWait: 5000,
-        timeout: 10000,
+  () => {
+    const client = createPrismaClient();
+
+    // Use $extends to add middleware since $use is not in the base type
+    // Model name in query extensions is lowercase
+    return client.$extends({
+      name: 'auditLogImmutability',
+      query: {
+        documentAuditLog: {
+          update: async ({ args, query }) => {
+            throw new Error(
+              'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
+            );
+          },
+          delete: async ({ args, query }) => {
+            throw new Error(
+              'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
+            );
+          },
+          deleteMany: async ({ args, query }) => {
+            throw new Error(
+              'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
+            );
+          },
+        },
       },
-    }),
+    });
+  },
 );
 
 export const kyselyPrisma = remember('kyselyPrisma', () =>

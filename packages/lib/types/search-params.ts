@@ -13,6 +13,11 @@ export const ZFindSearchParamsSchema = z.object({
   query: z.string().describe('The search query.').optional(),
   page: z.coerce.number().min(1).describe('The pagination page number, starts at 1.').optional(),
   perPage: z.coerce.number().min(1).describe('The number of items per page.').max(100).optional(),
+  contractType: z.string().describe('Filter by contract type.').optional(),
+  counterpartyName: z.string().describe('Filter by counterparty name.').optional(),
+  contractAmount: z.string().describe('Filter by contract amount.').optional(),
+  contractDateFrom: z.string().describe('Filter by contract date from (yyyy-MM-dd).').optional(),
+  contractDateTo: z.string().describe('Filter by contract date to (yyyy-MM-dd).').optional(),
 });
 
 /**
@@ -34,6 +39,26 @@ export const ZUrlSearchParamsSchema = z.object({
     .number()
     .min(1)
     .max(100)
+    .optional()
+    .catch(() => undefined),
+  contractType: z
+    .string()
+    .optional()
+    .catch(() => undefined),
+  counterpartyName: z
+    .string()
+    .optional()
+    .catch(() => undefined),
+  contractAmount: z
+    .string()
+    .optional()
+    .catch(() => undefined),
+  contractDateFrom: z
+    .string()
+    .optional()
+    .catch(() => undefined),
+  contractDateTo: z
+    .string()
     .optional()
     .catch(() => undefined),
 });

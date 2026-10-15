@@ -110,6 +110,7 @@ export const genericErrorCodeToTrpcErrorCodeMap: Record<string, { code: string; 
   [AppErrorCode.INVALID_REQUEST]: { code: 'BAD_REQUEST', status: 400 },
   [AppErrorCode.INVALID_CAPTCHA]: { code: 'BAD_REQUEST', status: 400 },
   [AppErrorCode.NOT_FOUND]: { code: 'NOT_FOUND', status: 404 },
+  [AppErrorCode.LIMIT_EXCEEDED]: { code: 'BAD_REQUEST', status: 400 },
   [AppErrorCode.NOT_IMPLEMENTED]: { code: 'INTERNAL_SERVER_ERROR', status: 501 },
   [AppErrorCode.NOT_SETUP]: { code: 'BAD_REQUEST', status: 400 },
   [AppErrorCode.MISSING_ENV_VAR]: { code: 'INTERNAL_SERVER_ERROR', status: 500 },
@@ -213,7 +214,7 @@ export class AppError extends Error {
 
     this.code = errorCode;
     this.userMessage = options?.userMessage;
-    this.statusCode = options?.statusCode;
+    this.statusCode = options?.statusCode ?? genericErrorCodeToTrpcErrorCodeMap[errorCode]?.status;
     this.headers = options?.headers;
   }
 

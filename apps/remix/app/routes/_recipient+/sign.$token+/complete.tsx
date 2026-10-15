@@ -28,6 +28,7 @@ import { ClaimAccount } from '~/components/general/claim-account';
 import { DocumentSigningAuthPageView } from '~/components/general/document-signing/document-signing-auth-page';
 import { RecipientBranding } from '~/components/general/recipient-branding';
 import { useCspNonce } from '~/utils/nonce';
+import { DenkeiCallout } from '@documenso/ui';
 
 import type { Route } from './+types/complete';
 
@@ -247,6 +248,18 @@ export default function CompletedSigningPage({ loaderData }: Route.ComponentProp
                   </Trans>
                 </p>
               ))}
+
+            <div className="mt-6 w-full max-w-md">
+              <DenkeiCallout
+                variant="success"
+                title="デンケイの署名完了証明"
+                message={
+                  <Trans>
+                    署名が正常に記録され、監査証跡（タイムスタンプ・IP・本人確認）が安全に保護されました。全当事者の合意完了後、署名済み合意書が自動送付されます。
+                  </Trans>
+                }
+              />
+            </div>
 
             <div className="mt-8 flex w-full max-w-xs flex-col items-stretch gap-4 md:w-auto md:max-w-none md:flex-row md:items-center">
               <DocumentShareButton

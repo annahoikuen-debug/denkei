@@ -178,9 +178,22 @@ export const ZDropdownFieldMeta = ZBaseFieldMeta.extend({
 
 export type TDropdownFieldMeta = z.infer<typeof ZDropdownFieldMeta>;
 
+/**
+ * フェーズ1 ステップ25: 印影(会社印)モード。
+ * 'standard' = 通常の署名 / 'seal' = 円形クロップ(印影)レンダリング。
+ */
+export const ZSignatureRenderModeSchema = z.enum(['standard', 'seal']).catch('standard');
+
+export type TSignatureRenderMode = z.infer<typeof ZSignatureRenderModeSchema>;
+
 export const ZSignatureFieldMeta = ZBaseFieldMeta.extend({
   type: z.literal('signature'),
   overflow: ZFieldOverflowMode.optional().default(DEFAULT_SIGNATURE_OVERFLOW_MODE),
+  /**
+   * 印影モード('seal')の場合、アップロード画像は円形クロップされて
+   * PDF に埋め込まれる。
+   */
+  renderMode: ZSignatureRenderModeSchema.optional(),
 });
 
 export type TSignatureFieldMeta = z.infer<typeof ZSignatureFieldMeta>;
@@ -382,6 +395,7 @@ export const FIELD_DROPDOWN_META_DEFAULT_VALUES: TDropdownFieldMeta = {
 
 export const FIELD_SIGNATURE_META_DEFAULT_VALUES: TSignatureFieldMeta = {
   type: 'signature',
+  renderMode: 'standard',
   fontSize: DEFAULT_SIGNATURE_TEXT_FONT_SIZE,
   overflow: DEFAULT_SIGNATURE_OVERFLOW_MODE,
 };

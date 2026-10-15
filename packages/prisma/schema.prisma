@@ -479,6 +479,9 @@ model Envelope {
   formValues  Json? /// [DocumentFormValues] @zod.custom.use(ZDocumentFormValuesSchema)
   visibility  DocumentVisibility @default(EVERYONE)
 
+  // フェーズ3: テンプレート自動化設定(差し込み変数/署名順固定/承認設定)
+  automationSettings Json?
+
   // Template specific fields.
   templateType      TemplateType        @default(PRIVATE)
   publicTitle       String              @default("")
@@ -535,6 +538,12 @@ model DocumentAuditLog {
   type       String
   data       Json
 
+  // フェーズ1 ステップ32: 電子帳簿保存法(真実性)対応のハッシュチェーン。
+  // prevHash: 直前レコードの hash。hash: SHA-256(prevHash + ペイロード)。
+  // 既存レコードはバックフィルスクリプトで遡及計算する。
+  prevHash String?
+  hash     String?
+
   // Details of the person who performed the action which caused the audit log.
   name      String?
   email     String?
@@ -545,6 +554,29 @@ model DocumentAuditLog {
   envelope Envelope? @relation(fields: [envelopeId], references: [id], onDelete: SetNull)
 
   @@index([envelopeId])
+}
+
+/// フェーズ2 ステップ3: 署名者本人確認(メールOTP/Firebaseメール認証)の一時検証トークン。
+/// OTP ハッシュは平文を保存しない(SHA-256)。検証成功後はセッション発行に使用し失効させる。
+/// ※ 既存の汎用 AnonymousVerificationToken とは別物。recipient 単位の認証トークン。
+model RecipientVerificationToken {
+  id           String   @id @default(cuid())
+  recipientId  Int
+  // 認証タイプ: EMAIL_OTP | FIREBASE_EMAIL
+  authType     String
+  // OTP の SHA-256 ハッシュ(FIREBASE_EMAIL では Firebase セッション識別子ハッシュ)
+  tokenHash    String
+  expiresAt    DateTime
+  // 試行回数(上限5回でロック)
+  attemptCount Int      @default(0)
+  lockedAt     DateTime?
+  createdAt    DateTime @default(now())
+  consumedAt   DateTime?
+
+  recipient Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId])
+  @@index([tokenHash])
 }
 
 enum DocumentDataType {
@@ -576,7 +608,9 @@ model DocumentMeta {
   id                     String               @id @default(cuid())
   subject                String?
   message                String?
-  timezone               String?              @default("Etc/UTC") @db.Text
+  // 既定値はフェーズ1(日本向け SaaS)で ja / Asia/Tokyo に変更。
+  // 既存レコードは変更しない(新規作成分のみ既定適用)。
+  timezone               String?              @default("Asia/Tokyo") @db.Text
   dateFormat             String?              @default("yyyy-MM-dd hh:mm a") @db.Text
   redirectUrl            String?
   signingOrder           DocumentSigningOrder @default(PARALLEL)
@@ -586,7 +620,7 @@ model DocumentMeta {
   uploadSignatureEnabled Boolean @default(true)
   drawSignatureEnabled   Boolean @default(true)
 
-  language           String                     @default("en")
+  language           String                     @default("ja")
   distributionMethod DocumentDistributionMethod @default(EMAIL)
 
   emailSettings Json? /// [DocumentEmailSettings] @zod.custom.use(ZDocumentEmailSettingsSchema)
@@ -596,6 +630,13 @@ model DocumentMeta {
   envelopeExpirationPeriod Json? /// [EnvelopeExpirationPeriod] @zod.custom.use(ZEnvelopeExpirationPeriodSchema)
 
   reminderSettings Json? /// [EnvelopeReminderSettings] @zod.custom.use(ZEnvelopeReminderSettingsSchema)
+
+  // フェーズ1 ステップ35: 電子帳簿保存法(検索要件)対応のメタデータ。
+  // 契約種別・取引先名・金額(円)・締結日。いずれも任意。
+  contractType     String?
+  counterpartyName String?
+  contractAmount   Int?
+  contractDate     DateTime?
 
   envelope Envelope?
 }
@@ -671,6 +712,9 @@ model Recipient {
 
   cscCredential CscCredential?
   cscSession    CscSession?
+
+  // フェーズ2 ステップ3: 本人確認トークン(メールOTP/Firebaseメール認証)
+  verificationTokens RecipientVerificationToken[]
 
   @@index([token])
   @@index([email])

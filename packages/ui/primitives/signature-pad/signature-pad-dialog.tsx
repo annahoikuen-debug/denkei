@@ -5,7 +5,7 @@ import type { MessageDescriptor } from '@lingui/core';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { motion } from 'framer-motion';
 import type { HTMLAttributes } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { cn } from '../../lib/utils';
 import { Button } from '../button';
@@ -40,6 +40,21 @@ export const SignaturePadDialog = ({
 
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [signature, setSignature] = useState<string>(value ?? '');
+
+  // フェーズ1 ステップ22: モバイル判定でダイアログを全画面表示にする
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 767px), (pointer: coarse)');
+
+    const update = () => setIsMobileViewport(query.matches);
+
+    update();
+
+    query.addEventListener('change', update);
+
+    return () => query.removeEventListener('change', update);
+  }, []);
 
   const onOpenChange = (open: boolean) => {
     if (disabled) {
@@ -119,7 +134,16 @@ export const SignaturePadDialog = ({
       </motion.button>
 
       <Dialog open={showSignatureModal} onOpenChange={onOpenChange}>
-        <DialogContent hideClose={true} className="p-6 pt-4">
+        <DialogContent
+          hideClose={true}
+          className={
+            isMobileViewport
+              ? // モバイル: 全画面シート化(大型ボタン・回転時リサイズに追従)
+              'h-screen w-screen max-w-none rounded-none p-4 pt-4 sm:rounded-none'
+              : 'p-6 pt-4'
+          }
+          style={isMobileViewport ? { height: '100dvh' } : undefined}
+        >
           <SignaturePad
             id="signature"
             fullName={fullName}
@@ -141,6 +165,9 @@ export const SignaturePadDialog = ({
 
             <Button
               type="button"
+              // モバイルでは確定ボタンを大型化して誤タップを防ぐ
+              size={isMobileViewport ? 'lg' : 'default'}
+              className={isMobileViewport ? 'h-14 min-w-32 text-base' : undefined}
               disabled={!signature}
               onClick={() => {
                 onChange(signature);

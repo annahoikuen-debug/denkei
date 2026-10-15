@@ -17,7 +17,7 @@ type IsRecipientAuthorizedOptions = {
   // !: Probably find a better name than 'ACCESS_2FA' if requirements change.
   type: 'ACCESS' | 'ACCESS_2FA' | 'ACTION';
   documentAuthOptions: Envelope['authOptions'];
-  recipient: Pick<Recipient, 'authOptions' | 'email' | 'envelopeId'>;
+  recipient: Pick<Recipient, 'authOptions' | 'email' | 'envelopeId' | 'id'>;
 
   /**
    * The ID of the user who initiated the request.
@@ -165,6 +165,23 @@ export const isRecipientAuthorized = async ({
     })
     .with({ type: DocumentAuth.EXPLICIT_NONE }, () => {
       return true;
+    })
+    // フェーズ2 ステップ7: メールOTP/Firebaseメール認証は recipient-verification で
+    // 検証済みセッション(hasVerifiedRecipientOtp)を前提とする。
+    // この関数はトークンによる即時検証を扱うため、ここでは検証済み確認を行う。
+    .with({ type: DocumentAuth.EMAIL_OTP }, async ({ token }) => {
+      const { verifyRecipientOtp } = await import('../otp/recipient-verification');
+
+      const result = await verifyRecipientOtp({ recipientId: recipient.id, inputOtp: token });
+
+      return result.status === 'success';
+    })
+    .with({ type: DocumentAuth.FIREBASE_EMAIL }, async ({ sessionIdentifier }) => {
+      const { verifyFirebaseSession } = await import('../otp/firebase-admin-client');
+
+      const firebaseResult = await verifyFirebaseSession(sessionIdentifier);
+
+      return firebaseResult.valid;
     })
     .exhaustive();
 };

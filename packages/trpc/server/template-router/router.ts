@@ -6,9 +6,14 @@ import { getDocumentWithDetailsById } from '@documenso/lib/server-only/document/
 import { sendDocument } from '@documenso/lib/server-only/document/send-document';
 import { convertToPdf } from '@documenso/lib/server-only/document-conversion';
 import { createDocumentData } from '@documenso/lib/server-only/document-data/create-document-data';
+import {
+  getAutomationSettings,
+  normalizeAutomationSettings,
+} from '@documenso/lib/server-only/envelope/automation-settings';
 import { createEnvelope } from '@documenso/lib/server-only/envelope/create-envelope';
 import { duplicateEnvelope } from '@documenso/lib/server-only/envelope/duplicate-envelope';
 import { updateEnvelope } from '@documenso/lib/server-only/envelope/update-envelope';
+import { extractAcroFormFieldsFromPDF } from '@documenso/lib/server-only/pdf/acroform-parser';
 import {
   createDocumentFromDirectTemplate,
   ZCreateDocumentFromDirectTemplateResponseSchema,
@@ -24,6 +29,7 @@ import { getTemplateById } from '@documenso/lib/server-only/template/get-templat
 import { toggleTemplateDirectLink } from '@documenso/lib/server-only/template/toggle-template-direct-link';
 import { validateBulkSendCsv } from '@documenso/lib/server-only/template/validate-bulk-send-csv';
 import { fireAndForget } from '@documenso/lib/universal/fire-and-forget';
+import { getFileServerSide } from '@documenso/lib/universal/upload/get-file.server';
 import { putNormalizedPdfFileServerSide } from '@documenso/lib/universal/upload/put-file.server';
 import { getPresignPostUrl } from '@documenso/lib/universal/upload/server-actions';
 import { mapSecondaryIdToTemplateId } from '@documenso/lib/utils/envelope';
@@ -31,7 +37,6 @@ import { mapEnvelopeToTemplateLite, mapEnvelopeToTemplateMany } from '@documenso
 import { prisma } from '@documenso/prisma';
 import type { Envelope } from '@prisma/client';
 import { DocumentDataType, EnvelopeType } from '@prisma/client';
-
 import { ZGenericSuccessResponse, ZSuccessResponseSchema } from '../schema';
 import { authenticatedProcedure, maybeAuthenticatedProcedure, router } from '../trpc';
 import { findTemplatesInternalRoute } from './find-templates-internal';
@@ -49,6 +54,8 @@ import {
   ZCreateTemplateV2ResponseSchema,
   ZDeleteTemplateDirectLinkRequestSchema,
   ZDeleteTemplateMutationSchema,
+  ZDetectAcroFormFieldsRequestSchema,
+  ZDetectAcroFormFieldsResponseSchema,
   ZDuplicateTemplateMutationSchema,
   ZDuplicateTemplateResponseSchema,
   ZFindOrganisationTemplatesRequestSchema,
@@ -60,6 +67,8 @@ import {
   ZGetTemplateByIdResponseSchema,
   ZToggleTemplateDirectLinkRequestSchema,
   ZToggleTemplateDirectLinkResponseSchema,
+  ZUpdateAutomationSettingsRequestSchema,
+  ZUpdateAutomationSettingsResponseSchema,
   ZUpdateTemplateRequestSchema,
   ZUpdateTemplateResponseSchema,
 } from './schema';
@@ -570,6 +579,7 @@ export const templateRouter = router({
         override,
         attachments,
         formValues,
+        mergeVariableValues: input.mergeVariableValues,
       });
 
       if (distributeDocument) {
@@ -802,6 +812,56 @@ export const templateRouter = router({
 
   /**
    * @private
+   *
+   * フェーズ3 ステップ1: テンプレート自動化設定(差し込み変数/署名順固定/承認設定)の更新。
+   */
+  updateAutomationSettings: authenticatedProcedure
+    .input(ZUpdateAutomationSettingsRequestSchema)
+    .output(ZUpdateAutomationSettingsResponseSchema)
+    .mutation(async ({ ctx, input }) => {
+      const { templateId, automationSettings } = input;
+      const { teamId, user } = ctx;
+
+      ctx.logger.info({
+        input: {
+          templateId,
+        },
+      });
+
+      const normalized = normalizeAutomationSettings(automationSettings);
+
+      if (!normalized) {
+        throw new AppError(AppErrorCode.INVALID_BODY, {
+          message: 'Invalid automation settings',
+          userMessage: '自動化設定の内容が正しくありません',
+        });
+      }
+
+      const template = await getTemplateById({
+        id: {
+          type: 'templateId',
+          id: templateId,
+        },
+        teamId,
+        userId: user.id,
+      });
+
+      if (!template) {
+        throw new AppError(AppErrorCode.NOT_FOUND, {
+          message: 'Template not found',
+        });
+      }
+
+      await prisma.envelope.update({
+        where: { id: template.envelopeId },
+        data: { automationSettings: normalized },
+      });
+
+      return { success: true as const };
+    }),
+
+  /**
+   * @private
    */
   uploadBulkSend: authenticatedProcedure.input(ZBulkSendTemplateMutationSchema).mutation(async ({ ctx, input }) => {
     const { templateId, teamId, csv, sendImmediately } = input;
@@ -836,9 +896,12 @@ export const templateRouter = router({
       });
     }
 
+    const automationSettings = getAutomationSettings(template);
+
     const csvValidationResult = validateBulkSendCsv({
       csvContent: csv,
       recipientCount: template.recipients.length,
+      templateVariables: automationSettings.mergeVariables,
     });
 
     if (!csvValidationResult.success) {
@@ -859,4 +922,64 @@ export const templateRouter = router({
 
     return { success: true as const };
   }),
+
+  /**
+   * フェーズ3 ステップ6: PDFフォーム(AcroForm)自動検出
+   */
+  detectAcroFormFields: authenticatedProcedure
+    .input(ZDetectAcroFormFieldsRequestSchema)
+    .output(ZDetectAcroFormFieldsResponseSchema)
+    .query(async ({ ctx, input }) => {
+      const { user, teamId } = ctx;
+      const { templateId } = input;
+
+      const template = await getTemplateById({
+        id: {
+          type: 'templateId',
+          id: templateId,
+        },
+        teamId,
+        userId: user.id,
+      });
+
+      if (!template) {
+        throw new AppError(AppErrorCode.NOT_FOUND, {
+          message: 'Template not found',
+        });
+      }
+
+      const documentData = template.templateDocumentData;
+      if (!documentData) {
+        return { fields: [] };
+      }
+
+      let pdfBuffer: Buffer;
+      if (documentData.type === DocumentDataType.BYTES_64) {
+        pdfBuffer = Buffer.from(documentData.data, 'base64');
+      } else {
+        const file = await getFileServerSide(documentData);
+        pdfBuffer = Buffer.from(file);
+      }
+
+      const detected = await extractAcroFormFieldsFromPDF(pdfBuffer);
+
+      return {
+        fields: detected.map((f) => ({
+          name: f.name,
+          type: f.type,
+          page: f.page,
+          x: f.x,
+          y: f.y,
+          width: f.width,
+          height: f.height,
+          suggestedVariable: {
+            name: f.suggestedVariable.name,
+            label: f.suggestedVariable.label,
+            type: f.suggestedVariable.type,
+            required: f.suggestedVariable.required,
+            format: f.suggestedVariable.format,
+          },
+        })),
+      };
+    }),
 });

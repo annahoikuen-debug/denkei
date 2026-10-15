@@ -1,0 +1,22 @@
+name: translations-check
+
+on:
+  pull_request:
+    paths:
+      - 'packages/lib/translations/**'
+      - 'scripts/check-translations.mjs'
+      - '.github/workflows/translations-check.yml'
+
+jobs:
+  check-ja-translations:
+    name: Check ja untranslated entries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check ja translations
+        run: node scripts/check-translations.mjs

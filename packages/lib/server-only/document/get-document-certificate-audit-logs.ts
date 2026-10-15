@@ -2,9 +2,15 @@ import { prisma } from '@documenso/prisma';
 
 import { DOCUMENT_AUDIT_LOG_TYPE, DOCUMENT_EMAIL_TYPE } from '../../types/document-audit-logs';
 import { parseDocumentAuditLogData } from '../../utils/document-audit-logs';
+import { verifyAuditLogHashChain, type AuditLogHashChainEntry } from '../document-audit-log-hash';
 
 export type GetDocumentCertificateAuditLogsOptions = {
   envelopeId: string;
+};
+
+export type AuditLogWithHash = AuditLogHashChainEntry & {
+  prevHash: string | null;
+  hash: string | null;
 };
 
 export const getDocumentCertificateAuditLogs = async ({ envelopeId }: GetDocumentCertificateAuditLogsOptions) => {
@@ -22,9 +28,32 @@ export const getDocumentCertificateAuditLogs = async ({ envelopeId }: GetDocumen
         ],
       },
     },
+    orderBy: { createdAt: 'asc' },
   });
 
   const auditLogs = rawAuditLogs.map((log) => parseDocumentAuditLogData(log));
+
+  // Full audit logs with hash chain info for certificate rendering
+  const fullAuditLogsWithHash: AuditLogWithHash[] = await prisma.documentAuditLog.findMany({
+    where: { envelopeId },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      createdAt: true,
+      type: true,
+      data: true,
+      name: true,
+      email: true,
+      userId: true,
+      userAgent: true,
+      ipAddress: true,
+      prevHash: true,
+      hash: true,
+    },
+  });
+
+  // Verify hash chain
+  const hashChainVerification = verifyAuditLogHashChain(fullAuditLogsWithHash);
 
   const groupedAuditLogs = {
     [DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_COMPLETED]: auditLogs.filter(
@@ -49,5 +78,9 @@ export const getDocumentCertificateAuditLogs = async ({ envelopeId }: GetDocumen
     ),
   } as const;
 
-  return groupedAuditLogs;
+  return {
+    groupedAuditLogs,
+    fullAuditLogsWithHash,
+    hashChainVerification,
+  };
 };

@@ -106,7 +106,14 @@ export const DocumentSigningAutoSign = ({ recipient, fields }: DocumentSigningAu
           }))
           .with(undefined, () => undefined)
           .with(
-            P.union(DocumentAuth.PASSKEY, DocumentAuth.TWO_FACTOR_AUTH, DocumentAuth.PASSWORD),
+            P.union(
+              DocumentAuth.PASSKEY,
+              DocumentAuth.TWO_FACTOR_AUTH,
+              DocumentAuth.PASSWORD,
+              // フェーズ2: 本人確認ゲートは自動署名非対応
+              DocumentAuth.EMAIL_OTP,
+              DocumentAuth.FIREBASE_EMAIL,
+            ),
             // This is a bit dirty, but the sentinel value used here is incredibly short-lived.
             () => 'NOT_SUPPORTED' as const,
           )

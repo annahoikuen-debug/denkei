@@ -11,7 +11,7 @@ import type { RowSelectionState } from '@documenso/ui/primitives/data-table';
 import { msg } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
 import { EnvelopeType, FolderType, type DocumentStatus as PrismaDocumentStatus } from '@prisma/client';
-import { XIcon } from 'lucide-react';
+import { XIcon, DownloadIcon } from 'lucide-react';
 import { useQueryStates } from 'nuqs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
@@ -31,6 +31,7 @@ import { DocumentsTableEmptyState } from '~/components/tables/documents-table-em
 import { DocumentsTablePeriodFilter } from '~/components/tables/documents-table-period-filter';
 import { DocumentsTableSenderFilter } from '~/components/tables/documents-table-sender-filter';
 import { DocumentsTableStatusFilter } from '~/components/tables/documents-table-status-filter';
+import { DocumentElectronicLedgerFilters } from '~/components/tables/document-electronic-ledger-filters';
 import { EnvelopesTableBulkActionBar } from '~/components/tables/envelopes-table-bulk-action-bar';
 import { useCurrentTeam } from '~/providers/team';
 import { documentsSearchParams } from '~/utils/documents-search-params';
@@ -101,6 +102,11 @@ export default function DocumentsPage() {
       perPage: findDocumentSearchParams.perPage ?? undefined,
       query: findDocumentSearchParams.query ?? undefined,
       folderId,
+      contractType: findDocumentSearchParams.contractType ?? undefined,
+      counterpartyName: findDocumentSearchParams.counterpartyName ?? undefined,
+      contractAmount: findDocumentSearchParams.contractAmount ?? undefined,
+      contractDateFrom: findDocumentSearchParams.contractDateFrom ?? undefined,
+      contractDateTo: findDocumentSearchParams.contractDateTo ?? undefined,
     },
     {
       ...SKIP_QUERY_BATCH_META,
@@ -156,7 +162,12 @@ export default function DocumentsPage() {
     return Boolean(
       (findDocumentSearchParams.status && findDocumentSearchParams.status !== ExtendedDocumentStatus.ALL) ||
         findDocumentSearchParams.senderIds?.length ||
-        findDocumentSearchParams.period,
+        findDocumentSearchParams.period ||
+        findDocumentSearchParams.contractType ||
+        findDocumentSearchParams.counterpartyName ||
+        findDocumentSearchParams.contractAmount ||
+        findDocumentSearchParams.contractDateFrom ||
+        findDocumentSearchParams.contractDateTo,
     );
   }, [findDocumentSearchParams]);
 
@@ -165,8 +176,44 @@ export default function DocumentsPage() {
       status: null,
       senderIds: null,
       period: null,
+      contractType: null,
+      counterpartyName: null,
+      contractAmount: null,
+      contractDateFrom: null,
+      contractDateTo: null,
       page: null,
     });
+  };
+
+  const handleCsvExport = async () => {
+    try {
+      const result = await trpc.document.downloadCsv.query({
+        status: findDocumentSearchParams.status ?? undefined,
+        period: findDocumentSearchParams.period ?? undefined,
+        senderIds: findDocumentSearchParams.senderIds ?? undefined,
+        query: findDocumentSearchParams.query ?? undefined,
+        folderId,
+        contractType: findDocumentSearchParams.contractType ?? undefined,
+        counterpartyName: findDocumentSearchParams.counterpartyName ?? undefined,
+        contractAmount: findDocumentSearchParams.contractAmount ?? undefined,
+        contractDateFrom: findDocumentSearchParams.contractDateFrom ?? undefined,
+        contractDateTo: findDocumentSearchParams.contractDateTo ?? undefined,
+      });
+
+      // Create blob and download
+      const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', result.filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('CSV export failed:', error);
+      // Could add toast notification here
+    }
   };
 
   useEffect(() => {
@@ -202,12 +249,21 @@ export default function DocumentsPage() {
 
           <DocumentsTablePeriodFilter />
 
+          <DocumentElectronicLedgerFilters />
+
           {hasActiveFilters && (
             <Button variant="ghost" className="px-2 text-muted-foreground lg:px-3" onClick={onResetFilters}>
               <Trans>Reset</Trans>
               <XIcon className="ml-1 h-4 w-4" />
             </Button>
           )}
+        </div>
+
+        <div className="mt-4 flex items-center gap-x-2">
+          <Button variant="outline" onClick={handleCsvExport} disabled={isLoading}>
+            <DownloadIcon className="mr-2 h-4 w-4" />
+            <Trans>CSVエクスポート (電帳法)</Trans>
+          </Button>
         </div>
 
         <div className="mt-8">

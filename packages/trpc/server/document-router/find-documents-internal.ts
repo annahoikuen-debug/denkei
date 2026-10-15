@@ -1,6 +1,7 @@
 import { findDocuments } from '@documenso/lib/server-only/document/find-documents';
 import { getStats } from '@documenso/lib/server-only/document/get-stats';
 import { mapEnvelopesToDocumentMany } from '@documenso/lib/utils/document';
+import { ExtendedDocumentStatus } from '@documenso/prisma/types/extended-document-status';
 
 import { authenticatedProcedure } from '../trpc';
 import {
@@ -27,6 +28,11 @@ export const findDocumentsInternalRoute = authenticatedProcedure
       period,
       senderIds,
       folderId,
+      contractType,
+      counterpartyName,
+      contractAmount,
+      contractDateFrom,
+      contractDateTo,
     } = input;
 
     const [stats, documents] = await Promise.all([
@@ -46,12 +52,17 @@ export const findDocumentsInternalRoute = authenticatedProcedure
         page,
         perPage,
         source,
-        status,
+        status: status ?? ExtendedDocumentStatus.ALL,
         period,
         senderIds,
         folderId,
         hasExpiredRecipients,
         orderBy: orderByColumn ? { column: orderByColumn, direction: orderByDirection } : undefined,
+        contractType,
+        counterpartyName,
+        contractAmount,
+        contractDateFrom,
+        contractDateTo,
       }),
     ]);
 

@@ -46,6 +46,10 @@ export const AppNavDesktop = ({ className, setIsCommandMenuOpen, ...props }: App
 
     return [
       {
+        href: `/t/${teamUrl}/new`,
+        label: msg`新規送信`,
+      },
+      {
         href: `/t/${teamUrl}/documents`,
         label: msg`Documents`,
       },

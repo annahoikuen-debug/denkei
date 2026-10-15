@@ -21,6 +21,7 @@ import { RECIPIENT_ROLE_SIGNING_REASONS, RECIPIENT_ROLES_DESCRIPTION } from '../
 import type { TDocumentAuditLogBaseSchema } from '../../types/document-audit-logs';
 import { svgToPng } from '../../utils/images/svg-to-png';
 import { ensureFontLibrary } from './helpers';
+import { verifyAuditLogHashChain, type AuditLogHashChainEntry } from '../document-audit-log-hash';
 
 type ColumnWidths = [number, number, number];
 
@@ -58,6 +59,9 @@ type GenerateCertificateOptions = {
   };
   pageWidth: number;
   pageHeight: number;
+  timezone?: string;
+  fullAuditLogsWithHash: AuditLogHashChainEntry[];
+  hashChainVerification: { isValid: boolean; breakAtId?: string };
 };
 
 // Helper function to get device info from user agent
@@ -200,6 +204,7 @@ type RenderColumnOptions = {
     name: string;
     email: string;
   };
+  timezone?: string;
 };
 
 const renderColumnOne = (options: RenderColumnOptions) => {
@@ -409,7 +414,7 @@ const renderColumnTwo = (options: RenderColumnOptions) => {
 };
 
 const renderColumnThree = (options: RenderColumnOptions) => {
-  const { recipient, width, i18n, envelopeOwner } = options;
+  const { recipient, width, i18n, envelopeOwner, timezone = 'Asia/Tokyo' } = options;
 
   const column = new Konva.Group();
 
@@ -420,46 +425,38 @@ const renderColumnThree = (options: RenderColumnOptions) => {
     valueFill?: string;
   };
 
+  const formatDate = (date: Date) => {
+    return DateTime.fromJSDate(date, { zone: timezone })
+      .setLocale(i18n.locale || APP_I18N_OPTIONS.defaultLocale)
+      .toFormat('yyyy-MM-dd HH:mm:ss (ZZZZ)');
+  };
+
   const itemsToRender: DetailItem[] = [
     {
       label: i18n._(msg`Sent`),
       value: recipient.logs.emailed
-        ? DateTime.fromJSDate(recipient.logs.emailed.createdAt)
-            .setLocale(APP_I18N_OPTIONS.defaultLocale)
-            .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+        ? formatDate(recipient.logs.emailed.createdAt)
         : recipient.logs.sent
-          ? DateTime.fromJSDate(recipient.logs.sent.createdAt)
-              .setLocale(APP_I18N_OPTIONS.defaultLocale)
-              .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+          ? formatDate(recipient.logs.sent.createdAt)
           : i18n._(msg`Unknown`),
     },
     {
       label: i18n._(msg`Viewed`),
-      value: recipient.logs.opened
-        ? DateTime.fromJSDate(recipient.logs.opened.createdAt)
-            .setLocale(APP_I18N_OPTIONS.defaultLocale)
-            .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
-        : i18n._(msg`Unknown`),
+      value: recipient.logs.opened ? formatDate(recipient.logs.opened.createdAt) : i18n._(msg`Unknown`),
     },
   ];
 
   if (recipient.logs.rejected) {
     itemsToRender.push({
       label: i18n._(msg`Rejected`),
-      value: DateTime.fromJSDate(recipient.logs.rejected.createdAt)
-        .setLocale(APP_I18N_OPTIONS.defaultLocale)
-        .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)'),
+      value: formatDate(recipient.logs.rejected.createdAt),
       labelFill: textRejectedRed,
       valueFill: textRejectedRed,
     });
   } else {
     itemsToRender.push({
       label: i18n._(msg`Signed`),
-      value: recipient.logs.completed
-        ? DateTime.fromJSDate(recipient.logs.completed.createdAt)
-            .setLocale(APP_I18N_OPTIONS.defaultLocale)
-            .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
-        : i18n._(msg`Unknown`),
+      value: recipient.logs.completed ? formatDate(recipient.logs.completed.createdAt) : i18n._(msg`Unknown`),
     });
   }
 
@@ -498,10 +495,11 @@ type RenderRowOptions = {
     name: string;
     email: string;
   };
+  timezone?: string;
 };
 
 const renderRow = (options: RenderRowOptions) => {
-  const { recipient, columnWidths, i18n, envelopeOwner } = options;
+  const { recipient, columnWidths, i18n, envelopeOwner, timezone } = options;
 
   const rowGroup = new Konva.Group();
 
@@ -547,6 +545,7 @@ const renderRow = (options: RenderRowOptions) => {
     width: columnWidths[2],
     i18n,
     envelopeOwner,
+    timezone,
   });
   columnThreeGroup.setAttrs({
     x: rowPadding + columnWidths[0] + columnWidths[1],
@@ -626,6 +625,161 @@ const renderBranding = async ({ qrToken, i18n }: { qrToken: string | null; i18n:
   return branding;
 };
 
+const textSuccessGreen = '#16a34a';
+const textErrorRed = '#dc2626';
+
+type AuditLogTableColumn = { key: keyof AuditLogHashChainEntry; label: string; widthRatio: number };
+
+const AUDIT_LOG_COLUMNS: AuditLogTableColumn[] = [
+  { key: 'createdAt', label: 'Date', widthRatio: 0.18 },
+  { key: 'type', label: 'Type', widthRatio: 0.22 },
+  { key: 'name', label: 'Actor', widthRatio: 0.15 },
+  { key: 'email', label: 'Email', widthRatio: 0.2 },
+  { key: 'ipAddress', label: 'IP', widthRatio: 0.12 },
+  { key: 'hash', label: 'Hash', widthRatio: 0.13 },
+];
+
+const renderHashChainVerification = (options: { i18n: I18n; verification: { isValid: boolean; breakAtId?: string }; width: number }) => {
+  const { i18n, verification, width } = options;
+  const group = new Konva.Group();
+
+  const title = new Konva.Text({
+    x: 0,
+    y: 0,
+    text: i18n._(msg`Audit Log Integrity Verification`),
+    fontFamily: 'Inter',
+    fontSize: 14,
+    fontStyle: '700',
+    fill: textForeground,
+  });
+  group.add(title);
+
+  const statusText = verification.isValid
+    ? i18n._(msg`Hash chain verification: PASSED — All records are intact and tamper-free.`)
+    : i18n._(msg`Hash chain verification: FAILED — Integrity compromised at record {breakAtId}.`);
+
+  const status = new Konva.Text({
+    x: 0,
+    y: title.getClientRect().height + 8,
+    text: statusText.replace('{breakAtId}', verification.breakAtId ?? ''),
+    fontFamily: 'Inter',
+    fontSize: textBase,
+    fill: verification.isValid ? textSuccessGreen : textErrorRed,
+    fontStyle: verification.isValid ? '500' : '700',
+    width,
+    wrap: 'char',
+  });
+  group.add(status);
+
+  const detailLabel = new Konva.Text({
+    x: 0,
+    y: status.getClientRect().height + status.y() + 8,
+    text: `${i18n._(msg`Total Records Verified`)}: ${verification.isValid ? 'All' : 'Partial'}`,
+    fontFamily: 'Inter',
+    fontSize: textSm,
+    fill: textMutedForeground,
+  });
+  group.add(detailLabel);
+
+  return group;
+};
+
+const formatAuditLogDate = (date: Date | string, timezone: string, i18n: I18n) => {
+  const dt = date instanceof Date ? DateTime.fromJSDate(date) : DateTime.fromISO(date);
+  return dt.setZone(timezone).setLocale(i18n.locale || APP_I18N_OPTIONS.defaultLocale).toFormat('yyyy-MM-dd HH:mm:ss ZZZZ');
+};
+
+const renderAuditLogTable = (options: {
+  logs: AuditLogHashChainEntry[];
+  width: number;
+  i18n: I18n;
+  timezone: string;
+}) => {
+  const { logs, width, i18n, timezone } = options;
+  const table = new Konva.Group();
+
+  const headerHeight = 28;
+  const rowHeight = 22;
+  const cellPadding = 6;
+
+  let xOffset = 0;
+  const colWidths = AUDIT_LOG_COLUMNS.map((col) => width * col.widthRatio);
+
+  // Header row
+  const headerBg = new Konva.Rect({
+    x: 0,
+    y: 0,
+    width,
+    height: headerHeight,
+    fill: '#f3f4f6',
+    cornerRadius: 4,
+  });
+  table.add(headerBg);
+
+  AUDIT_LOG_COLUMNS.forEach((col, idx) => {
+    const headerCell = new Konva.Text({
+      x: xOffset + cellPadding,
+      y: (headerHeight - 12) / 2,
+      text: i18n._(msg`${col.label}`),
+      fontFamily: 'Inter',
+      fontSize: textXs,
+      fontStyle: '700',
+      fill: textMutedForeground,
+      width: colWidths[idx] - cellPadding * 2,
+    });
+    table.add(headerCell);
+    xOffset += colWidths[idx];
+  });
+
+  // Data rows
+  logs.forEach((log, rowIdx) => {
+    const yOffset = headerHeight + rowIdx * rowHeight;
+    const rowBg = new Konva.Rect({
+      x: 0,
+      y: yOffset,
+      width,
+      height: rowHeight,
+      fill: rowIdx % 2 === 0 ? '#ffffff' : '#f9fafb',
+    });
+    table.add(rowBg);
+
+    xOffset = 0;
+    AUDIT_LOG_COLUMNS.forEach((col, colIdx) => {
+      let value = '';
+      if (col.key === 'createdAt') {
+        value = formatAuditLogDate(log.createdAt, timezone, i18n);
+      } else if (col.key === 'hash') {
+        value = log.hash ? `${log.hash.slice(0, 12)}...` : '—';
+      } else {
+        value = String((log as Record<string, unknown>)[col.key] ?? '—');
+      }
+
+      const cell = new Konva.Text({
+        x: xOffset + cellPadding,
+        y: yOffset + (rowHeight - 10) / 2,
+        text: value,
+        fontFamily: col.key === 'hash' ? 'monospace' : 'Inter',
+        fontSize: textXs,
+        fill: textForeground,
+        width: colWidths[colIdx] - cellPadding * 2,
+        ellipsis: true,
+      });
+      table.add(cell);
+      xOffset += colWidths[colIdx];
+    });
+  });
+
+  // Bottom border
+  const bottomBorder = new Konva.Line({
+    points: [0, headerHeight + logs.length * rowHeight, width, headerHeight + logs.length * rowHeight],
+    stroke: '#e5e7eb',
+    strokeWidth: 1,
+  });
+  table.add(bottomBorder);
+
+  return table;
+};
+
 type GroupRowsIntoPagesOptions = {
   recipients: CertificateRecipient[];
   maxHeight: number;
@@ -635,10 +789,11 @@ type GroupRowsIntoPagesOptions = {
     name: string;
     email: string;
   };
+  timezone?: string;
 };
 
 const groupRowsIntoPages = (options: GroupRowsIntoPagesOptions) => {
-  const { recipients, maxHeight, i18n, columnWidths, envelopeOwner } = options;
+  const { recipients, maxHeight, i18n, columnWidths, envelopeOwner, timezone } = options;
 
   const rowHeader = renderRowHeader({ columnWidths, i18n });
   const rowHeaderHeight = rowHeader.getClientRect().height;
@@ -650,7 +805,7 @@ const groupRowsIntoPages = (options: GroupRowsIntoPagesOptions) => {
 
   // Group rows into pages.
   for (const recipient of recipients) {
-    const row = renderRow({ recipient, columnWidths, i18n, envelopeOwner });
+    const row = renderRow({ recipient, columnWidths, i18n, envelopeOwner, timezone });
 
     const rowHeight = row.getClientRect().height;
 
@@ -724,6 +879,9 @@ export async function renderCertificate({
   envelopeOwner,
   pageWidth,
   pageHeight,
+  timezone,
+  fullAuditLogsWithHash,
+  hashChainVerification,
 }: GenerateCertificateOptions) {
   ensureFontLibrary();
 
@@ -750,9 +908,25 @@ export async function renderCertificate({
     columnWidths,
     i18n,
     envelopeOwner,
+    timezone,
   });
 
   const tables = renderTables({ groupedRows, columnWidths, i18n });
+
+  // Render hash chain verification section
+  const hashVerificationGroup = renderHashChainVerification({
+    i18n,
+    verification: hashChainVerification,
+    width: tableContentWidth,
+  });
+
+  // Render full audit log table
+  const auditLogTableGroup = renderAuditLogTable({
+    logs: fullAuditLogsWithHash,
+    width: tableContentWidth,
+    i18n,
+    timezone: timezone || 'Asia/Tokyo',
+  });
 
   const brandingGroup = await renderBranding({ qrToken, i18n });
   const brandingRect = brandingGroup.getClientRect();
@@ -848,6 +1022,94 @@ export async function renderCertificate({
     const canvas = page.canvas._canvas as unknown as Canvas;
     const buffer = await canvas.toBuffer('pdf');
 
+    pages.push(new Uint8Array(buffer));
+  }
+
+  // Add hash chain verification page
+  {
+    stage.destroyChildren();
+    const page = new Konva.Layer();
+
+    const group = new Konva.Group();
+
+    const titleText = new Konva.Text({
+      x: margin,
+      y: 0,
+      height: pageTopMargin,
+      verticalAlign: 'middle',
+      text: i18n._(msg`Audit Log Integrity Verification`),
+      fontFamily: 'Inter',
+      fontSize: titleFontSize,
+      fontStyle: '700',
+    });
+
+    hashVerificationGroup.setAttrs({
+      x: margin,
+      y: pageTopMargin,
+    } satisfies Partial<Konva.GroupConfig>);
+
+    group.add(titleText);
+    group.add(hashVerificationGroup);
+
+    const footerText = new Konva.Text({
+      x: margin,
+      y: pageHeight - textXs - 10,
+      text: `${i18n._(msg`Envelope ID`)}: ${envelopeId}`,
+      fontFamily: 'Inter',
+      fontSize: textXs,
+      fill: textMutedForegroundLight,
+    });
+    page.add(footerText);
+
+    page.add(group);
+    stage.add(page);
+
+    const canvas = page.canvas._canvas as unknown as Canvas;
+    const buffer = await canvas.toBuffer('pdf');
+    pages.push(new Uint8Array(buffer));
+  }
+
+  // Add full audit log table page(s)
+  {
+    stage.destroyChildren();
+    const page = new Konva.Layer();
+
+    const group = new Konva.Group();
+
+    const titleText = new Konva.Text({
+      x: margin,
+      y: 0,
+      height: pageTopMargin,
+      verticalAlign: 'middle',
+      text: i18n._(msg`Complete Audit Log`),
+      fontFamily: 'Inter',
+      fontSize: titleFontSize,
+      fontStyle: '700',
+    });
+
+    auditLogTableGroup.setAttrs({
+      x: margin,
+      y: pageTopMargin,
+    } satisfies Partial<Konva.GroupConfig>);
+
+    group.add(titleText);
+    group.add(auditLogTableGroup);
+
+    const footerText = new Konva.Text({
+      x: margin,
+      y: pageHeight - textXs - 10,
+      text: `${i18n._(msg`Envelope ID`)}: ${envelopeId}`,
+      fontFamily: 'Inter',
+      fontSize: textXs,
+      fill: textMutedForegroundLight,
+    });
+    page.add(footerText);
+
+    page.add(group);
+    stage.add(page);
+
+    const canvas = page.canvas._canvas as unknown as Canvas;
+    const buffer = await canvas.toBuffer('pdf');
     pages.push(new Uint8Array(buffer));
   }
 

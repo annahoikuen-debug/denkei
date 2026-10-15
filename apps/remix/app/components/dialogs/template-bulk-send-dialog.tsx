@@ -36,14 +36,23 @@ type TBulkSendFormSchema = z.infer<typeof ZBulkSendFormSchema>;
 
 type TBulkSendValidationError = TBulkSendCsvError | { type: 'UPLOAD_ERROR'; code: string };
 
+import type { TMergeVariableList } from '@documenso/lib/types/merge-variables';
+
 export type TemplateBulkSendDialogProps = {
   templateId: number;
   recipients: Array<{ email: string; name?: string | null }>;
+  templateVariables?: TMergeVariableList;
   trigger?: React.ReactNode;
   onSuccess?: () => void;
 };
 
-export const TemplateBulkSendDialog = ({ templateId, recipients, trigger, onSuccess }: TemplateBulkSendDialogProps) => {
+export const TemplateBulkSendDialog = ({
+  templateId,
+  recipients,
+  templateVariables = [],
+  trigger,
+  onSuccess,
+}: TemplateBulkSendDialogProps) => {
   const { _ } = useLingui();
   const { toast } = useToast();
 
@@ -76,9 +85,16 @@ export const TemplateBulkSendDialog = ({ templateId, recipients, trigger, onSucc
   };
 
   const onDownloadTemplate = () => {
-    const headers = recipients.flatMap((_, index) => [`recipient_${index + 1}_email`, `recipient_${index + 1}_name`]);
+    const recipientHeaders = recipients.flatMap((_, index) => [
+      `recipient_${index + 1}_email`,
+      `recipient_${index + 1}_name`,
+    ]);
+    const variableHeaders = templateVariables.map((v) => v.name);
+    const headers = [...recipientHeaders, ...variableHeaders];
 
-    const exampleRow = recipients.flatMap((recipient) => [recipient.email, recipient.name || '']);
+    const recipientExampleRow = recipients.flatMap((recipient) => [recipient.email, recipient.name || '']);
+    const variableExampleRow = templateVariables.map((v) => (v.type === 'currency' ? '100000' : ''));
+    const exampleRow = [...recipientExampleRow, ...variableExampleRow];
 
     const csv = [headers.join(','), exampleRow.join(',')].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -179,6 +195,23 @@ export const TemplateBulkSendDialog = ({ templateId, recipients, trigger, onSucc
                   <li key={index}>{recipient.name ? `${recipient.name} (${recipient.email})` : recipient.email}</li>
                 ))}
               </ul>
+
+              {templateVariables.length > 0 && (
+                <>
+                  <p className="mt-4 font-medium text-sm">
+                    <Trans>差込変数 (列名):</Trans>
+                  </p>
+                  <ul className="mt-2 list-inside list-disc text-muted-foreground text-sm">
+                    {templateVariables.map((v) => (
+                      <li key={v.name}>
+                        <span className="font-mono text-foreground">{v.name}</span>
+                        {v.label ? ` (${v.label})` : ''} -{' '}
+                        {v.required ? <span className="font-semibold text-destructive">必須</span> : '任意'}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
 
             <div className="flex flex-col gap-y-2">
@@ -303,8 +336,8 @@ export const TemplateBulkSendDialog = ({ templateId, recipients, trigger, onSucc
                           {rowErrors.map((rowError, index) => (
                             <li key={index}>
                               <Trans>
-                                Row {rowError.row}: <span className="font-mono">{rowError.column}</span> must be a valid
-                                email or empty
+                                Row {rowError.row}: <span className="font-mono">{rowError.column}</span> -{' '}
+                                {rowError.message}
                               </Trans>
                             </li>
                           ))}

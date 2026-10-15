@@ -20,6 +20,7 @@ import {
   SigningStatus,
 } from '../client';
 import { seedPendingDocument } from './documents';
+import { seedJapaneseTemplates } from './japanese-templates';
 import { seedDirectTemplate, seedTemplate } from './templates';
 import { seedUser } from './users';
 
@@ -265,6 +266,14 @@ export const seedDatabase = async () => {
       recipientEmail: adminUser.user.email,
       insertFields: true,
       status: DocumentStatus.PENDING,
+    }),
+    seedJapaneseTemplates({
+      userId: exampleUser.user.id,
+      teamId: exampleUser.team.id,
+    }),
+    seedJapaneseTemplates({
+      userId: adminUser.user.id,
+      teamId: adminUser.team.id,
     }),
   ]);
 };

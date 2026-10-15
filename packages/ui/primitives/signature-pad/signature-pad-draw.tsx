@@ -17,9 +17,19 @@ export type SignaturePadDrawProps = {
   className?: string;
   value: string;
   onChange: (_signatureDataUrl: string) => void;
+  /**
+   * フェーズ1 ステップ24: 簡易モードではカラーピッカーを非表示にし黒固定にする。
+   */
+  hideColorPicker?: boolean;
 };
 
-export const SignaturePadDraw = ({ className, value, onChange, ...props }: SignaturePadDrawProps) => {
+export const SignaturePadDraw = ({
+  className,
+  value,
+  onChange,
+  hideColorPicker = false,
+  ...props
+}: SignaturePadDrawProps) => {
   const { t } = useLingui();
 
   const $el = useRef<HTMLCanvasElement>(null);
@@ -233,6 +243,31 @@ export const SignaturePadDraw = ({ className, value, onChange, ...props }: Signa
     }
   });
 
+  // フェーズ1 ステップ21: モバイルタッチ最適化
+  // - setPointerCapture で指がキャンバス外に出ても描画を継続
+  // - pointercancel(電話着信・通知等でタッチ中断)時にストロークを確定
+  const onPointerDownWithCapture = (event: PointerEvent<HTMLCanvasElement>) => {
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // setPointerCapture は失敗する場合がある(既に解放済み等)。無視して描画は継続。
+    }
+
+    onMouseDown(event);
+  };
+
+  const onPointerCancel = (event: PointerEvent<HTMLCanvasElement>) => {
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // 無視
+    }
+
+    if (isPressed) {
+      onMouseUp(event, true);
+    }
+  };
+
   return (
     <div className={cn('h-full w-full', className)}>
       <canvas
@@ -243,20 +278,23 @@ export const SignaturePadDraw = ({ className, value, onChange, ...props }: Signa
         })}
         style={{ touchAction: 'none' }}
         onPointerMove={(event) => onMouseMove(event)}
-        onPointerDown={(event) => onMouseDown(event)}
+        onPointerDown={onPointerDownWithCapture}
         onPointerUp={(event) => onMouseUp(event)}
+        onPointerCancel={onPointerCancel}
         onPointerLeave={(event) => onMouseLeave(event)}
         onPointerEnter={(event) => onMouseEnter(event)}
         {...props}
       />
 
-      <SignaturePadColorPicker
-        className={cn('transition-opacity duration-100', {
-          'pointer-events-none opacity-0': isPressed,
-        })}
-        selectedColor={selectedColor}
-        setSelectedColor={setSelectedColor}
-      />
+      {!hideColorPicker && (
+        <SignaturePadColorPicker
+          className={cn('transition-opacity duration-100', {
+            'pointer-events-none opacity-0': isPressed,
+          })}
+          selectedColor={selectedColor}
+          setSelectedColor={setSelectedColor}
+        />
+      )}
 
       <div
         className={cn('absolute right-3 bottom-3 flex gap-2 transition-opacity duration-100', {

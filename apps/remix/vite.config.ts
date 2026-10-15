@@ -36,16 +36,23 @@ export default defineConfig({
   server: {
     port: parseInt(process.env.PORT || '3000', 10),
     strictPort: true,
+    watch: {
+      ignored: ['**/build/**', '**/dist/**', '**/.react-router/**'],
+    },
   },
   plugins: [
-    viteStaticCopy({
-      targets: [
-        {
-          src: cMapsDir,
-          dest: 'static',
-        },
-      ],
-    }),
+    ...(process.env.NODE_ENV !== 'production'
+      ? [
+          viteStaticCopy({
+            targets: [
+              {
+                src: cMapsDir,
+                dest: 'static',
+              },
+            ],
+          }),
+        ]
+      : []),
     reactRouter(),
     macrosPlugin(),
     lingui(),

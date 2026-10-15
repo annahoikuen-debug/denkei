@@ -168,7 +168,7 @@ export default function AdminDocumentDetailsPage({ loaderData }: Route.Component
         <AdminDocumentRecipientsTable
           envelopeId={envelope.id}
           isDocumentCompleted={Boolean(envelope.completedAt)}
-          recipients={envelope.recipients}
+          recipients={envelope.recipients as any}
         />
       </div>
 

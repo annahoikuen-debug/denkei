@@ -31,6 +31,7 @@ import { GripVerticalIcon, HelpCircle, Plus, Trash } from 'lucide-react';
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
+import { DenkeiCallout } from '../../components/denkei/denkei-guide';
 import { DocumentReadOnlyFields, mapFieldsWithRecipients } from '../../components/document/document-read-only-fields';
 import type { RecipientAutoCompleteOption } from '../../components/recipient/recipient-autocomplete-input';
 import { RecipientAutoCompleteInput } from '../../components/recipient/recipient-autocomplete-input';
@@ -65,6 +66,7 @@ export type AddSignersFormProps = {
   fields: Field[];
   signingOrder?: DocumentSigningOrder | null;
   allowDictateNextSigner?: boolean;
+  isSigningOrderLocked?: boolean;
   onSubmit: (_data: TAddSignersFormSchema) => void;
   onAutoSave: (_data: TAddSignersFormSchema) => Promise<AutoSaveResponse>;
   isDocumentPdfLoaded: boolean;
@@ -82,6 +84,7 @@ export const AddSignersFormPartial = ({
   fields,
   signingOrder,
   allowDictateNextSigner,
+  isSigningOrderLocked = false,
   onSubmit,
   onAutoSave,
   isDocumentPdfLoaded,
@@ -578,7 +581,9 @@ export const AddSignersFormPartial = ({
 
                         void handleAutoSave();
                       }}
-                      disabled={isSubmitting || hasDocumentBeenSent || emptySigners().length !== 0}
+                      disabled={
+                        isSubmitting || hasDocumentBeenSent || emptySigners().length !== 0 || isSigningOrderLocked
+                      }
                     />
                   </FormControl>
 
@@ -590,22 +595,38 @@ export const AddSignersFormPartial = ({
                       <Trans>Enable signing order</Trans>
                     </FormLabel>
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="ml-1 cursor-help text-muted-foreground">
-                          <HelpCircle className="h-3.5 w-3.5" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-80 p-4">
-                        <p>
-                          <Trans>Add 2 or more signers to enable signing order.</Trans>
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
+                    {isSigningOrderLocked ? (
+                      <span className="ml-2 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 font-medium text-amber-600 text-xs dark:bg-amber-950/40">
+                        <Trans>テンプレート設定により固定中</Trans>
+                      </span>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 cursor-help text-muted-foreground">
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-80 p-4">
+                          <p>
+                            <Trans>Add 2 or more signers to enable signing order.</Trans>
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </FormItem>
               )}
             />
+
+            {isSigningOrderLocked && (
+              <div className="mb-6">
+                <DenkeiCallout
+                  variant="secure"
+                  title="デンケイの署名順固定ガイド"
+                  message="このテンプレートは日本の商習慣に合わせ、先方署名完了後に自社が締結する順序があらかじめ設定されています。誤送信や順序間違いを防ぐため、送信時の順序変更はロックされています。"
+                />
+              </div>
+            )}
 
             <FormField
               control={form.control}

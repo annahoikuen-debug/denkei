@@ -70,6 +70,12 @@ export const extractDerivedDocumentMeta = (
 
     // Reminder settings.
     reminderSettings: meta.reminderSettings ?? settings.reminderSettings ?? null,
+
+    // フェーズ1 ステップ35: 電帳法(検索要件)対応メタデータ。
+    contractType: meta.contractType ?? null,
+    counterpartyName: meta.counterpartyName ?? null,
+    contractAmount: meta.contractAmount ?? null,
+    contractDate: meta.contractDate ?? null,
   } satisfies Omit<DocumentMeta, 'id'>;
 };
 

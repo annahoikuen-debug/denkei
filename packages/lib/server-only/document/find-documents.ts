@@ -47,6 +47,12 @@ export type FindDocumentsOptions = {
    * When false, use a full COUNT(*) for exact totals — preferred for external API consumers.
    */
   useWindowedCount?: boolean;
+  // 電帳法検索要件対応フィルタ
+  contractType?: string;
+  counterpartyName?: string;
+  contractAmount?: string;
+  contractDateFrom?: string;
+  contractDateTo?: string;
 };
 
 /**
@@ -123,6 +129,11 @@ export const findDocuments = async ({
   folderId,
   hasExpiredRecipients,
   useWindowedCount = true,
+  contractType,
+  counterpartyName,
+  contractAmount,
+  contractDateFrom,
+  contractDateTo,
 }: FindDocumentsOptions) => {
   const user = await prisma.user.findFirstOrThrow({
     where: { id: userId },
@@ -209,6 +220,68 @@ export const findDocuments = async ({
     // Expired recipient filter (orthogonal to status, additive)
     if (hasExpiredRecipients) {
       qb = qb.where((eb) => hasExpiredRecipient(eb));
+    }
+
+    // 電帳法検索要件対応フィルタ (DocumentMeta 経由で結合)
+    if (contractType) {
+      qb = qb.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('DocumentMeta')
+            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .where('DocumentMeta.contractType', 'ilike', `%${contractType}%`)
+            .select(sql.lit(1).as('one')),
+        ),
+      );
+    }
+
+    if (counterpartyName) {
+      qb = qb.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('DocumentMeta')
+            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .where('DocumentMeta.counterpartyName', 'ilike', `%${counterpartyName}%`)
+            .select(sql.lit(1).as('one')),
+        ),
+      );
+    }
+
+    if (contractAmount) {
+      // 金額は完全一致で検索（文字列として比較）
+      qb = qb.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('DocumentMeta')
+            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .where('DocumentMeta.contractAmount', '=', parseInt(contractAmount, 10))
+            .select(sql.lit(1).as('one')),
+        ),
+      );
+    }
+
+    if (contractDateFrom) {
+      qb = qb.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('DocumentMeta')
+            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .where('DocumentMeta.contractDate', '>=', new Date(contractDateFrom))
+            .select(sql.lit(1).as('one')),
+        ),
+      );
+    }
+
+    if (contractDateTo) {
+      qb = qb.where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom('DocumentMeta')
+            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .where('DocumentMeta.contractDate', '<=', new Date(contractDateTo))
+            .select(sql.lit(1).as('one')),
+        ),
+      );
     }
 
     return qb;
@@ -546,14 +619,15 @@ export const findDocuments = async ({
   const data = await prisma.envelope.findMany({
     where: { id: { in: ids } },
     orderBy: { [orderByColumn]: orderByDirection },
-    include: {
-      user: { select: { id: true, name: true, email: true } },
-      recipients: true,
-      team: { select: { id: true, url: true } },
-      envelopeItems: {
-        select: { id: true, envelopeId: true, title: true, order: true },
-      },
-    },
+     include: {
+       user: { select: { id: true, name: true, email: true } },
+       recipients: true,
+       team: { select: { id: true, url: true } },
+       envelopeItems: {
+         select: { id: true, envelopeId: true, title: true, order: true },
+       },
+       documentMeta: true,
+     },
   });
 
   // Preserve ordering from the Kysely query

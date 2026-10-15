@@ -1,5 +1,6 @@
 import { X509Certificate } from 'node:crypto';
 
+import { NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY } from '../../constants/app';
 import { createLocalSigner } from '@documenso/signing/transports/local';
 
 import { NEXT_PRIVATE_SIGNING_TRANSPORT } from '../../constants/app';
@@ -13,12 +14,12 @@ export const getCertificateStatus = async () => {
 
   // Cannot inspect a remote HSM or CSC provider from this process.
   if (transport === 'gcloud-hsm' || transport === 'csc') {
-    return { isAvailable: true };
+    return { isAvailable: true, hasTimestampAuthority: hasTimestampAuthorityConfigured() };
   }
 
   // Anything else (typo, leftover `http`) would throw at seal time.
   if (transport !== 'local') {
-    return { isAvailable: false };
+    return { isAvailable: false, hasTimestampAuthority: hasTimestampAuthorityConfigured() };
   }
 
   try {
@@ -30,8 +31,19 @@ export const getCertificateStatus = async () => {
 
     const isWithinValidityPeriod = new Date(certificate.validFrom) <= now && now <= new Date(certificate.validTo);
 
-    return { isAvailable: isWithinValidityPeriod };
+    return {
+      isAvailable: isWithinValidityPeriod,
+      hasTimestampAuthority: hasTimestampAuthorityConfigured(),
+    };
   } catch {
-    return { isAvailable: false };
+    return { isAvailable: false, hasTimestampAuthority: hasTimestampAuthorityConfigured() };
   }
+};
+
+/**
+ * フェーズ1 ステップ30: タイムスタンプ(RFC3161)設定の有無を返す。
+ * UI の検証バッジ(「電子署名: 有効 / タイムスタンプ: あり」)で使用する。
+ */
+export const hasTimestampAuthorityConfigured = (): boolean => {
+  return Boolean(NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY());
 };

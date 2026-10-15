@@ -6,6 +6,9 @@ export const DEFAULT_DOCUMENT_DATE_FORMAT = 'yyyy-MM-dd hh:mm a';
 
 export const VALID_DATE_FORMAT_VALUES = [
   DEFAULT_DOCUMENT_DATE_FORMAT,
+  'yyyy年M月d日',
+  'yyyy年M月d日 H時m分',
+  'yyyy年M月d日 HH:mm',
   'yyyy-MM-dd',
   'dd/MM/yyyy',
   'dd-MM-yyyy',
@@ -159,6 +162,21 @@ export const DATE_FORMATS = [
     key: 'DayMonthYear',
     label: 'Day, Month Year',
     value: 'EEEE, MMMM dd, yyyy',
+  },
+  {
+    key: 'JP_DATE',
+    label: 'YYYY年M月D日',
+    value: 'yyyy年M月d日',
+  },
+  {
+    key: 'JP_DATETIME',
+    label: 'YYYY年M月D日 H時m分',
+    value: 'yyyy年M月d日 H時m分',
+  },
+  {
+    key: 'JP_DATETIME_24H',
+    label: 'YYYY年M月D日 HH:mm',
+    value: 'yyyy年M月d日 HH:mm',
   },
 ] satisfies {
   key: string;

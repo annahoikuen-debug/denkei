@@ -5,7 +5,9 @@ import {
 } from '@documenso/lib/constants/template';
 import { DO_NOT_INVALIDATE_QUERY_ON_MUTATION, SKIP_QUERY_BATCH_META } from '@documenso/lib/constants/trpc';
 import { AppError } from '@documenso/lib/errors/app-error';
+import type { TMergeVariableList, TMergeVariableValues } from '@documenso/lib/types/merge-variables';
 import { type TRecipientLite, ZRecipientEmailSchema } from '@documenso/lib/types/recipient';
+import type { TTemplateAutomationSettings } from '@documenso/lib/types/template-automation';
 import { putPdfFile } from '@documenso/lib/universal/upload/put-file';
 import { trpc } from '@documenso/trpc/react';
 import { DOCUMENT_TITLE_MAX_LENGTH } from '@documenso/trpc/server/document-router/schema';
@@ -38,6 +40,7 @@ import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import * as z from 'zod';
+import { MergeVariablesForm } from '~/components/general/wizard/merge-variables-form';
 import { getTemplateUseErrorMessage } from '~/utils/toast-error-messages';
 
 const DOCUMENT_NAME_SOURCE = {
@@ -108,6 +111,7 @@ export type TemplateUseDialogProps = {
   recipients: TRecipientLite[];
   documentDistributionMethod?: DocumentDistributionMethod;
   documentRootPath: string;
+  automationSettings?: TTemplateAutomationSettings | null;
   trigger?: React.ReactNode;
 };
 
@@ -118,6 +122,7 @@ export function TemplateUseDialog({
   envelopeId,
   templateId,
   templateSigningOrder,
+  automationSettings,
   trigger,
 }: TemplateUseDialogProps) {
   const { toast } = useToast();
@@ -127,6 +132,10 @@ export function TemplateUseDialog({
 
   const [open, setOpen] = useState(false);
   const [lastUploadedFile, setLastUploadedFile] = useState<File>();
+  const [mergeVariableValues, setMergeVariableValues] = useState<TMergeVariableValues>({});
+  const [mergeVariableErrors, setMergeVariableErrors] = useState<Record<string, string>>({});
+
+  const definedVariables: TMergeVariableList = (automationSettings?.mergeVariables ?? []) as TMergeVariableList;
 
   const { data: response, isLoading: isLoadingEnvelopeItems } = trpc.envelope.item.getMany.useQuery(
     {
@@ -228,11 +237,35 @@ export function TemplateUseDialog({
         }),
       );
 
+      // Validate required merge variables
+      if (definedVariables.length > 0) {
+        const errors: Record<string, string> = {};
+        for (const variable of definedVariables) {
+          if (
+            variable.required &&
+            (!mergeVariableValues[variable.name] || mergeVariableValues[variable.name].trim() === '')
+          ) {
+            errors[variable.name] = _(msg`この変数は必須です`);
+          }
+        }
+
+        if (Object.keys(errors).length > 0) {
+          setMergeVariableErrors(errors);
+          toast({
+            title: _(msg`未入力の必須項目があります`),
+            description: _(msg`差し込み変数の必須項目を入力してください。`),
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+
       const { envelopeId } = await createDocumentFromTemplate({
         templateId,
         recipients: data.recipients,
         distributeDocument: data.distributeDocument,
         customDocumentData,
+        mergeVariableValues,
         ...(documentTitle ? { override: { title: documentTitle } } : {}),
       });
 
@@ -386,6 +419,20 @@ export function TemplateUseDialog({
                     />
                   </div>
                 ))}
+
+                {definedVariables.length > 0 && (
+                  <div className="mt-4">
+                    <MergeVariablesForm
+                      variables={definedVariables}
+                      values={mergeVariableValues}
+                      onChange={(newValues) => {
+                        setMergeVariableValues(newValues);
+                        setMergeVariableErrors({});
+                      }}
+                      errors={mergeVariableErrors}
+                    />
+                  </div>
+                )}
 
                 {recipients.length > 0 && (
                   <div className="mt-4 flex flex-row items-center">

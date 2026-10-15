@@ -1,0 +1,1 @@
+{"root":["./index.ts","./pdf-tamper-detection.test.ts","./helpers/tsa.test.ts","./helpers/tsa.ts","./transports/google-cloud.ts","./transports/local.ts","./package.json","./tsconfig.json"],"version":"5.6.2"}

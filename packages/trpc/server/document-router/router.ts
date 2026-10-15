@@ -12,6 +12,7 @@ import { downloadDocumentRoute } from './download-document';
 import { downloadDocumentAuditLogsRoute } from './download-document-audit-logs';
 import { downloadDocumentBetaRoute } from './download-document-beta';
 import { downloadDocumentCertificateRoute } from './download-document-certificate';
+import { downloadDocumentsCsvRoute } from './download-documents-csv';
 import { duplicateDocumentRoute } from './duplicate-document';
 import { findDocumentAuditLogsRoute } from './find-document-audit-logs';
 import { findDocumentsRoute } from './find-documents';
@@ -41,6 +42,7 @@ export const documentRouter = router({
   share: shareDocumentRoute,
 
   download: downloadDocumentRoute,
+  downloadCsv: downloadDocumentsCsvRoute,
 
   // Deprecated endpoints which need to be removed in the future.
   downloadBeta: downloadDocumentBetaRoute,

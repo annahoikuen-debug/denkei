@@ -1,6 +1,6 @@
 import { useAnalytics } from '@documenso/lib/client-only/hooks/use-analytics';
 import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
-import { type TRecipientAccessAuth, ZDocumentAccessAuthSchema } from '@documenso/lib/types/document-auth';
+import { DocumentAuth, type TRecipientAccessAuth, ZDocumentAccessAuthSchema } from '@documenso/lib/types/document-auth';
 import { fieldsContainUnsignedRequiredField } from '@documenso/lib/utils/advanced-fields-helpers';
 import { zEmail } from '@documenso/lib/utils/zod';
 import { Button } from '@documenso/ui/primitives/button';
@@ -212,7 +212,13 @@ export const DocumentSigningCompleteDialog = ({
   };
 
   const onTwoFactorFormSubmit = (validatedAuthOptions: TRecipientAccessAuth) => {
-    form.setValue('accessAuthOptions', validatedAuthOptions);
+    // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL を除外(2FA系ダイアログでは扱わない)
+    const normalizedAuthOptions =
+      validatedAuthOptions.type === DocumentAuth.EMAIL_OTP || validatedAuthOptions.type === DocumentAuth.FIREBASE_EMAIL
+        ? undefined
+        : validatedAuthOptions;
+
+    form.setValue('accessAuthOptions', normalizedAuthOptions);
 
     setShowTwoFactorForm(false);
     setTwoFactorValidationError(null);

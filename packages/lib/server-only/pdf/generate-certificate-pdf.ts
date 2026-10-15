@@ -43,7 +43,7 @@ export const generateCertificatePdf = async (options: GenerateCertificatePdfOpti
 
   const documentLanguage = ZSupportedLanguageCodeSchema.parse(language);
 
-  const [organisationClaim, auditLogs, messages] = await Promise.all([
+  const [organisationClaim, auditLogsResult, messages] = await Promise.all([
     getOrganisationClaimByTeamId({ teamId: envelope.teamId }),
     getDocumentCertificateAuditLogs({
       envelopeId: envelope.id,
@@ -56,6 +56,8 @@ export const generateCertificatePdf = async (options: GenerateCertificatePdfOpti
     messages,
   });
 
+  const { groupedAuditLogs, fullAuditLogsWithHash, hashChainVerification } = auditLogsResult;
+
   const payload = {
     recipients: recipients.map((recipient) => {
       const recipientId = recipient.id;
@@ -64,23 +66,23 @@ export const generateCertificatePdf = async (options: GenerateCertificatePdfOpti
         (field) => field.recipientId === recipient.id && field.type === FieldType.SIGNATURE,
       );
 
-      const emailSent: TDocumentAuditLogBaseSchema | undefined = auditLogs['EMAIL_SENT'].find(
+      const emailSent: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs['EMAIL_SENT'].find(
         (log) => log.type === 'EMAIL_SENT' && log.data.recipientId === recipientId,
       );
 
-      const documentSent: TDocumentAuditLogBaseSchema | undefined = auditLogs['DOCUMENT_SENT'].find(
+      const documentSent: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs['DOCUMENT_SENT'].find(
         (log) => log.type === 'DOCUMENT_SENT',
       );
 
-      const documentOpened: TDocumentAuditLogBaseSchema | undefined = auditLogs['DOCUMENT_OPENED'].find(
+      const documentOpened: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs['DOCUMENT_OPENED'].find(
         (log) => log.type === 'DOCUMENT_OPENED' && log.data.recipientId === recipientId,
       );
 
-      const documentRecipientCompleted: TDocumentAuditLogBaseSchema | undefined = auditLogs[
+      const documentRecipientCompleted: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs[
         'DOCUMENT_RECIPIENT_COMPLETED'
       ].find((log) => log.type === 'DOCUMENT_RECIPIENT_COMPLETED' && log.data.recipientId === recipientId);
 
-      const documentRecipientRejected: TDocumentAuditLogBaseSchema | undefined = auditLogs[
+      const documentRecipientRejected: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs[
         'DOCUMENT_RECIPIENT_REJECTED'
       ].find((log) => log.type === 'DOCUMENT_RECIPIENT_REJECTED' && log.data.recipientId === recipientId);
 
@@ -90,7 +92,7 @@ export const generateCertificatePdf = async (options: GenerateCertificatePdfOpti
       });
 
       const insertedAuditLogsWithFieldAuth = sortBy(
-        auditLogs.DOCUMENT_FIELD_INSERTED.filter(
+        groupedAuditLogs.DOCUMENT_FIELD_INSERTED.filter(
           (log) => log.data.recipientId === recipient.id && log.data.fieldSecurity,
         ),
         [prop('createdAt'), 'desc'],
@@ -104,6 +106,9 @@ export const generateCertificatePdf = async (options: GenerateCertificatePdfOpti
         .with('PASSWORD', () => i18n._(msg`Password Re-Authentication`))
         .with('PASSKEY', () => i18n._(msg`Passkey Re-Authentication`))
         .with('EXPLICIT_NONE', () => i18n._(msg`Email`))
+        // フェーズ2 ステップ14: 本人確認結果を締結証明書に記載
+        .with('EMAIL_OTP', () => i18n._(msg`Email OTP Verification`))
+        .with('FIREBASE_EMAIL', () => i18n._(msg`Verified Email (Firebase)`))
         .with(undefined, () => null)
         .exhaustive();
 
@@ -113,6 +118,9 @@ export const generateCertificatePdf = async (options: GenerateCertificatePdfOpti
         authLevel = match(accessAuthMethod)
           .with('ACCOUNT', () => i18n._(msg`Account Authentication`))
           .with('TWO_FACTOR_AUTH', () => i18n._(msg`Two-Factor Authentication`))
+          // フェーズ2 ステップ14: 本人確認結果を締結証明書に記載
+          .with('EMAIL_OTP', () => i18n._(msg`Email OTP Verification`))
+          .with('FIREBASE_EMAIL', () => i18n._(msg`Verified Email (Firebase)`))
           .with(undefined, () => i18n._(msg`Email`))
           .exhaustive();
       }
@@ -141,7 +149,10 @@ export const generateCertificatePdf = async (options: GenerateCertificatePdfOpti
     hidePoweredBy: organisationClaim.flags.hidePoweredBy ?? false,
     pageWidth,
     pageHeight,
+    timezone: envelope.documentMeta?.timezone || 'Asia/Tokyo',
     i18n,
+    fullAuditLogsWithHash,
+    hashChainVerification,
   };
 
   const certificatePages = await renderCertificate(payload);

@@ -33,6 +33,7 @@ import type {
   TTextFieldMeta,
 } from '../../types/field-meta';
 import { ZCheckboxFieldMeta, ZDropdownFieldMeta, ZFieldMetaSchema, ZRadioFieldMeta } from '../../types/field-meta';
+import type { TMergeVariableValues } from '../../types/merge-variables';
 import { ZSignatureLevelSchema } from '../../types/signature-level';
 import { mapEnvelopeToWebhookDocumentPayload, ZWebhookDocumentSchema } from '../../types/webhook-payload';
 import type { ApiRequestMetadata } from '../../universal/extract-request-metadata';
@@ -48,6 +49,7 @@ import {
 import type { EnvelopeIdOptions } from '../../utils/envelope';
 import { mapSecondaryIdToTemplateId } from '../../utils/envelope';
 import { buildTeamWhereQuery } from '../../utils/teams';
+import { getAutomationSettings } from '../envelope/automation-settings';
 import { getEnvelopeWhereInput } from '../envelope/get-envelope-by-id';
 import { incrementDocumentId } from '../envelope/increment-id';
 import { insertFormValuesInPdf } from '../pdf/insert-form-values-in-pdf';
@@ -59,6 +61,7 @@ import { resolveSignatureLevel } from '../signature-level/resolve-signature-leve
 import { getTeamSettings } from '../team/get-team-settings';
 import { triggerWebhook } from '../webhooks/trigger/trigger-webhook';
 import { getOrganisationTemplateWhereInput } from './get-organisation-template-by-id';
+import { mergeText } from './merge';
 
 type FinalRecipient = Pick<Recipient, 'name' | 'email' | 'role' | 'authOptions' | 'signingOrder' | 'token'> & {
   templateRecipientId: number;
@@ -119,6 +122,7 @@ export type CreateDocumentFromTemplateOptions = {
   };
 
   formValues?: TDocumentFormValues;
+  mergeVariableValues?: TMergeVariableValues;
   requestMetadata: ApiRequestMetadata;
 };
 
@@ -306,6 +310,7 @@ export const createDocumentFromTemplate = async ({
   prefillFields,
   attachments,
   formValues,
+  mergeVariableValues = {},
 }: CreateDocumentFromTemplateOptions) => {
   const templateInclude = {
     recipients: {
@@ -401,6 +406,9 @@ export const createDocumentFromTemplate = async ({
     documentAuth: template.authOptions,
   });
 
+  const automationSettings = getAutomationSettings(template);
+  const isSigningOrderLocked = automationSettings.signingOrderLock?.locked;
+
   const finalRecipients: FinalRecipient[] = template.recipients.map((templateRecipient) => {
     const foundRecipient = recipients.find((recipient) => recipient.id === templateRecipient.id);
 
@@ -410,7 +418,9 @@ export const createDocumentFromTemplate = async ({
       name: foundRecipient ? (foundRecipient.name ?? '') : templateRecipient.name,
       email: foundRecipient ? foundRecipient.email : templateRecipient.email,
       role: templateRecipient.role,
-      signingOrder: foundRecipient?.signingOrder ?? templateRecipient.signingOrder,
+      signingOrder: isSigningOrderLocked
+        ? templateRecipient.signingOrder
+        : (foundRecipient?.signingOrder ?? templateRecipient.signingOrder),
       authOptions: templateRecipient.authOptions,
       token: nanoid(),
     };
@@ -607,13 +617,18 @@ export const createDocumentFromTemplate = async ({
             data: allFinalRecipients.map((recipient) => {
               const authOptions = ZRecipientAuthOptionsSchema.parse(recipient?.authOptions);
 
+              const templateAutomation = getAutomationSettings(template);
+              const actionAuth =
+                authOptions.actionAuth ??
+                (templateAutomation.requireEmailOtp && recipient.role !== RecipientRole.CC ? 'EMAIL_OTP' : undefined);
+
               return {
                 email: recipient.email,
                 name: recipient.name,
                 role: recipient.role,
                 authOptions: createRecipientAuthOptions({
                   accessAuth: authOptions.accessAuth,
-                  actionAuth: authOptions.actionAuth,
+                  actionAuth,
                 }),
                 sendStatus: recipient.role === RecipientRole.CC ? SendStatus.SENT : SendStatus.NOT_SENT,
                 signingStatus: recipient.role === RecipientRole.CC ? SigningStatus.SIGNED : SigningStatus.NOT_SIGNED,
@@ -731,6 +746,60 @@ export const createDocumentFromTemplate = async ({
               .otherwise((selector) => {
                 payload.fieldMeta = getUpdatedFieldMeta(field, selector);
               });
+          }
+
+          const automationSettings = getAutomationSettings(template);
+          const definedVariables = automationSettings.mergeVariables;
+
+          // Apply mergeText to customText if variables are present
+          if (payload.customText) {
+            const mergeResult = mergeText({
+              text: payload.customText,
+              values: mergeVariableValues,
+              variables: definedVariables,
+            });
+
+            if (!mergeResult.success) {
+              throw new AppError(AppErrorCode.INVALID_BODY, {
+                message: `未設定の変数があります: ${mergeResult.missingVariables.join(', ')}`,
+              });
+            }
+
+            payload.customText = mergeResult.mergedText;
+            payload.inserted = true;
+          }
+
+          // Apply mergeText to text field placeholder or text in fieldMeta
+          if (payload.fieldMeta && typeof payload.fieldMeta === 'object') {
+            const metaObj = { ...(payload.fieldMeta as Record<string, unknown>) };
+            let hasMetaMerge = false;
+
+            for (const key of ['text', 'placeholder', 'label']) {
+              if (typeof metaObj[key] === 'string' && (metaObj[key] as string).includes('{{')) {
+                const mergeResult = mergeText({
+                  text: metaObj[key] as string,
+                  values: mergeVariableValues,
+                  variables: definedVariables,
+                });
+
+                if (!mergeResult.success) {
+                  throw new AppError(AppErrorCode.INVALID_BODY, {
+                    message: `未設定の変数があります: ${mergeResult.missingVariables.join(', ')}`,
+                  });
+                }
+
+                metaObj[key] = mergeResult.mergedText;
+                hasMetaMerge = true;
+              }
+            }
+
+            if (hasMetaMerge) {
+              payload.fieldMeta = metaObj as any;
+              if (metaObj.text && !payload.customText) {
+                payload.customText = metaObj.text as string;
+                payload.inserted = true;
+              }
+            }
           }
 
           return payload;

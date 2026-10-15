@@ -204,5 +204,49 @@ describe('validateBulkSendCsv', () => {
         ],
       });
     });
+
+    it('validates required template variables and fails when empty', () => {
+      const csvContent = buildCsv(
+        ['recipient_1_email', 'company_name', 'amount'],
+        [
+          ['alice@example.com', '株式会社テスト', '500000'],
+          ['bob@example.com', '', '300000'],
+        ],
+      );
+
+      const error = expectFailure(
+        validateBulkSendCsv({
+          csvContent,
+          recipientCount: 1,
+          templateVariables: [
+            { name: 'company_name', type: 'text', required: true },
+            { name: 'amount', type: 'currency', required: true },
+          ],
+        }),
+      );
+
+      expect(error).toMatchObject({
+        type: 'INVALID_RECIPIENTS',
+        rowErrors: [{ row: 2, column: 'company_name' }],
+      });
+    });
+
+    it('passes when optional template variables are omitted or empty', () => {
+      const csvContent = buildCsv(
+        ['recipient_1_email', 'memo'],
+        [
+          ['alice@example.com', ''],
+          ['bob@example.com', 'メモ内容'],
+        ],
+      );
+
+      const result = validateBulkSendCsv({
+        csvContent,
+        recipientCount: 1,
+        templateVariables: [{ name: 'memo', type: 'text', required: false }],
+      });
+
+      expect(result.success).toBe(true);
+    });
   });
 });

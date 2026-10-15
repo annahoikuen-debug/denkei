@@ -71,6 +71,9 @@ async function handleV1Loader({ params, request }: Route.LoaderArgs) {
     match(auth)
       .with(DocumentAccessAuth.ACCOUNT, () => !!user)
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => false) // Not supported for direct links
+      // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
+      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 
@@ -203,6 +206,9 @@ async function handleV2Loader({ params, request }: Route.LoaderArgs) {
     match(accesssAuth)
       .with(DocumentAccessAuth.ACCOUNT, () => user && user.email === recipient.email)
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => false) // Not supported for direct links
+      // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
+      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 

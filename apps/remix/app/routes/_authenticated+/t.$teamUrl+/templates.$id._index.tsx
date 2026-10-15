@@ -18,6 +18,8 @@ import { Link, useNavigate } from 'react-router';
 
 import { TemplateBulkSendDialog } from '~/components/dialogs/template-bulk-send-dialog';
 import { TemplateDirectLinkDialog } from '~/components/dialogs/template-direct-link-dialog';
+import { TemplateMergeVariableDialog } from '~/components/dialogs/template-merge-variable-dialog';
+import { TemplateAcroFormDetectDialog } from '~/components/dialogs/template-acroform-detect-dialog';
 import { TemplateUseDialog } from '~/components/dialogs/template-use-dialog';
 import { EnvelopeRendererFileSelector } from '~/components/general/envelope-editor/envelope-file-selector';
 import { EnvelopeGenericPageRenderer } from '~/components/general/envelope-editor/envelope-generic-page-renderer';
@@ -107,10 +109,10 @@ export default function TemplatePage({ params }: Route.ComponentProps) {
 
   const mockedDocumentMeta = envelope.documentMeta
     ? {
-        ...envelope.documentMeta,
-        signingOrder: envelope.documentMeta.signingOrder || DocumentSigningOrder.SEQUENTIAL,
-        documentId: 0,
-      }
+      ...envelope.documentMeta,
+      signingOrder: envelope.documentMeta.signingOrder || DocumentSigningOrder.SEQUENTIAL,
+      documentId: 0,
+    }
     : undefined;
 
   const isMultiEnvelopeItem = envelope.envelopeItems.length > 1 && envelope.internalVersion === 2;
@@ -136,6 +138,17 @@ export default function TemplatePage({ params }: Route.ComponentProps) {
               <TemplateBulkSendDialog
                 templateId={mapSecondaryIdToTemplateId(envelope.secondaryId)}
                 recipients={envelope.recipients}
+                templateVariables={(envelope as any).automationSettings?.templateVariables}
+              />
+
+              <TemplateMergeVariableDialog
+                templateId={mapSecondaryIdToTemplateId(envelope.secondaryId)}
+                automationSettings={(envelope as any).automationSettings}
+              />
+
+              <TemplateAcroFormDetectDialog
+                templateId={mapSecondaryIdToTemplateId(envelope.secondaryId)}
+                automationSettings={(envelope as any).automationSettings}
               />
 
               <Button asChild size="sm">
@@ -259,6 +272,7 @@ export default function TemplatePage({ params }: Route.ComponentProps) {
                   templateSigningOrder={envelope.documentMeta?.signingOrder}
                   recipients={envelope.recipients}
                   documentRootPath={documentRootPath}
+                  automationSettings={(envelope as any).automationSettings}
                   trigger={
                     <Button className="w-full">
                       <Trans>Use</Trans>

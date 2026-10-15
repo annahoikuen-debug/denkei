@@ -120,6 +120,9 @@ export const getEnvelopeForDirectTemplateSigning = async ({
     match(auth)
       .with(DocumentAccessAuth.ACCOUNT, () => Boolean(userId))
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true)
+      // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
+      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 
@@ -144,13 +147,13 @@ export const getEnvelopeForDirectTemplateSigning = async ({
 
   const sender = settings.includeSenderDetails
     ? {
-        email: envelope.user.email,
-        name: envelope.user.name || '',
-      }
+      email: envelope.user.email,
+      name: envelope.user.name || '',
+    }
     : {
-        email: envelope.team.teamEmail?.email || '',
-        name: envelope.team.name || '',
-      };
+      email: envelope.team.teamEmail?.email || '',
+      name: envelope.team.name || '',
+    };
 
   return ZEnvelopeForSigningResponse.parse({
     envelope,

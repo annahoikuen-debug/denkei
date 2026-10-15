@@ -91,8 +91,8 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
   const allRecipients =
     recipient.role === RecipientRole.ASSISTANT
       ? await getRecipientsForAssistant({
-          token,
-        })
+        token,
+      })
       : [recipient];
 
   // Dictation eligibility must be decided here, over the FULL recipient list
@@ -103,9 +103,9 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
   const nextPendingRecipient =
     document.documentMeta?.signingOrder === DocumentSigningOrder.SEQUENTIAL
       ? await getNextPendingRecipient({
-          documentId: document.id,
-          currentRecipientId: recipient.id,
-        })
+        documentId: document.id,
+        currentRecipientId: recipient.id,
+      })
       : null;
 
   // Only the identity is needed client-side (dictation flag + prefill).
@@ -122,6 +122,9 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
     match(accesssAuth)
       .with(DocumentAccessAuth.ACCOUNT, () => user && user.email === recipient.email)
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true) // Allow without account requirement
+      // フェーズ2 ステップ6: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲート(OtpGate)で検証する
+      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 
@@ -236,6 +239,9 @@ const handleV2Loader = async ({ params, request }: Route.LoaderArgs) => {
     match(accesssAuth)
       .with(DocumentAccessAuth.ACCOUNT, () => user && user.email === recipient.email)
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true) // Allow without account requirement
+      // フェーズ2 ステップ6: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
+      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 

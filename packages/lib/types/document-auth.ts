@@ -4,8 +4,22 @@ import { ZAuthenticationResponseJSONSchema } from './webauthn';
 
 /**
  * All the available types of document authentication options for both access and action.
+ *
+ * フェーズ2 ステップ2: 本人確認の段階的標準化として以下を追加(SMS 認証は採用しない):
+ * - EMAIL_OTP: メールOTP(自社実装)。LOW レベル
+ * - FIREBASE_EMAIL: Firebase Authentication (Google) のメール認証(メールリンク)。MEDIUM レベル
+ *
+ * 既存タイプ(ACCOUNT/PASSKEY/TWO_FACTOR_AUTH/PASSWORD/EXPLICIT_NONE)と併用可能。
  */
-export const ZDocumentAuthTypesSchema = z.enum(['ACCOUNT', 'PASSKEY', 'TWO_FACTOR_AUTH', 'PASSWORD', 'EXPLICIT_NONE']);
+export const ZDocumentAuthTypesSchema = z.enum([
+  'ACCOUNT',
+  'PASSKEY',
+  'TWO_FACTOR_AUTH',
+  'PASSWORD',
+  'EXPLICIT_NONE',
+  'EMAIL_OTP',
+  'FIREBASE_EMAIL',
+]);
 
 export const DocumentAuth = ZDocumentAuthTypesSchema.Enum;
 
@@ -35,6 +49,23 @@ const ZDocumentAuth2FASchema = z.object({
 });
 
 /**
+ * フェーズ2 ステップ2: メールOTP(LOW)。6桁のワンタイムコードで本人確認する。
+ */
+const ZDocumentAuthEmailOtpSchema = z.object({
+  type: z.literal(DocumentAuth.EMAIL_OTP),
+  token: z.string().regex(/^\d{6}$/, 'OTP is 6 digits'),
+});
+
+/**
+ * フェーズ2 ステップ2: Firebase Authentication メール認証(MEDIUM)。
+ * メールリンク検証済みセッションの識別子を保持する。
+ */
+const ZDocumentAuthFirebaseEmailSchema = z.object({
+  type: z.literal(DocumentAuth.FIREBASE_EMAIL),
+  sessionIdentifier: z.string().min(1),
+});
+
+/**
  * All the document auth methods for both accessing and actioning.
  */
 export const ZDocumentAuthMethodsSchema = z.discriminatedUnion('type', [
@@ -43,6 +74,8 @@ export const ZDocumentAuthMethodsSchema = z.discriminatedUnion('type', [
   ZDocumentAuthPasskeySchema,
   ZDocumentAuth2FASchema,
   ZDocumentAuthPasswordSchema,
+  ZDocumentAuthEmailOtpSchema,
+  ZDocumentAuthFirebaseEmailSchema,
 ]);
 
 /**
@@ -53,9 +86,16 @@ export const ZDocumentAuthMethodsSchema = z.discriminatedUnion('type', [
 export const ZDocumentAccessAuthSchema = z.discriminatedUnion('type', [
   ZDocumentAuthAccountSchema,
   ZDocumentAuth2FASchema,
+  ZDocumentAuthEmailOtpSchema,
+  ZDocumentAuthFirebaseEmailSchema,
 ]);
 export const ZDocumentAccessAuthTypesSchema = z
-  .enum([DocumentAuth.ACCOUNT, DocumentAuth.TWO_FACTOR_AUTH])
+  .enum([
+    DocumentAuth.ACCOUNT,
+    DocumentAuth.TWO_FACTOR_AUTH,
+    DocumentAuth.EMAIL_OTP,
+    DocumentAuth.FIREBASE_EMAIL,
+  ])
   .describe('The type of authentication required for the recipient to access the document.');
 
 /**
@@ -83,9 +123,16 @@ export const ZDocumentActionAuthTypesSchema = z
 export const ZRecipientAccessAuthSchema = z.discriminatedUnion('type', [
   ZDocumentAuthAccountSchema,
   ZDocumentAuth2FASchema,
+  ZDocumentAuthEmailOtpSchema,
+  ZDocumentAuthFirebaseEmailSchema,
 ]);
 export const ZRecipientAccessAuthTypesSchema = z
-  .enum([DocumentAuth.ACCOUNT, DocumentAuth.TWO_FACTOR_AUTH])
+  .enum([
+    DocumentAuth.ACCOUNT,
+    DocumentAuth.TWO_FACTOR_AUTH,
+    DocumentAuth.EMAIL_OTP,
+    DocumentAuth.FIREBASE_EMAIL,
+  ])
   .describe('The type of authentication required for the recipient to access the document.');
 
 /**
@@ -99,6 +146,8 @@ export const ZRecipientActionAuthSchema = z.discriminatedUnion('type', [
   ZDocumentAuth2FASchema,
   ZDocumentAuthPasswordSchema,
   ZDocumentAuthExplicitNoneSchema,
+  ZDocumentAuthEmailOtpSchema,
+  ZDocumentAuthFirebaseEmailSchema,
 ]);
 export const ZRecipientActionAuthTypesSchema = z
   .enum([
@@ -107,6 +156,8 @@ export const ZRecipientActionAuthTypesSchema = z
     DocumentAuth.TWO_FACTOR_AUTH,
     DocumentAuth.PASSWORD,
     DocumentAuth.EXPLICIT_NONE,
+    DocumentAuth.EMAIL_OTP,
+    DocumentAuth.FIREBASE_EMAIL,
   ])
   .describe('The type of authentication required for the recipient to sign the document.');
 

@@ -16,4 +16,9 @@ export const documentsSearchParams = {
   page: parseAsInteger,
   perPage: parseAsInteger,
   query: parseAsString,
+  contractType: parseAsString,
+  counterpartyName: parseAsString,
+  contractAmount: parseAsString,
+  contractDateFrom: parseAsString,
+  contractDateTo: parseAsString,
 };

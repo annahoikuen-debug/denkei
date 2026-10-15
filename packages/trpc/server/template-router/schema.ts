@@ -21,6 +21,7 @@ import { ZFieldMetaPrefillFieldsSchema } from '@documenso/lib/types/field-meta';
 import { ZRecipientEmailSchema } from '@documenso/lib/types/recipient';
 import { ZFindResultResponse, ZFindSearchParamsSchema } from '@documenso/lib/types/search-params';
 import { ZTemplateLiteSchema, ZTemplateManySchema, ZTemplateSchema } from '@documenso/lib/types/template';
+import { ZTemplateAutomationSettingsSchema } from '@documenso/lib/types/template-automation';
 import { zEmail } from '@documenso/lib/utils/zod';
 import { LegacyTemplateDirectLinkSchema } from '@documenso/prisma/types/template-legacy-schema';
 import { ZDocumentExternalIdSchema } from '@documenso/trpc/server/document-router/schema';
@@ -164,6 +165,7 @@ export const ZCreateDocumentFromTemplateRequestSchema = z.object({
     .optional(),
 
   formValues: ZDocumentFormValuesSchema.optional(),
+  mergeVariableValues: z.record(z.string(), z.string()).optional(),
 });
 
 export const ZCreateDocumentFromTemplateResponseSchema = ZDocumentSchema;
@@ -303,12 +305,55 @@ export const ZGetOrganisationTemplateByIdRequestSchema = z.object({
 
 export const ZGetOrganisationTemplateByIdResponseSchema = ZEnvelopeSchema;
 
+/**
+ * フェーズ3 ステップ1: テンプレート自動化設定の更新リクエスト。
+ * 差し込み変数定義・署名順固定・承認設定を含む。
+ */
+export const ZUpdateAutomationSettingsRequestSchema = z.object({
+  templateId: z.number(),
+  automationSettings: ZTemplateAutomationSettingsSchema,
+});
+
+export const ZUpdateAutomationSettingsResponseSchema = z.object({
+  success: z.boolean(),
+});
+
+export type TUpdateAutomationSettingsRequestSchema = z.infer<typeof ZUpdateAutomationSettingsRequestSchema>;
+
 export const ZBulkSendTemplateMutationSchema = z.object({
   templateId: z.number(),
   teamId: z.number(),
   csv: z.string().min(1),
   sendImmediately: z.boolean(),
 });
+
+export const ZDetectAcroFormFieldsRequestSchema = z.object({
+  templateId: z.number(),
+});
+
+export const ZDetectAcroFormFieldsResponseSchema = z.object({
+  fields: z.array(
+    z.object({
+      name: z.string(),
+      type: z.string(),
+      page: z.number(),
+      x: z.number(),
+      y: z.number(),
+      width: z.number(),
+      height: z.number(),
+      suggestedVariable: z.object({
+        name: z.string(),
+        label: z.string().optional(),
+        type: z.string(),
+        required: z.boolean(),
+        format: z.string().optional(),
+      }),
+    }),
+  ),
+});
+
+export type TDetectAcroFormFieldsRequestSchema = z.infer<typeof ZDetectAcroFormFieldsRequestSchema>;
+export type TDetectAcroFormFieldsResponseSchema = z.infer<typeof ZDetectAcroFormFieldsResponseSchema>;
 
 export type TCreateTemplatePayloadSchema = z.input<typeof ZCreateTemplatePayloadSchema>;
 export type TCreateTemplateMutationSchema = z.infer<typeof ZCreateTemplateMutationSchema>;

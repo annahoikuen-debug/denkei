@@ -1,8 +1,10 @@
 import { BulkSendCompleteEmail } from '@documenso/email/templates/bulk-send-complete';
 import { sendDocument } from '@documenso/lib/server-only/document/send-document';
+import { getAutomationSettings } from '@documenso/lib/server-only/envelope/automation-settings';
 import { createDocumentFromTemplate } from '@documenso/lib/server-only/template/create-document-from-template';
 import { getTemplateById } from '@documenso/lib/server-only/template/get-template-by-id';
 import { validateBulkSendCsv } from '@documenso/lib/server-only/template/validate-bulk-send-csv';
+import type { TMergeVariableValues } from '@documenso/lib/types/merge-variables';
 import { prisma } from '@documenso/prisma';
 import { msg } from '@lingui/macro';
 import { createElement } from 'react';
@@ -32,12 +34,15 @@ export const run = async ({ payload, io }: { payload: TBulkSendTemplateJobDefini
   }
 
   const { recipients } = template;
+  const automationSettings = getAutomationSettings(template);
+  const templateVariables = automationSettings.mergeVariables || [];
 
   // The CSV is validated upfront when the bulk send is uploaded, this acts as
   // a final safeguard prior to processing.
   const csvValidationResult = validateBulkSendCsv({
     csvContent,
     recipientCount: recipients.length,
+    templateVariables,
   });
 
   if (!csvValidationResult.success) {
@@ -65,8 +70,16 @@ export const run = async ({ payload, io }: { payload: TBulkSendTemplateJobDefini
   // Process each row
   for (const [rowIndex, row] of rows.entries()) {
     try {
-      const envelope = await io.runTask(`create-document-${rowIndex}`, async () => {
-        return await createDocumentFromTemplate({
+      const mergeVariableValues: TMergeVariableValues = {};
+      for (const variable of templateVariables) {
+        const val = row[variable.name];
+        if (typeof val === 'string') {
+          mergeVariableValues[variable.name] = val;
+        }
+      }
+
+      const createdEnvelope = await io.runTask(`create-document-${rowIndex}`, async () => {
+        const doc = await createDocumentFromTemplate({
           id: {
             type: 'templateId',
             id: template.id,
@@ -82,20 +95,22 @@ export const run = async ({ payload, io }: { payload: TBulkSendTemplateJobDefini
               signingOrder: recipient.signingOrder,
             };
           }),
+          mergeVariableValues: Object.keys(mergeVariableValues).length > 0 ? mergeVariableValues : undefined,
           requestMetadata: {
             source: 'app',
             auth: 'session',
             requestMetadata: requestMetadata || {},
           },
         });
+        return { id: doc.id };
       });
 
-      if (sendImmediately) {
+      if (sendImmediately && createdEnvelope?.id) {
         await io.runTask(`send-document-${rowIndex}`, async () => {
           await sendDocument({
             id: {
               type: 'envelopeId',
-              id: envelope.id,
+              id: createdEnvelope.id,
             },
             userId,
             teamId,

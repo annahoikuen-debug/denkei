@@ -153,6 +153,9 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
       .with('PASSWORD', () => _(msg`Password Re-Authentication`))
       .with('PASSKEY', () => _(msg`Passkey Re-Authentication`))
       .with('EXPLICIT_NONE', () => _(msg`Email`))
+      // フェーズ2 ステップ14: 本人確認結果を締結証明書に記載
+      .with('EMAIL_OTP', () => _(msg`Email OTP Verification`))
+      .with('FIREBASE_EMAIL', () => _(msg`Verified Email (Firebase)`))
       .with(undefined, () => null)
       .exhaustive();
 
@@ -162,6 +165,9 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
       authLevel = match(accessAuthMethod)
         .with('ACCOUNT', () => _(msg`Account Authentication`))
         .with('TWO_FACTOR_AUTH', () => _(msg`Two-Factor Authentication`))
+        // フェーズ2 ステップ14
+        .with('EMAIL_OTP', () => _(msg`Email OTP Verification`))
+        .with('FIREBASE_EMAIL', () => _(msg`Verified Email (Firebase)`))
         .with(undefined, () => _(msg`Email`))
         .exhaustive();
     }
@@ -296,12 +302,12 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                           <span className="inline-block">
                             {logs.EMAIL_SENT[0]
                               ? DateTime.fromJSDate(logs.EMAIL_SENT[0].createdAt)
-                                  .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                  .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                                .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                               : logs.DOCUMENT_SENT[0]
                                 ? DateTime.fromJSDate(logs.DOCUMENT_SENT[0].createdAt)
-                                    .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                    .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                                  .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                  .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                                 : _(msg`Unknown`)}
                           </span>
                         </p>
@@ -311,8 +317,8 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                           <span className="inline-block">
                             {logs.DOCUMENT_OPENED[0]
                               ? DateTime.fromJSDate(logs.DOCUMENT_OPENED[0].createdAt)
-                                  .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                  .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                                .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                               : _(msg`Unknown`)}
                           </span>
                         </p>
@@ -323,8 +329,8 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                             <span className="inline-block">
                               {logs.DOCUMENT_RECIPIENT_REJECTED[0]
                                 ? DateTime.fromJSDate(logs.DOCUMENT_RECIPIENT_REJECTED[0].createdAt)
-                                    .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                    .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                                  .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                  .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                                 : _(msg`Unknown`)}
                             </span>
                           </p>
@@ -334,8 +340,8 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                             <span className="inline-block">
                               {logs.DOCUMENT_RECIPIENT_COMPLETED[0]
                                 ? DateTime.fromJSDate(logs.DOCUMENT_RECIPIENT_COMPLETED[0].createdAt)
-                                    .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                    .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                                  .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                  .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                                 : _(msg`Unknown`)}
                             </span>
                           </p>
@@ -347,10 +353,10 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                             {recipient.signingStatus === SigningStatus.REJECTED
                               ? recipient.rejectionReason
                               : _(
-                                  isOwner(recipient.email)
-                                    ? FRIENDLY_SIGNING_REASONS['__OWNER__']
-                                    : FRIENDLY_SIGNING_REASONS[recipient.role],
-                                )}
+                                isOwner(recipient.email)
+                                  ? FRIENDLY_SIGNING_REASONS['__OWNER__']
+                                  : FRIENDLY_SIGNING_REASONS[recipient.role],
+                              )}
                           </span>
                         </p>
                       </div>

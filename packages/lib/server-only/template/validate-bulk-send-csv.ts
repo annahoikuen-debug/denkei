@@ -38,6 +38,8 @@ export type TValidateBulkSendCsvResult =
   | { success: true; data: TBulkSendCsvRow[] }
   | { success: false; error: TBulkSendCsvError };
 
+import type { TMergeVariableList } from '@documenso/lib/types/merge-variables';
+
 export type ValidateBulkSendCsvOptions = {
   csvContent: string;
 
@@ -46,6 +48,11 @@ export type ValidateBulkSendCsvOptions = {
    * required `recipient_N_email` columns.
    */
   recipientCount: number;
+
+  /**
+   * Variables defined on the template to validate against CSV columns.
+   */
+  templateVariables?: TMergeVariableList;
 
   maxRows?: number;
 };
@@ -59,6 +66,7 @@ export type ValidateBulkSendCsvOptions = {
 export const validateBulkSendCsv = ({
   csvContent,
   recipientCount,
+  templateVariables,
   maxRows = 100,
 }: ValidateBulkSendCsvOptions): TValidateBulkSendCsvResult => {
   let rows: TBulkSendCsvRow[];
@@ -105,6 +113,21 @@ export const validateBulkSendCsv = ({
           column: emailKey,
           message: parsed.error.issues?.[0]?.message ?? 'Invalid value',
         });
+      }
+    }
+
+    if (templateVariables?.length) {
+      for (const variable of templateVariables) {
+        if (variable.required) {
+          const val = row[variable.name];
+          if (!val || val.trim() === '') {
+            rowErrors.push({
+              row: rowIndex + 1,
+              column: variable.name,
+              message: `必須変数「${variable.name}」の値がありません`,
+            });
+          }
+        }
       }
     }
   }

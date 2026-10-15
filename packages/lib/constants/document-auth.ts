@@ -30,4 +30,12 @@ export const DOCUMENT_AUTH_TYPES: Record<string, DocumentAuthTypeData> = {
     key: DocumentAuth.EXPLICIT_NONE,
     value: msg`None (Overrides global settings)`,
   },
+  [DocumentAuth.EMAIL_OTP]: {
+    key: DocumentAuth.EMAIL_OTP,
+    value: msg`Require email OTP`,
+  },
+  [DocumentAuth.FIREBASE_EMAIL]: {
+    key: DocumentAuth.FIREBASE_EMAIL,
+    value: msg`Require verified email (Firebase)`,
+  },
 } satisfies Record<TDocumentAuth, DocumentAuthTypeData>;

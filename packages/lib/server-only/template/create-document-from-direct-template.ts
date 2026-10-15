@@ -207,6 +207,9 @@ export const createDocumentFromDirectTemplate = async ({
   const isAccessAuthValid = match(derivedRecipientAccessAuth.at(0))
     .with(DocumentAccessAuth.ACCOUNT, () => user && user?.email === directRecipientEmail)
     .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => false) // Not supported for direct templates
+    // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する(direct テンプレートでは許可)
+    .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+    .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
     .with(undefined, () => true)
     .exhaustive();
 
@@ -287,6 +290,7 @@ export const createDocumentFromDirectTemplate = async ({
       const derivedRecipientActionAuth = await validateFieldAuth({
         documentAuthOptions: directTemplateEnvelope.authOptions,
         recipient: {
+          id: directTemplateRecipient.id,
           authOptions: directTemplateRecipient.authOptions,
           email: directRecipientEmail,
           envelopeId: directTemplateEnvelope.id,
@@ -329,9 +333,9 @@ export const createDocumentFromDirectTemplate = async ({
         derivedRecipientActionAuth,
         signature: isSignatureField
           ? {
-              signatureImageAsBase64,
-              typedSignature,
-            }
+            signatureImageAsBase64,
+            typedSignature,
+          }
           : null,
       };
     }),
@@ -665,8 +669,8 @@ export const createDocumentFromDirectTemplate = async ({
               .exhaustive(),
             fieldSecurity: derivedRecipientActionAuth
               ? {
-                  type: derivedRecipientActionAuth,
-                }
+                type: derivedRecipientActionAuth,
+              }
               : undefined,
           },
         }),

@@ -124,6 +124,9 @@ export const DocumentSigningAuthDialog = ({
                         .with(DocumentAuth.PASSKEY, () => <Trans>Passkey</Trans>)
                         .with(DocumentAuth.TWO_FACTOR_AUTH, () => <Trans>2FA</Trans>)
                         .with(DocumentAuth.PASSWORD, () => <Trans>Password</Trans>)
+                        // フェーズ2 ステップ6: 本人確認ゲート(ja)
+                        .with(DocumentAuth.EMAIL_OTP, () => <Trans>メール確認コード</Trans>)
+                        .with(DocumentAuth.FIREBASE_EMAIL, () => <Trans>メール認証</Trans>)
                         .exhaustive()}
                     </div>
 
@@ -133,6 +136,9 @@ export const DocumentSigningAuthDialog = ({
                         .with(DocumentAuth.PASSKEY, () => <Trans>Use your passkey for authentication</Trans>)
                         .with(DocumentAuth.TWO_FACTOR_AUTH, () => <Trans>Enter your 2FA code</Trans>)
                         .with(DocumentAuth.PASSWORD, () => <Trans>Enter your password</Trans>)
+                        // フェーズ2 ステップ6
+                        .with(DocumentAuth.EMAIL_OTP, () => <Trans>メールで受信した確認コードを入力</Trans>)
+                        .with(DocumentAuth.FIREBASE_EMAIL, () => <Trans>確認済みメールで認証</Trans>)
                         .exhaustive()}
                     </div>
                   </div>
@@ -170,6 +176,9 @@ export const DocumentSigningAuthDialog = ({
               />
             ))
             .with({ documentAuthType: DocumentAuth.EXPLICIT_NONE }, () => null)
+            // フェーズ2 ステップ6: OTP/メール認証ゲートは署名画面側で処理
+            .with({ documentAuthType: DocumentAuth.EMAIL_OTP }, () => null)
+            .with({ documentAuthType: DocumentAuth.FIREBASE_EMAIL }, () => null)
             .exhaustive()}
       </DialogContent>
     </Dialog>
