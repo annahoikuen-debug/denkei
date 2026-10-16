@@ -29,9 +29,9 @@ const assertTransportAllowedForEnvironment = (transport: string) => {
 
   if (isProduction && transport === 'local' && process.env.NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION !== 'true') {
     throw new Error(
-      '[signing] The "local" (P12) signing transport is not allowed in production. ' +
-        'Configure NEXT_PRIVATE_SIGNING_TRANSPORT=gcloud-hsm. ' +
-        'Set NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION=true only for temporary migrations.',
+      '[signing] The "local" (P12) signing transport is not allowed in production without explicit opt-in. ' +
+        'Configure NEXT_PRIVATE_SIGNING_TRANSPORT=gcloud-hsm, or set ' +
+        'NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION=true for self-hosted SMB deployments.',
     );
   }
 };

@@ -1,0 +1,56 @@
+name: denkei-smb-standalone
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-denkei}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-denkei_secure_password_123}
+      POSTGRES_DB: ${POSTGRES_DB:-denkei}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-denkei} -d ${POSTGRES_DB:-denkei}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - denkei_data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - PORT=3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-denkei_super_secret_auth_token_32chars}
+      - NEXT_PRIVATE_ENCRYPTION_KEY=${NEXT_PRIVATE_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef}
+      - NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY=${NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY:-fedcba9876543210fedcba9876543210}
+      - NEXT_PUBLIC_WEBAPP_URL=${NEXT_PUBLIC_WEBAPP_URL:-http://localhost:3000}
+      - NEXT_PRIVATE_INTERNAL_WEBAPP_URL=http://localhost:3000
+      - NEXT_PRIVATE_DATABASE_URL=postgres://${POSTGRES_USER:-denkei}:${POSTGRES_PASSWORD:-denkei_secure_password_123}@db:5432/${POSTGRES_DB:-denkei}
+      - NEXT_PRIVATE_DIRECT_DATABASE_URL=postgres://${POSTGRES_USER:-denkei}:${POSTGRES_PASSWORD:-denkei_secure_password_123}@db:5432/${POSTGRES_DB:-denkei}
+      # === デンケイ 中小企業特化・低コスト構成（SMB Standalone Lean Profile） ===
+      - NEXT_PRIVATE_JOBS_PROVIDER=local
+      - NEXT_PRIVATE_SIGNING_ENABLE_TSA=false
+      - NEXT_PRIVATE_IDENTITY_PROVIDER=otp
+      - NEXT_PRIVATE_SIGNING_TRANSPORT=local
+      - NEXT_PUBLIC_UPLOAD_TRANSPORT=${NEXT_PUBLIC_UPLOAD_TRANSPORT:-database}
+      # メール配信設定 (SMTP / Resend / SES)
+      - NEXT_PRIVATE_SMTP_TRANSPORT=${NEXT_PRIVATE_SMTP_TRANSPORT:-smtp-auth}
+      - NEXT_PRIVATE_SMTP_HOST=${NEXT_PRIVATE_SMTP_HOST}
+      - NEXT_PRIVATE_SMTP_PORT=${NEXT_PRIVATE_SMTP_PORT:-587}
+      - NEXT_PRIVATE_SMTP_USERNAME=${NEXT_PRIVATE_SMTP_USERNAME}
+      - NEXT_PRIVATE_SMTP_PASSWORD=${NEXT_PRIVATE_SMTP_PASSWORD}
+      - NEXT_PRIVATE_SMTP_FROM_NAME=${NEXT_PRIVATE_SMTP_FROM_NAME:-デンケイ 電子契約}
+      - NEXT_PRIVATE_SMTP_FROM_ADDRESS=${NEXT_PRIVATE_SMTP_FROM_ADDRESS:-noreply@denkei.local}
+      - NEXT_PRIVATE_RESEND_API_KEY=${NEXT_PRIVATE_RESEND_API_KEY}
+      - NEXT_PUBLIC_DOCUMENT_SIZE_UPLOAD_LIMIT=${NEXT_PUBLIC_DOCUMENT_SIZE_UPLOAD_LIMIT:-10}
+    ports:
+      - "${PORT:-3000}:3000"
+
+volumes:
+  denkei_data:

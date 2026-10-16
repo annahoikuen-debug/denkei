@@ -20,8 +20,8 @@ import { getSignatureFontFamily } from '../../constants/pdf';
 import { RECIPIENT_ROLE_SIGNING_REASONS, RECIPIENT_ROLES_DESCRIPTION } from '../../constants/recipient-roles';
 import type { TDocumentAuditLogBaseSchema } from '../../types/document-audit-logs';
 import { svgToPng } from '../../utils/images/svg-to-png';
+import type { AuditLogHashChainEntry } from '../document-audit-log-hash';
 import { ensureFontLibrary } from './helpers';
-import { verifyAuditLogHashChain, type AuditLogHashChainEntry } from '../document-audit-log-hash';
 
 type ColumnWidths = [number, number, number];
 
@@ -639,7 +639,11 @@ const AUDIT_LOG_COLUMNS: AuditLogTableColumn[] = [
   { key: 'hash', label: 'Hash', widthRatio: 0.13 },
 ];
 
-const renderHashChainVerification = (options: { i18n: I18n; verification: { isValid: boolean; breakAtId?: string }; width: number }) => {
+const renderHashChainVerification = (options: {
+  i18n: I18n;
+  verification: { isValid: boolean; breakAtId?: string };
+  width: number;
+}) => {
   const { i18n, verification, width } = options;
   const group = new Konva.Group();
 
@@ -681,12 +685,30 @@ const renderHashChainVerification = (options: { i18n: I18n; verification: { isVa
   });
   group.add(detailLabel);
 
+  const complianceNote = new Konva.Text({
+    x: 0,
+    y: detailLabel.getClientRect().height + detailLabel.y() + 8,
+    text: i18n._(
+      msg`* Compliant with Japan Electronic Books Preservation Act (Tamper-evident hash chain verification without external TSA). Please store in accordance with your internal document handling regulations.`,
+    ),
+    fontFamily: 'Inter',
+    fontSize: textXs,
+    fill: textMutedForeground,
+    width,
+    wrap: 'char',
+    lineHeight: 1.3,
+  });
+  group.add(complianceNote);
+
   return group;
 };
 
 const formatAuditLogDate = (date: Date | string, timezone: string, i18n: I18n) => {
   const dt = date instanceof Date ? DateTime.fromJSDate(date) : DateTime.fromISO(date);
-  return dt.setZone(timezone).setLocale(i18n.locale || APP_I18N_OPTIONS.defaultLocale).toFormat('yyyy-MM-dd HH:mm:ss ZZZZ');
+  return dt
+    .setZone(timezone)
+    .setLocale(i18n.locale || APP_I18N_OPTIONS.defaultLocale)
+    .toFormat('yyyy-MM-dd HH:mm:ss ZZZZ');
 };
 
 const renderAuditLogTable = (options: {

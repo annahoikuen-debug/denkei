@@ -3,6 +3,7 @@ import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
 import { DocumentAuth, type TRecipientAccessAuth, ZDocumentAccessAuthSchema } from '@documenso/lib/types/document-auth';
 import { fieldsContainUnsignedRequiredField } from '@documenso/lib/utils/advanced-fields-helpers';
 import { zEmail } from '@documenso/lib/utils/zod';
+import { cn } from '@documenso/ui/lib/utils';
 import { Button } from '@documenso/ui/primitives/button';
 import {
   Dialog,
@@ -58,6 +59,7 @@ export type DocumentSigningCompleteDialogProps = {
   buttonSize?: 'sm' | 'lg';
   position?: 'start' | 'end' | 'center';
   disableNameInput?: boolean;
+  className?: string;
 
   /** When provided, replaces the confirmation form (and 2FA step) as the dialog body. */
   children?: ReactNode;
@@ -94,6 +96,7 @@ export const DocumentSigningCompleteDialog = ({
   buttonSize = 'lg',
   position,
   disableNameInput = false,
+  className,
   children,
   onOpenChange,
 }: DocumentSigningCompleteDialogProps) => {
@@ -231,7 +234,7 @@ export const DocumentSigningCompleteDialog = ({
     <Dialog open={showDialog} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
-          className="w-full"
+          className={cn('w-full', className)}
           type="button"
           size={buttonSize}
           onClick={fieldsValidated}

@@ -12,105 +12,105 @@
 export type PlanId = 'FREE' | 'STANDARD' | 'BUSINESS';
 
 export type PlanFeatures = {
-    id: PlanId;
-    /** ja 表示名 */
-    label: string;
-    /** 月額(円・税抜)。FREE は 0 */
-    monthlyPriceJpy: number;
-    /** 月次送信件数上限。null は無制限 */
-    monthlyDocumentLimit: number | null;
-    features: {
-        /** Firebase メール認証(MEDIUM 本人確認) */
-        firebaseEmailAuth: boolean;
-        /** タイムスタンプ(RFC3161) */
-        timestamp: boolean;
-        /** 承認フロー(送信前承認ステップ) */
-        approvalFlow: boolean;
-        /** テンプレート共有 */
-        templateSharing: boolean;
-        /** CSV 一括送信 */
-        bulkSend: boolean;
-    };
+  id: PlanId;
+  /** ja 表示名 */
+  label: string;
+  /** 月額(円・税抜)。FREE は 0 */
+  monthlyPriceJpy: number;
+  /** 月次送信件数上限。null は無制限 */
+  monthlyDocumentLimit: number | null;
+  features: {
+    /** Firebase メール認証(MEDIUM 本人確認) */
+    firebaseEmailAuth: boolean;
+    /** タイムスタンプ(RFC3161) */
+    timestamp: boolean;
+    /** 承認フロー(送信前承認ステップ) */
+    approvalFlow: boolean;
+    /** テンプレート共有 */
+    templateSharing: boolean;
+    /** CSV 一括送信 */
+    bulkSend: boolean;
+  };
 };
 
 export const PLANS: Record<PlanId, PlanFeatures> = {
-    FREE: {
-        id: 'FREE',
-        label: '無料',
-        monthlyPriceJpy: 0,
-        monthlyDocumentLimit: 3,
-        features: {
-            firebaseEmailAuth: false,
-            timestamp: false,
-            approvalFlow: false,
-            templateSharing: false,
-            bulkSend: false,
-        },
+  FREE: {
+    id: 'FREE',
+    label: '無料',
+    monthlyPriceJpy: 0,
+    monthlyDocumentLimit: 3,
+    features: {
+      firebaseEmailAuth: false,
+      timestamp: false,
+      approvalFlow: false,
+      templateSharing: false,
+      bulkSend: false,
     },
-    STANDARD: {
-        id: 'STANDARD',
-        label: 'スタンダード',
-        monthlyPriceJpy: 1500,
-        monthlyDocumentLimit: null,
-        features: {
-            firebaseEmailAuth: true,
-            timestamp: true,
-            approvalFlow: false,
-            templateSharing: false,
-            bulkSend: false,
-        },
+  },
+  STANDARD: {
+    id: 'STANDARD',
+    label: '中小応援スタンダード',
+    monthlyPriceJpy: 2980,
+    monthlyDocumentLimit: 100,
+    features: {
+      firebaseEmailAuth: true,
+      timestamp: false,
+      approvalFlow: false,
+      templateSharing: true,
+      bulkSend: false,
     },
-    BUSINESS: {
-        id: 'BUSINESS',
-        label: 'ビジネス',
-        monthlyPriceJpy: 5000,
-        monthlyDocumentLimit: null,
-        features: {
-            firebaseEmailAuth: true,
-            timestamp: true,
-            approvalFlow: true,
-            templateSharing: true,
-            bulkSend: true,
-        },
+  },
+  BUSINESS: {
+    id: 'BUSINESS',
+    label: 'ビジネス',
+    monthlyPriceJpy: 4980,
+    monthlyDocumentLimit: null,
+    features: {
+      firebaseEmailAuth: true,
+      timestamp: false,
+      approvalFlow: true,
+      templateSharing: true,
+      bulkSend: true,
     },
+  },
 };
 
 /**
  * 機能がプランで利用可能かを判定する。
  */
 export const isFeatureEnabledForPlan = ({
-    plan,
-    feature,
+  plan,
+  feature,
 }: {
-    plan: PlanId;
-    feature: keyof PlanFeatures['features'];
+  plan: PlanId;
+  feature: keyof PlanFeatures['features'];
 }): boolean => {
-    return PLANS[plan].features[feature];
+  return PLANS[plan].features[feature];
 };
 
 /**
  * 送信可能か(月次上限チェック)。
  */
 export const canSendDocument = ({
-    plan,
-    currentMonthlyCount,
+  plan,
+  currentMonthlyCount,
 }: {
-    plan: PlanId;
-    currentMonthlyCount: number;
+  plan: PlanId;
+  currentMonthlyCount: number;
 }): { allowed: boolean; limit: number | null; remaining: number | null } => {
-    const limit = PLANS[plan].monthlyDocumentLimit;
+  const limit = PLANS[plan].monthlyDocumentLimit;
 
-    if (limit === null) {
-        return { allowed: true, limit: null, remaining: null };
-    }
+  if (limit === null) {
+    return { allowed: true, limit: null, remaining: null };
+  }
 
-    const remaining = Math.max(limit - currentMonthlyCount, 0);
+  const remaining = Math.max(limit - currentMonthlyCount, 0);
 
-    return {
-        allowed: currentMonthlyCount < limit,
-        limit,
-        remaining,
-    };
+  return {
+    allowed: currentMonthlyCount < limit,
+    limit,
+    remaining,
+  };
 };
 
 /**
@@ -118,11 +118,11 @@ export const canSendDocument = ({
  * 例: '2026-10'
  */
 export const getMonthlyCounterKey = (date: Date = new Date()): string => {
-    // タイムゾーン: Asia/Tokyo(JST)基準で月を区切る
-    const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  // タイムゾーン: Asia/Tokyo(JST)基準で月を区切る
+  const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
 
-    const year = jst.getUTCFullYear();
-    const month = String(jst.getUTCMonth() + 1).padStart(2, '0');
+  const year = jst.getUTCFullYear();
+  const month = String(jst.getUTCMonth() + 1).padStart(2, '0');
 
-    return `${year}-${month}`;
+  return `${year}-${month}`;
 };

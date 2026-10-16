@@ -21,10 +21,10 @@ export const SignFieldSignatureDialog = createCallable<SignFieldSignatureDialogP
 
     return (
       <Dialog open={true} onOpenChange={(value) => (!value ? call.end(null) : null)}>
-        <DialogContent position="center">
+        <DialogContent position="center" className="max-h-[92dvh] w-[95vw] overflow-y-auto p-4 sm:max-w-lg sm:p-6">
           <div>
-            <DialogHeader>
-              <DialogTitle>
+            <DialogHeader className="pb-2">
+              <DialogTitle className="font-bold text-lg sm:text-xl">
                 <Trans>Sign Signature Field</Trans>
               </DialogTitle>
             </DialogHeader>
@@ -41,12 +41,22 @@ export const SignFieldSignatureDialog = createCallable<SignFieldSignatureDialogP
 
           <DocumentSigningDisclosure />
 
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => call.end(null)}>
+          <DialogFooter className="flex flex-col-reverse gap-2 pt-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-11 w-full sm:h-9 sm:w-auto"
+              onClick={() => call.end(null)}
+            >
               <Trans>Cancel</Trans>
             </Button>
 
-            <Button type="button" disabled={!localSignature} onClick={() => call.end(localSignature || null)}>
+            <Button
+              type="button"
+              disabled={!localSignature}
+              className="h-11 w-full font-semibold text-base sm:h-9 sm:w-auto"
+              onClick={() => call.end(localSignature || null)}
+            >
               <Trans>Sign</Trans>
             </Button>
           </DialogFooter>

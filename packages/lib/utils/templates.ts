@@ -106,5 +106,6 @@ export const mapEnvelopeToTemplateMany = (envelope: EnvelopeWithTemplateManyRela
     recipients: envelope.recipients.map((recipient) => mapRecipientToLegacyRecipient(recipient, envelope)),
     templateMeta: envelope.documentMeta,
     directLink: envelope.directLink,
+    automationSettings: envelope.automationSettings,
   };
 };

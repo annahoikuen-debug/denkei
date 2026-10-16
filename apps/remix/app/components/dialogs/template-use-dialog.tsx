@@ -121,8 +121,7 @@ export function TemplateUseDialog({
   documentRootPath,
   envelopeId,
   templateId,
-  templateSigningOrder,
-  automationSettings,
+  automationSettings: initialAutomationSettings,
   trigger,
 }: TemplateUseDialogProps) {
   const { toast } = useToast();
@@ -135,7 +134,24 @@ export function TemplateUseDialog({
   const [mergeVariableValues, setMergeVariableValues] = useState<TMergeVariableValues>({});
   const [mergeVariableErrors, setMergeVariableErrors] = useState<Record<string, string>>({});
 
-  const definedVariables: TMergeVariableList = (automationSettings?.mergeVariables ?? []) as TMergeVariableList;
+  const { data: fetchedTemplate } = trpc.template.getTemplateById.useQuery(
+    {
+      templateId,
+    },
+    {
+      enabled: open && !initialAutomationSettings,
+      ...SKIP_QUERY_BATCH_META,
+      ...DO_NOT_INVALIDATE_QUERY_ON_MUTATION,
+    },
+  );
+
+  const effectiveAutomationSettings =
+    initialAutomationSettings ??
+    (fetchedTemplate?.automationSettings as TTemplateAutomationSettings | null | undefined) ??
+    null;
+
+  const definedVariables: TMergeVariableList = (effectiveAutomationSettings?.mergeVariables ??
+    []) as TMergeVariableList;
 
   const { data: response, isLoading: isLoadingEnvelopeItems } = trpc.envelope.item.getMany.useQuery(
     {

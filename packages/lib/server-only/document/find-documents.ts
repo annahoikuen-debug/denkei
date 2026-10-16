@@ -228,7 +228,7 @@ export const findDocuments = async ({
         eb.exists(
           eb
             .selectFrom('DocumentMeta')
-            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .whereRef('DocumentMeta.id', '=', 'Envelope.documentMetaId')
             .where('DocumentMeta.contractType', 'ilike', `%${contractType}%`)
             .select(sql.lit(1).as('one')),
         ),
@@ -240,7 +240,7 @@ export const findDocuments = async ({
         eb.exists(
           eb
             .selectFrom('DocumentMeta')
-            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .whereRef('DocumentMeta.id', '=', 'Envelope.documentMetaId')
             .where('DocumentMeta.counterpartyName', 'ilike', `%${counterpartyName}%`)
             .select(sql.lit(1).as('one')),
         ),
@@ -253,7 +253,7 @@ export const findDocuments = async ({
         eb.exists(
           eb
             .selectFrom('DocumentMeta')
-            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .whereRef('DocumentMeta.id', '=', 'Envelope.documentMetaId')
             .where('DocumentMeta.contractAmount', '=', parseInt(contractAmount, 10))
             .select(sql.lit(1).as('one')),
         ),
@@ -265,7 +265,7 @@ export const findDocuments = async ({
         eb.exists(
           eb
             .selectFrom('DocumentMeta')
-            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .whereRef('DocumentMeta.id', '=', 'Envelope.documentMetaId')
             .where('DocumentMeta.contractDate', '>=', new Date(contractDateFrom))
             .select(sql.lit(1).as('one')),
         ),
@@ -277,7 +277,7 @@ export const findDocuments = async ({
         eb.exists(
           eb
             .selectFrom('DocumentMeta')
-            .where(sql`DocumentMeta."envelopeId" = Envelope.id`)
+            .whereRef('DocumentMeta.id', '=', 'Envelope.documentMetaId')
             .where('DocumentMeta.contractDate', '<=', new Date(contractDateTo))
             .select(sql.lit(1).as('one')),
         ),
@@ -619,15 +619,15 @@ export const findDocuments = async ({
   const data = await prisma.envelope.findMany({
     where: { id: { in: ids } },
     orderBy: { [orderByColumn]: orderByDirection },
-     include: {
-       user: { select: { id: true, name: true, email: true } },
-       recipients: true,
-       team: { select: { id: true, url: true } },
-       envelopeItems: {
-         select: { id: true, envelopeId: true, title: true, order: true },
-       },
-       documentMeta: true,
-     },
+    include: {
+      user: { select: { id: true, name: true, email: true } },
+      recipients: true,
+      team: { select: { id: true, url: true } },
+      envelopeItems: {
+        select: { id: true, envelopeId: true, title: true, order: true },
+      },
+      documentMeta: true,
+    },
   });
 
   // Preserve ordering from the Kysely query

@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 import { ZFieldSchema } from './field';
 import { ZRecipientLiteSchema } from './recipient';
+import { ZTemplateAutomationSettingsSchema } from './template-automation';
 
 /**
  * The full template response schema.
@@ -88,6 +89,7 @@ export const ZTemplateSchema = TemplateSchema.pick({
     id: true,
     envelopeId: true,
   }).array(),
+  automationSettings: ZTemplateAutomationSettingsSchema.nullish(),
 });
 
 export type TTemplate = z.infer<typeof ZTemplateSchema>;
@@ -156,6 +158,7 @@ export const ZTemplateManySchema = TemplateSchema.pick({
   }).nullable(),
   // Backwards compatibility.
   templateDocumentDataId: z.string().default(''),
+  automationSettings: ZTemplateAutomationSettingsSchema.nullish(),
 });
 
 export type TTemplateMany = z.infer<typeof ZTemplateManySchema>;

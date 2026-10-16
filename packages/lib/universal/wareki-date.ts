@@ -8,10 +8,10 @@ import { DateTime } from 'luxon';
  */
 
 const WAREKI_FORMATTER = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
-    era: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  era: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
 });
 
 const WAREKI_ERA_START = '2019-05-01';
@@ -25,55 +25,54 @@ const WAREKI_ERA_START = '2019-05-01';
  * toWareki('2019-05-01'); // '令和元年5月1日'
  */
 export const toWareki = (date: string | Date | DateTime): string | null => {
-    let dt: DateTime;
+  let dt: DateTime;
 
-    if (date instanceof DateTime) {
-        dt = date;
-    } else if (date instanceof Date) {
-        dt = DateTime.fromJSDate(date);
-    } else {
-        dt = DateTime.fromISO(date);
-
-        if (!dt.isValid) {
-            dt = DateTime.fromFormat(date, 'yyyy-MM-dd', { zone: 'Asia/Tokyo' });
-        }
-    }
+  if (date instanceof DateTime) {
+    dt = date.setZone('Asia/Tokyo');
+  } else if (date instanceof Date) {
+    dt = DateTime.fromJSDate(date, { zone: 'Asia/Tokyo' });
+  } else {
+    dt = DateTime.fromISO(date, { zone: 'Asia/Tokyo' });
 
     if (!dt.isValid) {
-        return null;
+      dt = DateTime.fromFormat(date, 'yyyy-MM-dd', { zone: 'Asia/Tokyo' });
     }
+  }
 
-    if (dt.toISODate()! < WAREKI_ERA_START) {
-        return null;
+  if (!dt.isValid) {
+    return null;
+  }
+
+  const isoDate = dt.toISODate();
+  if (!isoDate || isoDate < WAREKI_ERA_START) {
+    return null;
+  }
+
+  const parts = WAREKI_FORMATTER.formatToParts(dt.toJSDate());
+
+  const era = parts.find((p) => p.type === 'era')?.value ?? '';
+  const rawYear = parts.find((p) => p.type === 'year')?.value ?? '';
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+
+  // Node.js / Intl は 1年目を「元」「元年」「1」などで返す可能性があるため正規化
+  let yearString: string;
+  if (rawYear === '元' || rawYear === '元年' || rawYear === '1') {
+    yearString = '元年';
+  } else {
+    const yearNum = parseInt(rawYear.replace(/[^0-9]/g, ''), 10);
+    if (Number.isNaN(yearNum)) {
+      return null;
     }
+    yearString = yearNum === 1 ? '元年' : `${yearNum}年`;
+  }
 
-    const parts = WAREKI_FORMATTER.formatToParts(dt.toJSDate());
-
-    const era = parts.find((p) => p.type === 'era')?.value ?? '';
-    let year = parts.find((p) => p.type === 'year')?.value ?? '';
-    const month = parts.find((p) => p.type === 'month')?.value ?? '';
-    const day = parts.find((p) => p.type === 'day')?.value ?? '';
-
-    // Node.js/Intl では 1年目を「元」または「1」と返す
-    if (year === '元' || year === '元年' || year === '1') {
-        year = '元年';
-    } else {
-        const yearNum = parseInt(year, 10);
-        if (Number.isNaN(yearNum)) {
-            return null;
-        }
-        year = yearNum === 1 ? '元年' : `${yearNum}年`;
-    }
-
-    // year に既に「年」が含まれている場合は重複させない
-    const yearString = year.endsWith('年') ? year : `${year}年`;
-
-    return `${era}${yearString}${month}月${day}日`;
+  return `${era}${yearString}${month}月${day}日`;
 };
 
 /**
  * 和暦対応可否を判定する(令和以降のみ true)。
  */
 export const isWarekiSupported = (date: string | Date | DateTime): boolean => {
-    return toWareki(date) !== null;
+  return toWareki(date) !== null;
 };

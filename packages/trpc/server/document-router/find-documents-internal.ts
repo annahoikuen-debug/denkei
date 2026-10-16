@@ -57,7 +57,7 @@ export const findDocumentsInternalRoute = authenticatedProcedure
         senderIds,
         folderId,
         hasExpiredRecipients,
-        orderBy: orderByColumn ? { column: orderByColumn, direction: orderByDirection } : undefined,
+        orderBy: orderByColumn ? { column: orderByColumn, direction: orderByDirection ?? 'desc' } : undefined,
         contractType,
         counterpartyName,
         contractAmount,

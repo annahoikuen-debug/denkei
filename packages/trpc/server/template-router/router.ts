@@ -862,6 +862,17 @@ export const templateRouter = router({
 
   /**
    * @private
+   *
+   * チームに標準の日本語3大雛形(業務委託・秘密保持・雇用契約)を追加する。
+   */
+  seedJapaneseTemplates: authenticatedProcedure.output(ZSuccessResponseSchema).mutation(async ({ ctx }) => {
+    const { seedJapaneseTemplates } = await import('@documenso/prisma/seed/japanese-templates');
+    await seedJapaneseTemplates({ userId: ctx.user.id, teamId: ctx.teamId });
+    return { success: true };
+  }),
+
+  /**
+   * @private
    */
   uploadBulkSend: authenticatedProcedure.input(ZBulkSendTemplateMutationSchema).mutation(async ({ ctx, input }) => {
     const { templateId, teamId, csv, sendImmediately } = input;

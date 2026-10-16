@@ -17,37 +17,34 @@ const createPrismaClient = () =>
     },
   });
 
-const prisma = remember(
-  'prisma',
-  () => {
-    const client = createPrismaClient();
+const prisma = remember('prisma', () => {
+  const client = createPrismaClient();
 
-    // Use $extends to add middleware since $use is not in the base type
-    // Model name in query extensions is lowercase
-    return client.$extends({
-      name: 'auditLogImmutability',
-      query: {
-        documentAuditLog: {
-          update: async ({ args, query }) => {
-            throw new Error(
-              'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
-            );
-          },
-          delete: async ({ args, query }) => {
-            throw new Error(
-              'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
-            );
-          },
-          deleteMany: async ({ args, query }) => {
-            throw new Error(
-              'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
-            );
-          },
+  // Use $extends to add middleware since $use is not in the base type
+  // Model name in query extensions is lowercase
+  return client.$extends({
+    name: 'auditLogImmutability',
+    query: {
+      documentAuditLog: {
+        update: async ({ args, query }) => {
+          throw new Error(
+            'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
+          );
+        },
+        delete: async ({ args, query }) => {
+          throw new Error(
+            'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
+          );
+        },
+        deleteMany: async ({ args, query }) => {
+          throw new Error(
+            'DocumentAuditLog is immutable: update/delete/deleteMany operations are not allowed. This is required for electronic bookkeeping law (電子帳簿保存法) compliance.',
+          );
         },
       },
-    });
-  },
-);
+    },
+  }) as unknown as PrismaClient;
+});
 
 export const kyselyPrisma = remember('kyselyPrisma', () =>
   prisma.$extends(

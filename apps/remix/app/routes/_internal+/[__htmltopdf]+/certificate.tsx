@@ -17,7 +17,6 @@ import { Trans } from '@lingui/react/macro';
 import { EnvelopeType, FieldType, SigningStatus } from '@prisma/client';
 import { DateTime } from 'luxon';
 import { redirect } from 'react-router';
-import { prop, sortBy } from 'remeda';
 import { match } from 'ts-pattern';
 import { UAParser } from 'ua-parser-js';
 import { renderSVG } from 'uqr';
@@ -102,7 +101,13 @@ export async function loader({ request }: Route.LoaderArgs) {
  * Update: Maybe <Trans> tags work now after RR7 migration.
  */
 export default function SigningCertificate({ loaderData }: Route.ComponentProps) {
-  const { document, documentLanguage, hidePoweredBy, auditLogs, messages } = loaderData;
+  const {
+    document,
+    documentLanguage,
+    hidePoweredBy,
+    auditLogs: { groupedAuditLogs: auditLogs },
+    messages,
+  } = loaderData;
 
   const { i18n, _ } = useLingui();
 
@@ -138,14 +143,11 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
       recipientAuth: recipient.authOptions,
     });
 
-    const insertedAuditLogsWithFieldAuth = sortBy(
-      auditLogs.DOCUMENT_FIELD_INSERTED.filter(
-        (log) => log.data.recipientId === recipient.id && log.data.fieldSecurity,
-      ),
-      [prop('createdAt'), 'desc'],
-    );
+    const insertedAuditLogsWithFieldAuth = auditLogs.DOCUMENT_FIELD_INSERTED.filter(
+      (log) => log.data.recipientId === recipient.id && log.data.fieldSecurity,
+    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const actionAuthMethod = insertedAuditLogsWithFieldAuth.at(0)?.data?.fieldSecurity?.type;
+    const actionAuthMethod = insertedAuditLogsWithFieldAuth[0]?.data?.fieldSecurity?.type;
 
     let authLevel = match(actionAuthMethod)
       .with('ACCOUNT', () => _(msg`Account Re-Authentication`))
@@ -302,12 +304,12 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                           <span className="inline-block">
                             {logs.EMAIL_SENT[0]
                               ? DateTime.fromJSDate(logs.EMAIL_SENT[0].createdAt)
-                                .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
-                              : logs.DOCUMENT_SENT[0]
-                                ? DateTime.fromJSDate(logs.DOCUMENT_SENT[0].createdAt)
                                   .setLocale(APP_I18N_OPTIONS.defaultLocale)
                                   .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                              : logs.DOCUMENT_SENT[0]
+                                ? DateTime.fromJSDate(logs.DOCUMENT_SENT[0].createdAt)
+                                    .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                    .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                                 : _(msg`Unknown`)}
                           </span>
                         </p>
@@ -317,8 +319,8 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                           <span className="inline-block">
                             {logs.DOCUMENT_OPENED[0]
                               ? DateTime.fromJSDate(logs.DOCUMENT_OPENED[0].createdAt)
-                                .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                                  .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                  .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                               : _(msg`Unknown`)}
                           </span>
                         </p>
@@ -329,8 +331,8 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                             <span className="inline-block">
                               {logs.DOCUMENT_RECIPIENT_REJECTED[0]
                                 ? DateTime.fromJSDate(logs.DOCUMENT_RECIPIENT_REJECTED[0].createdAt)
-                                  .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                  .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                                    .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                    .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                                 : _(msg`Unknown`)}
                             </span>
                           </p>
@@ -340,8 +342,8 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                             <span className="inline-block">
                               {logs.DOCUMENT_RECIPIENT_COMPLETED[0]
                                 ? DateTime.fromJSDate(logs.DOCUMENT_RECIPIENT_COMPLETED[0].createdAt)
-                                  .setLocale(APP_I18N_OPTIONS.defaultLocale)
-                                  .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
+                                    .setLocale(APP_I18N_OPTIONS.defaultLocale)
+                                    .toFormat('yyyy-MM-dd hh:mm:ss a (ZZZZ)')
                                 : _(msg`Unknown`)}
                             </span>
                           </p>
@@ -353,10 +355,10 @@ export default function SigningCertificate({ loaderData }: Route.ComponentProps)
                             {recipient.signingStatus === SigningStatus.REJECTED
                               ? recipient.rejectionReason
                               : _(
-                                isOwner(recipient.email)
-                                  ? FRIENDLY_SIGNING_REASONS['__OWNER__']
-                                  : FRIENDLY_SIGNING_REASONS[recipient.role],
-                              )}
+                                  isOwner(recipient.email)
+                                    ? FRIENDLY_SIGNING_REASONS['__OWNER__']
+                                    : FRIENDLY_SIGNING_REASONS[recipient.role],
+                                )}
                           </span>
                         </p>
                       </div>

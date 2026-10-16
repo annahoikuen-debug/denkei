@@ -1,251 +1,241 @@
-<img src="https://github.com/documenso/documenso/assets/13398220/a643571f-0239-46a6-a73e-6bef38d1228b" alt="Documenso Logo">
+# デンケイ (Denkei) - 日本の中小企業向け電子契約・電子署名プラットフォーム
+
+<img src="https://github.com/documenso/documenso/assets/13398220/a643571f-0239-46a6-a73e-6bef38d1228b" alt="Denkei Logo" width="200">
 
 <p align="center" style="margin-top: 20px">
-  <p align="center">
-  The Open Source DocuSign Alternative.
-  <br>
-    <a href="https://documenso.com"><strong>Learn more »</strong></a>
-    <br />
-    <br />
-    <a href="https://documen.so/discord">Discord</a>
-    ·
-    <a href="https://documenso.com">Website</a>
-    ·
-    <a href="https://docs.documenso.com">Documentation</a>
-    ·
-    <a href="https://github.com/documenso/documenso/issues">Issues</a>
-    ·
-    <a href="https://documen.so/live">Upcoming Releases</a>
-    ·
-    <a href="https://documen.so/roadmap">Roadmap</a>
-  </p>
+  デジタル契約を、誰でも簡単に。中小企業向け低コスト・単一コンテナ構成のオープンソース電子契約サービスです。
+  <br />
+  <br />
+  <a href="https://docs.documenso.com">ドキュメント »</a>
+  ·
+  <a href="https://github.com/documenso/documenso/issues">Issueを報告 »</a>
 </p>
 
 <p align="center">
-   <a href="https://documen.so/discord"><img src="https://img.shields.io/badge/Discord-documen.so/discord-%235865F2" alt="Join Documenso on Discord"></a>
    <a href="https://github.com/documenso/documenso/stargazers"><img src="https://img.shields.io/github/stars/documenso/documenso" alt="Github Stars"></a>
-   <a href="https://github.com/documenso/documenso/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a>
    <a href="https://github.com/documenso/documenso/pulse"><img src="https://img.shields.io/github/commit-activity/m/documenso/documenso" alt="Commits-per-month"></a>
-   <a href="https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/documenso/documenso">
-   <img alt="open in devcontainer" src="https://img.shields.io/static/v1?label=Dev%20Containers&message=Enabled&color=blue&logo=visualstudiocode" />
-   </a>
+   <a href="https://github.com/documenso/documenso/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-AGPLv3-purple" alt="License"></a>
    <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg" alt="Contributor Covenant"></a>
 </p>
 
-<div align="center">
-  <img src="https://github.com/documenso/documenso/assets/13398220/d96ed533-6f34-4a97-be9b-442bdb189c69" style="width: 80%;" />
-</div>
+## デンケイとは
 
-## About Documenso
+デンケイ（Denkei）は、電子契約・電子署名をシンプルかつ低コストで利用できるオープンソースプラットフォームです。DocuSign のオープンソース代替として開発され、**日本の中小企業（SMB）向けに最適化**されています。
 
-Signing documents digitally should be fast and easy and should be the best practice for every document signed worldwide. This is technically quite easy today, but it also introduces a new party to every signature: The signing tool providers. While this is not a problem in itself, it should make us think about how we want these providers of trust to work. Documenso aims to be the world's most trusted document-signing tool. This trust is built by empowering you to self-host Documenso and review how it works under the hood.
+主な特徴：
 
-Join us in creating the next generation of open trust infrastructure.
+- **日本語フル対応** - 画面・メール・日付（和暦／西暦）・氏名（姓・名分離）など、日本のビジネス慣習に合わせたUI
+- **低コスト構成** - Redis・有料TSA・従量課金SMSなどの外部依存を排除。PostgreSQL 1台＋アプリ 1台で契約あたり原価約 0.2〜0.5円、月額 2,980 円（月 100 件）運用を実現
+- **日本法対応** - 電子署名法・民法・電子帳簿保存法の要件を技術的に満たす実装（PAdES署名、ハッシュチェーン監査ログ、締結証明書、CSVエクスポート等）
+- **セルフホスティング可能** - Docker コンテナ 1 つで起動。AGPLv3 オープンソースでソースコードを自由に監査・改変可能
+- **電子署名法準拠の本人確認** - メールOTP、WebAuthn/Passkeys、2FA など多要素認証に対応
 
-## Recognition
+## 技術スタック
 
-<p align="center">
-  <a href="https://www.producthunt.com/posts/documenso?utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-documenso" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=395047&theme=light&period=daily" alt="Documenso - The&#0032;open&#0032;source&#0032;DocuSign&#0032;alternative | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-  <a href="https://www.producthunt.com/posts/documenso?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-documenso" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=395047&theme=light" alt="Documenso - The&#0032;Open&#0032;Source&#0032;DocuSign&#0032;Alternative&#0046; | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-</p>
+| カテゴリ | 技術 |
+|---------|------|
+| 言語 | TypeScript |
+| フロントエンド | React 19, React Router v7 (Remix) |
+| サーバー | Hono |
+| データベース | PostgreSQL, Prisma ORM, Kysely |
+| API | tRPC (v2/内部), ts-rest (v1), OpenAPI |
+| スタイリング | Tailwind CSS, Radix UI, shadcn/ui |
+| PDF 表示・操作 | pdf.js, @libpdf/core, pdf-lib |
+| 電子署名 | PAdES (ETSI.CAdES.detached), RFC 3161 TSA |
+| メール | React Email, Nodemailer |
+| 国際化 | Lingui (日本語標準) |
+| ジョブキュー | PostgreSQL 内蔵 (local), Inngest, BullMQ |
+| ストレージ | データベース内包, S3互換 |
+| 決済 | Stripe |
+| リンター・フォーマッタ | Biome |
+| E2Eテスト | Playwright |
+| ビルドツール | Turborepo, Vite |
 
-## Community and Next Steps 🎯
+## リポジトリ構造（モノレポ）
 
-- Try Documenso by self-hosting it or signing up at [documenso.com](https://documenso.com).
-- Tell us what you think in the [Discussions](https://github.com/documenso/documenso/discussions).
-- Join the [Discord server](https://documen.so/discord) for any questions and getting to know other community members.
-- ⭐ the repository to help us raise awareness.
-- Open detailed [issues](https://github.com/documenso/documenso/issues) to report bugs or propose features.
-
-## Contributing
-
-> **Note**: We no longer accept external pull requests, aside from a small group of trusted contributors we reach out to directly. The best way to contribute is through detailed issues. Read [Why We're Pausing External Pull Requests](https://documenso.com/blog/why-we-re-pausing-external-pull-requests) for the reasoning.
-
-- Documenso stays open source. You can read, audit, run, and fork the code.
-- To report issues or propose changes, see our [contribution guide](https://github.com/documenso/documenso/blob/main/CONTRIBUTING.md).
-
-## Contact us
-
-Contact us if you are interested in our Enterprise plan for large organizations that need extra flexibility and control.
-
-<a href="https://cal.com/timurercan/enterprise-customers?utm_source=banner&utm_campaign=oss"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
-
-## Tech Stack
-
-<p align="left">
-  <a href="https://www.typescriptlang.org"><img src="https://shields.io/badge/TypeScript-3178C6?logo=TypeScript&logoColor=FFF&style=flat-square" alt="TypeScript"></a>
-  <a href="https://prisma.io"><img width="122" height="20" src="http://made-with.prisma.io/indigo.svg" alt="Made with Prisma" /></a>
-  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/tailwindcss-0F172A?&logo=tailwindcss" alt="Tailwind CSS"></a>
-  <a href=""><img src="" alt=""></a>
-  <a href=""><img src="" alt=""></a>
-  <a href=""><img src="" alt=""></a>
-  <a href=""><img src="" alt=""></a>
-  <a href=""><img src="" alt=""></a>
-</p>
-
-- [TypeScript](https://www.typescriptlang.org/) - Language
-- [React Router v7](https://reactrouter.com/) - Framework
-- [Hono](https://hono.dev/) - Server
-- [Prisma](https://www.prisma.io/) - ORM
-- [Tailwind CSS](https://tailwindcss.com/) - CSS
-- [shadcn/ui](https://ui.shadcn.com/) + [Radix UI](https://www.radix-ui.com/) - Component Library
-- [react-email](https://react.email/) - Email Templates
-- [Lingui](https://lingui.dev/) - Internationalization
-- [tRPC](https://trpc.io/) - API
-- [@libpdf/core](https://www.npmjs.com/package/@libpdf/core) - PDF Signatures
-- [pdf.js](https://mozilla.github.io/pdf.js/) - Viewing PDFs
-- [@cantoo/pdf-lib](https://github.com/cantoo-scribe/pdf-lib) - PDF manipulation
-- [Stripe](https://stripe.com/) - Payments
-- [Biome](https://biomejs.dev/) - Linting & Formatting
-- [Playwright](https://playwright.dev/) - E2E Testing
-
-<!-- - Support for [opensignpdf (requires Java on server)](https://github.com/open-pdf-sign) is currently planned. -->
-
-## Local Development
-
-### Requirements
-
-To run Documenso locally, you will need
-
-- Node.js (v24 or above)
-- Postgres SQL Database
-- Docker (optional)
-
-### Developer Quickstart
-
-> **Note**: This is a quickstart for developers. It assumes that you have both [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/) installed on your machine.
-
-Want to get up and running quickly? Follow these steps:
-
-1. [Fork this repository](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/about-forks) to your GitHub account.
-
-After forking the repository, clone it to your local device by using the following command:
-
-```sh
-git clone https://github.com/<your-username>/documenso
+```
+denkei/
+├── apps/
+│   ├── remix/          # メインWebアプリ (React Router + Hono, ポート3000)
+│   ├── openpage-api/   # 公開アナリティクスAPI (ポート3003)
+│   └── docs/           # ドキュメントサイト (ポート3004)
+├── packages/
+│   ├── lib/            # コアビジネスロジック (server-only/client-only/universal)
+│   ├── prisma/         # データベーススキーマ・クライアント
+│   ├── trpc/           # tRPC APIレイヤー (OpenAPI対応)
+│   ├── api/            # REST APIレイヤー (ts-rest)
+│   ├── ui/             # UIコンポーネントライブラリ (shadcn + Radix + Tailwind)
+│   ├── email/          # メールテンプレート・メーラー (React Email)
+│   ├── auth/           # 認証 (OAuth, WebAuthn/Passkeys)
+│   ├── signing/        # PDF電子署名 (P12 / Google Cloud HSM)
+│   ├── ee/             # Enterprise Edition 機能
+│   └── assets/         # 静的アセット
+├── docker/             # Docker設定 (スタンドアロン / 本番)
+├── docs/plans/         # 実装計画書
+└── package.json        # ルートワークスペース設定
 ```
 
-2. Set up your `.env` file using the recommendations in the `.env.example` file. Alternatively, just run `cp .env.example .env` to get started with our handpicked defaults.
+## 主要機能
 
-3. Run `npm run dx` in the root directory
+| 機能 | 概要 |
+|------|------|
+| 文書アップロード | PDFファイルのアップロード・プレビュー (DOCX変換オプション) |
+| 受取人設定 | 複数受取人への送信順序・署名フィールド配置 |
+| 電子署名 | 手書き署名、タイプド署名、PAdES準拠デジタル署名 |
+| エンベロープ | 複数文書をまとめて送信するエンベロープ機能 |
+| テンプレート | よく使う文書のテンプレート化・再利用 |
+| フォルダ管理 | 文書のフォルダ分類・整理 |
+| 監査ログ | すべての操作を記録した改ざん検知可能な監査ログ (ハッシュチェーン) |
+| 締結証明書 | 署名完了時に締結証明書PDFを自動生成・同梱 |
+| 電子帳簿保存法対応 | 取引先名・金額・日付の検索メタデータ、CSVエクスポート |
+| 和暦対応 | 令和等の和暦日付表示・入力 |
+| 姓・名分離 | 日本の氏名入力慣習に対応 (姓 / 名 の分離入力) |
+| 認証 | メールOTP、Google OAuth、Microsoft OAuth、OIDC、WebAuthn/Passkeys、2FA |
+| 決済 | Stripe による課金・サブスクリプション管理 (EE) |
+| シングルサインオン | 組織認証ポータル、SSO (EE) |
 
-   - This will spin up a postgres database and inbucket mailserver in a docker container.
+## クイックスタート（開発環境）
 
-4. Run `npm run dev` in the root directory
+### 必要条件
 
-5. Want it even faster? Just use
+- Node.js v24 以上
+- PostgreSQL データベース
+- Docker (オプション、開発用データベース・メールサーバー起動用)
 
-```sh
+### 1. リポジトリをクローン
+
+```bash
+git clone https://github.com/<your-username>/denkei.git
+cd denkei/denkei
+```
+
+### 2. 環境変数を設定
+
+```bash
+cp .env.example .env
+```
+
+`.env` ファイルを開き、必要に応じて値を編集してください。最低限以下を設定してください：
+
+- `NEXTAUTH_SECRET` - 認証用シークレット (32文字以上のランダム文字列)
+- `NEXT_PRIVATE_ENCRYPTION_KEY` - �号化鍵 (32文字以上)
+- `NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY` - 二次暗号化鍵 (32文字以上)
+- `NEXT_PRIVATE_DATABASE_URL` - データベース接続URL
+
+### 3. 依存関係をインストール
+
+```bash
+npm ci
+```
+
+### 4. データベースをセットアップ
+
+Docker を使用する場合：
+
+```bash
+npm run dx:up       # PostgreSQL と Inbucket (メールテストサーバー) を起動
+npm run prisma:migrate-dev   # マイグレーションを適用
+npm run prisma:seed          # シードデータを投入
+```
+
+### 5. 開発サーバーを起動
+
+```bash
+npm run dev
+```
+
+アプリケーションは `http://localhost:3000` で起動します。
+
+### ワンコマンドセットアップ
+
+Docker がインストールされている場合、以下の 1 コマンドで全セットアップが完了します：
+
+```bash
 npm run d
 ```
 
-#### Access Points for Your Application
+これは依存関係インストール、Docker サービス起動、マイグレーション、シード投入、翻訳コンパイル、開発サーバー起動を一括で実行します。
 
-1. **App** - http://localhost:3000
-2. **Incoming Mail Access** - http://localhost:9000
-3. **Database Connection Details**
+### アクセスポイント
 
-   - **Port**: 54320
-   - **Connection**: Use your favorite database client to connect using the provided port.
+| サービス | URL | 説明 |
+|---------|-----|------|
+| メインアプリ | http://localhost:3000 | デンケイ本体 |
+| インバケット (メール確認) | http://localhost:9000 | 開発用送信メールをWebで確認 |
+| データベース | localhost:54320 | PostgreSQL (Docker経由) |
 
-## Developer Setup
+## Docker でのデプロイ（セルフホスティング）
 
-### Manual Setup
+### スタンドアロン構成（SMB向け低コスト）
 
-Follow the [manual setup guide](https://docs.documenso.com/docs/developers/local-development/manual) to configure Documenso on your local machine.
+外部Redis・有料TSAを不要とし、PostgreSQL＋アプリの 2 コンテナで最小構成で動作します。
 
-### Run in Gitpod
+```bash
+# スタンドアロン構成を起動
+docker compose -f docker/compose.standalone.yml up -d
 
-- Click below to launch a ready-to-use Gitpod workspace in your browser.
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/documenso/documenso)
-
-### Run in DevContainer
-
-We support DevContainers for VSCode. [Click here to get started.](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/documenso/documenso)
-
-### Video walkthrough
-
-If you're a visual learner and prefer to watch a video walkthrough of setting up Documenso locally, check out this video:
-
-[![Watch the video](https://img.youtube.com/vi/Y0ppIQrEnZs/hqdefault.jpg)](https://youtu.be/Y0ppIQrEnZs)
-
-## Docker
-
-We provide official Docker images on [DockerHub](https://hub.docker.com/r/documenso/documenso) and [GitHub Container Registry](https://ghcr.io/documenso/documenso).
-
-For setup instructions, see the [Docker Deployment](https://docs.documenso.com/docs/self-hosting/deployment/docker) and [Docker Compose](https://docs.documenso.com/docs/self-hosting/deployment/docker-compose) guides.
-
-## Self Hosting
-
-We support a variety of deployment methods including Docker, Docker Compose, Railway, Kubernetes, and manual deployment.
-
-For full instructions, requirements, and configuration details, see the [Self Hosting documentation](https://docs.documenso.com/docs/self-hosting).
-
-### One-Click Deploys
-
-> [!NOTE]
-> Want to see another provider listed here? Please [open a provider request](https://github.com/documenso/documenso/issues/new?template=deploy-provider-request.yml) instead of a PR so the community can signal interest. PRs adding deploy badges without a prior issue will be closed.
-
-<table>
-  <tr>
-    <td align="center" width="200">
-      <a href="https://railway.com/deploy/DjrRRX?referralCode=EZR3s0&utm_medium=integration&utm_source=template&utm_campaign=generic">
-        <img src="https://railway.com/button.svg" alt="Deploy on Railway" height="40" />
-      </a>
-    </td>
-    <td align="center" width="200">
-      <a href="https://render.com/deploy?repo=https://github.com/documenso/documenso">
-        <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" height="40" />
-      </a>
-    </td>
-    <td align="center" width="200">
-      <a href="https://app.koyeb.com/deploy?type=git&repository=github.com/documenso/documenso&branch=main&name=documenso-app&builder=dockerfile&dockerfile=/docker/Dockerfile">
-        <img src="https://www.koyeb.com/static/images/deploy/button.svg" alt="Deploy to Koyeb" height="40" />
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="200">
-      <a href="https://elest.io/open-source/documenso">
-        <img src="https://elest.io/images/logos/deploy-to-elestio-btn.png" alt="Deploy on Elestio" height="40" />
-      </a>
-    </td>
-    <td align="center" width="200"></td>
-    <td align="center" width="200"></td>
-  </tr>
-</table>
-
-## Security
-
-If you believe you have found a security vulnerability in Documenso, please report it through our [Security Policy](https://github.com/documenso/documenso/security/policy). We prioritize private reports via [GitHub Security Advisories](https://github.com/documenso/documenso/security/advisories/new). See [SECURITY.md](./SECURITY.md) for scope and details.
-
-## Troubleshooting
-
-For troubleshooting self-hosted deployments, see the [Troubleshooting guide](https://docs.documenso.com/docs/self-hosting/maintenance/troubleshooting) and [Tips & Common Pitfalls](https://docs.documenso.com/docs/self-hosting/getting-started/tips).
-
-### I'm not receiving any emails when using the developer quickstart.
-
-When using the developer quickstart, an [Inbucket](https://inbucket.org/) server will be spun up in a docker container that will store all outgoing emails locally for you to view.
-
-The Web UI can be found at http://localhost:9000, while the SMTP port will be on localhost:2500.
-
-### I can't see environment variables in my package scripts.
-
-Wrap your package script with the `with:env` script like such:
-
-```
-npm run with:env -- npm run myscript
+# ログを確認
+docker compose -f docker/compose.standalone.yml logs -f app
 ```
 
-The same can be done when using `npx` for one of the bin scripts:
+起動後、自動的に Prisma マイグレーションが適用され、`http://localhost:3000` で利用可能になります。
 
+### 本番構成
+
+```bash
+docker compose -f docker/production/compose.yml up -d
 ```
-npm run with:env -- npx myscript
-```
 
-This will load environment variables from your `.env` and `.env.local` files.
+### 環境変数の主な設定項目
 
-## Repo Activity
+| 変数 | 説明 | デフォルト |
+|------|------|-----------|
+| `NEXT_PUBLIC_UPLOAD_TRANSPORT` | ストレージプロバイダ | `database` |
+| `NEXT_PRIVATE_SIGNING_TRANSPORT` | 署名トランスポート | `local` |
+| `NEXT_PRIVATE_SIGNING_ENABLE_TSA` | 外部タイムスタンプ局利用 | `false` |
+| `NEXT_PRIVATE_IDENTITY_PROVIDER` | 本人確認プロバイダ | `otp` |
+| `NEXT_PRIVATE_JOBS_PROvider` | ジョブキュープロバイダ | `local` |
+| `NEXT_PRIVATE_SMTP_TRANSPORT` | メール送信プロバイダ | `smtp-auth` |
+| `PORT` | サーバー待受ポート | `3000` |
 
-![Repository Activity](https://repobeats.axiom.co/api/embed/622a2e9aa709696f7226304b5b7178a5741b3868.svg)
+詳細な設定は `.env.example` および `docker/README.md` を参照してください。
+
+### ワンクリックデプロイ
+
+Railway、Render、Koyeb、Elestio などへのワンクリックデプロイボタンが用意されています。詳細はリポジトリの README または各プロバイダーのドキュメントを参照してください。
+
+## ユーザー向けマニュアル
+
+日常的な操作手順については `USER_MANUAL.md` を参照してください。文書の作成・送信・署名、テンプレート利用、チーム管理など、エンドユーザー向けの手順をステップバイステップで解説しています。
+
+## よくある質問 (Q&A)
+
+運用中によくある質問とその回答については `Q&A.md` を参照してください。
+
+## セキュリティ
+
+脆弱性を発見した場合は、公開の Issue ではなく、[GitHub Security Advisories](https://github.com/documenso/documenso/security/advisories/new) または `security@documenso.com` まで非公開で報告してください。詳細なポリシーは `SECURITY.md` を参照してください。
+
+## 日本法における法的根拠
+
+デンケイは、日本の電子署名法・民法・電子帳簿保存法の要件を満たす実装を備えています。詳細は `LEGAL_BASIS_JP.md` を参照してください。
+
+## ライセンス
+
+このプロジェクトは [GNU AGPL v3](LICENSE) の下で公開されています。ネットワーク経由で利用する場合もソースコードの開示義務があります。
+
+## コントリビュート
+
+バグ報告や機能提案は [Issue](https://github.com/documenso/documenso/issues) で受け付けています。プルリクエストについては `CONTRIBUTING.md` および `CLA.md` を参照してください。
+
+> 注意: 外部からのプルリクエストは、信頼できるコントリビューターに限って受け付けています。詳細は [なぜ外部プルリクエストを一時停止しているか](https://documenso.com/blog/why-we-re-pausing-external-pull-requests) を参照してください。
+
+## お問い合わせ
+
+エンタープライズプランや大規模導入に関するご相談は、以下のカレンダーよりご予約ください。
+
+<a href="https://cal.com/timurercan/enterprise-customers?utm_source=banner&utm_campaign=oss"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
+
+---
+
+デンケイは Documenso プロジェクトをベースに、日本の中小企業向けに最適化されたフォークプロジェクトです。

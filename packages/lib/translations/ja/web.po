@@ -15322,3 +15322,109 @@ msgstr "認証コード:"
 #: apps/remix/app/routes/_authenticated+/o.$orgUrl.settings.sso.tsx
 msgid "your-domain.com another-domain.com"
 msgstr "your-domain.com another-domain.com"
+
+#: packages/lib/server-only/pdf/render-certificate.ts
+msgid "* Compliant with Japan Electronic Books Preservation Act (Tamper-evident hash chain verification without external TSA). Please store in accordance with your internal document handling regulations."
+msgstr "※電子帳簿保存法（電子取引データ保存）施行規則第3条・第4条準拠（外部TSA不要の改ざん防止ハッシュチェーン検証）。自社の事務処理規程に沿って保管してください。"
+
+#: packages/lib/utils/settings-nav.ts
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/settings.compliance.tsx
+msgid "Electronic Ledger Compliance"
+msgstr "電帳法・事務処理規程"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "契約書選択・アップロード"
+msgstr "契約書選択・アップロード"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "定型契約書の標準雛形"
+msgstr "定型契約書の標準雛形"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "標準雛形を追加しました"
+msgstr "標準雛形を追加しました"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "業務委託・秘密保持・雇用の3大雛形が追加されました。"
+msgstr "業務委託・秘密保持・雇用の3大雛形が追加されました。"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "追加に失敗しました"
+msgstr "追加に失敗しました"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "雛形の作成中にエラーが発生しました。"
+msgstr "雛形の作成中にエラーが発生しました。"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "PDFをアップロードしました"
+msgstr "PDFをアップロードしました"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "宛先の入力画面へ進みます。"
+msgstr "宛先の入力画面へ進みます。"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "アップロードに失敗しました"
+msgstr "アップロードに失敗しました"
+
+#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
+msgid "PDFファイルの読み込みに失敗しました。もう一度お試しください。"
+msgstr "PDFファイルの読み込みに失敗しました。もう一度お試しください。"
+
+#: apps/remix/app/components/dialogs/template-use-dialog.tsx
+msgid "この変数は必須です"
+msgstr "この変数は必須です"
+
+#: apps/remix/app/components/dialogs/template-use-dialog.tsx
+msgid "未入力の必須項目があります"
+msgstr "未入力の必須項目があります"
+
+#: apps/remix/app/components/dialogs/template-use-dialog.tsx
+msgid "差し込み変数の必須項目を入力してください。"
+msgstr "差し込み変数の必須項目を入力してください。"
+
+#: apps/remix/app/components/tables/organisation-billing-invoices-table.tsx
+msgid "適格請求書"
+msgstr "適格請求書"
+
+#: apps/remix/app/components/tables/organisation-billing-invoices-table.tsx
+msgid "適格請求書（インボイス）"
+msgstr "適格請求書（インボイス）"
+
+#: apps/remix/app/components/tables/organisation-billing-invoices-table.tsx
+msgid "登録番号: T1010001999999"
+msgstr "登録番号: T1010001999999"
+
+#: apps/remix/app/components/tables/organisation-billing-invoices-table.tsx
+msgid "下記の通りご請求申し上げます。"
+msgstr "下記の通りご請求申し上げます。"
+
+#: apps/remix/app/components/tables/organisation-billing-invoices-table.tsx
+msgid "ご請求金額 (税込)"
+msgstr "ご請求金額 (税込)"
+
+#: apps/remix/app/components/tables/organisation-billing-invoices-table.tsx
+msgid "※ 本請求書は消費税法第57条の4に定める適格請求書（インボイス）の要件を満たしています。<br />※ 電子帳簿保存法（電子取引データ保存）に基づき、適切に保存してください。"
+msgstr "※ 本請求書は消費税法第57条の4に定める適格請求書（インボイス）の要件を満たしています。<br />※ 電子帳簿保存法（電子取引データ保存）に基づき、適切に保存してください。"
+
+#: apps/remix/app/components/tables/organisation-billing-invoices-table.tsx
+msgid "印刷 / PDF保存"
+msgstr "印刷 / PDF保存"
+
+#: packages/ui/primitives/signature-pad/signature-pad-type.tsx
+msgid "電子印影（認印・赤丸印）"
+msgstr "電子印影（認印・赤丸印）"
+
+#: packages/ui/primitives/signature-pad/signature-pad-type.tsx
+msgid "手書き風テキスト"
+msgstr "手書き風テキスト"
+
+#: packages/ui/primitives/signature-pad/signature-pad-type.tsx
+msgid "苗字を入力 (例: 田中)"
+msgstr "苗字を入力 (例: 田中)"
+
+#: packages/ui/primitives/signature-pad/signature-pad-type.tsx
+msgid "お名前を入力してください"
+msgstr "お名前を入力してください"
+

@@ -1,6 +1,5 @@
 import { NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY } from '@documenso/lib/constants/app';
 import { HttpTimestampAuthority } from '@libpdf/core';
-import { once } from 'remeda';
 
 /**
  * フェーズ1 ステップ27: TSA 障害時フォールバックポリシー
@@ -17,21 +16,49 @@ export const getTsaFallbackPolicy = (): TsaFallbackPolicy => {
   return policy === 'block' ? 'block' : 'continue';
 };
 
-const setupTimestampAuthorities = once(() => {
+/**
+ * 中小企業特化・低価格方針: TSA(認定タイムスタンプ)は基本無効(オプトイン)。
+ * NEXT_PRIVATE_SIGNING_ENABLE_TSA=true かつ NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY が設定されている場合のみ有効化。
+ */
+export const isTsaEnabled = (): boolean => {
+  return process.env.NEXT_PRIVATE_SIGNING_ENABLE_TSA === 'true';
+};
+
+let cachedAuthorities: HttpTimestampAuthority[] | null = null;
+let lastEnvKey: string | null = null;
+
+export const resetTimestampAuthoritiesCacheForTesting = () => {
+  cachedAuthorities = null;
+  lastEnvKey = null;
+};
+
+const setupTimestampAuthorities = () => {
+  const enabled = isTsaEnabled();
   const timestampAuthority = NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY();
+  const currentKey = `${enabled}:${timestampAuthority ?? ''}`;
 
-  if (!timestampAuthority) {
-    // フェーズ1 ステップ27: TSA 未設定時の警告ログ
-    console.warn(
-      '[signing] NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY is not set. ' +
-        'RFC3161 timestamps will NOT be embedded in signed PDFs. ' +
-        'Set one or more TSA URLs (comma-separated) for tamper-evident signing.',
-    );
+  if (lastEnvKey === currentKey && cachedAuthorities !== null) {
+    return cachedAuthorities;
+  }
 
+  lastEnvKey = currentKey;
+
+  if (!enabled) {
+    // タイムスタンプなし割り切り運用: 意図的なデフォルト無効
+    cachedAuthorities = null;
     return null;
   }
 
-  const timestampAuthorities = timestampAuthority
+  if (!timestampAuthority) {
+    console.warn(
+      '[signing] NEXT_PRIVATE_SIGNING_ENABLE_TSA is true, but NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY is not set. ' +
+        'RFC3161 timestamps will NOT be embedded.',
+    );
+    cachedAuthorities = null;
+    return null;
+  }
+
+  cachedAuthorities = timestampAuthority
     .trim()
     .split(',')
     .filter(Boolean)
@@ -39,8 +66,8 @@ const setupTimestampAuthorities = once(() => {
       return new HttpTimestampAuthority(url);
     });
 
-  return timestampAuthorities;
-});
+  return cachedAuthorities;
+};
 
 /**
  * フェーズ1 ステップ27 / 第6部 ステップ33-34: TSA サーキットブレーカー

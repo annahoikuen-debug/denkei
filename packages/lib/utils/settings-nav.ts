@@ -228,6 +228,12 @@ export const getSettingsNavGroups = ({
               isSubNav: true,
             },
             {
+              key: 'compliance',
+              path: `/t/${team.url}/settings/compliance`,
+              label: msg`Electronic Ledger Compliance`,
+              icon: ShieldCheckIcon,
+            },
+            {
               key: 'members',
               path: `/t/${team.url}/settings/members`,
               label: msg`Members`,

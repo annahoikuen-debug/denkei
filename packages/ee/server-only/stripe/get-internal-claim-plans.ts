@@ -44,11 +44,14 @@ export const getInternalClaimPlans = async (): Promise<InternalClaimPlans> => {
       return;
     }
 
-    let usdPrice = toHumanPrice(price.unit_amount ?? 0);
+    const isJpy = price.currency.toLowerCase() === 'jpy';
+    let formattedPrice = isJpy
+      ? `¥${(price.unit_amount ?? 0).toLocaleString()} (税込)`
+      : `$${toHumanPrice(price.unit_amount ?? 0, price.currency)} ${price.currency.toUpperCase()}`.replace('.00', '');
 
     if (price.recurring?.interval === 'month') {
-      if (product.metadata['isSeatBased'] === 'true') {
-        usdPrice = '50';
+      if (product.metadata['isSeatBased'] === 'true' && !isJpy) {
+        formattedPrice = `$50 ${price.currency.toUpperCase()}`;
       }
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -56,13 +59,13 @@ export const getInternalClaimPlans = async (): Promise<InternalClaimPlans> => {
         ...price,
         isVisibleInApp,
         product,
-        friendlyPrice: `$${usdPrice} ${price.currency.toUpperCase()}`.replace('.00', ''),
+        friendlyPrice: formattedPrice,
       };
     }
 
     if (price.recurring?.interval === 'year') {
-      if (product.metadata['isSeatBased'] === 'true') {
-        usdPrice = '480';
+      if (product.metadata['isSeatBased'] === 'true' && !isJpy) {
+        formattedPrice = `$480 ${price.currency.toUpperCase()}`;
       }
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -70,7 +73,7 @@ export const getInternalClaimPlans = async (): Promise<InternalClaimPlans> => {
         ...price,
         isVisibleInApp,
         product,
-        friendlyPrice: `$${usdPrice} ${price.currency.toUpperCase()}`.replace('.00', ''),
+        friendlyPrice: formattedPrice,
       };
     }
   });

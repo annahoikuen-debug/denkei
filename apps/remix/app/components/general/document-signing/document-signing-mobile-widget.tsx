@@ -31,18 +31,18 @@ export const DocumentSigningMobileWidget = () => {
   }, []);
 
   return (
-    <div className="pointer-events-none fixed right-0 bottom-0 left-0 z-50 flex justify-center px-2 pb-2 sm:px-4 sm:pb-6">
+    <div className="pointer-events-none fixed right-0 bottom-0 left-0 z-50 flex justify-center px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4 sm:pb-6">
       <div className="pointer-events-auto w-full max-w-[760px]">
         <div className="overflow-hidden rounded-xl border border-border bg-card shadow-2xl">
           {/* Main Header Bar */}
-          <div className="flex items-center justify-between gap-4 p-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3 p-3.5 sm:p-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 sm:gap-3">
                 {recipient.role !== RecipientRole.VIEWER && (
                   <Button
                     variant="outline"
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="flex h-8 w-8 items-center justify-center"
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center"
                     aria-label={isExpanded ? 'Collapse' : 'Expand'}
                   >
                     {isExpanded ? (
@@ -53,8 +53,8 @@ export const DocumentSigningMobileWidget = () => {
                   </Button>
                 )}
 
-                <div>
-                  <h2 className="font-semibold text-foreground text-lg">
+                <div className="min-w-0">
+                  <h2 className="truncate font-semibold text-base text-foreground sm:text-lg">
                     {match(recipient.role)
                       .with(RecipientRole.VIEWER, () => <Trans>View Document</Trans>)
                       .with(RecipientRole.SIGNER, () => <Trans>Sign Document</Trans>)
@@ -63,7 +63,7 @@ export const DocumentSigningMobileWidget = () => {
                       .otherwise(() => null)}
                   </h2>
 
-                  <p className="-mt-0.5 text-muted-foreground text-sm">
+                  <p className="-mt-0.5 truncate text-muted-foreground text-xs sm:text-sm">
                     {recipientFieldsRemaining.length === 0 ? (
                       match(recipient.role)
                         .with(RecipientRole.VIEWER, () => <Trans>Please mark as viewed to complete</Trans>)
@@ -83,8 +83,11 @@ export const DocumentSigningMobileWidget = () => {
               </div>
             </div>
 
-            <div>
-              <EnvelopeSignerCompleteDialog />
+            <div className="flex-shrink-0">
+              <EnvelopeSignerCompleteDialog
+                buttonSize="lg"
+                className="h-11 min-w-[110px] font-semibold text-sm shadow-sm sm:min-w-[130px]"
+              />
             </div>
           </div>
 

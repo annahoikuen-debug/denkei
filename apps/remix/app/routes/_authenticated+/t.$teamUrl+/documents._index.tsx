@@ -11,10 +11,10 @@ import type { RowSelectionState } from '@documenso/ui/primitives/data-table';
 import { msg } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
 import { EnvelopeType, FolderType, type DocumentStatus as PrismaDocumentStatus } from '@prisma/client';
-import { XIcon, DownloadIcon } from 'lucide-react';
+import { DownloadIcon, ShieldCheckIcon, XIcon } from 'lucide-react';
 import { useQueryStates } from 'nuqs';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { EnvelopesBulkCancelDialog } from '~/components/dialogs/envelopes-bulk-cancel-dialog';
 import { EnvelopesBulkDeleteDialog } from '~/components/dialogs/envelopes-bulk-delete-dialog';
@@ -26,12 +26,12 @@ import { EnvelopesBulkMoveDialog } from '~/components/dialogs/envelopes-bulk-mov
 import { DocumentSearch } from '~/components/general/document/document-search';
 import { EnvelopeDropZoneWrapper } from '~/components/general/envelope/envelope-drop-zone-wrapper';
 import { FolderGrid } from '~/components/general/folder/folder-grid';
+import { DocumentElectronicLedgerFilters } from '~/components/tables/document-electronic-ledger-filters';
 import { DocumentsTable } from '~/components/tables/documents-table';
 import { DocumentsTableEmptyState } from '~/components/tables/documents-table-empty-state';
 import { DocumentsTablePeriodFilter } from '~/components/tables/documents-table-period-filter';
 import { DocumentsTableSenderFilter } from '~/components/tables/documents-table-sender-filter';
 import { DocumentsTableStatusFilter } from '~/components/tables/documents-table-status-filter';
-import { DocumentElectronicLedgerFilters } from '~/components/tables/document-electronic-ledger-filters';
 import { EnvelopesTableBulkActionBar } from '~/components/tables/envelopes-table-bulk-action-bar';
 import { useCurrentTeam } from '~/providers/team';
 import { documentsSearchParams } from '~/utils/documents-search-params';
@@ -56,6 +56,8 @@ export default function DocumentsPage() {
   const navigate = useNavigate();
 
   const documentsPath = formatDocumentsPath(team.url);
+
+  const trpcUtils = trpc.useUtils();
 
   const [isMovingDocument, setIsMovingDocument] = useState(false);
   const [documentToMove, setDocumentToMove] = useState<string | null>(null);
@@ -187,7 +189,7 @@ export default function DocumentsPage() {
 
   const handleCsvExport = async () => {
     try {
-      const result = await trpc.document.downloadCsv.query({
+      const result = await trpcUtils.document.downloadCsv.fetch({
         status: findDocumentSearchParams.status ?? undefined,
         period: findDocumentSearchParams.period ?? undefined,
         senderIds: findDocumentSearchParams.senderIds ?? undefined,
@@ -259,10 +261,17 @@ export default function DocumentsPage() {
           )}
         </div>
 
-        <div className="mt-4 flex items-center gap-x-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={handleCsvExport} disabled={isLoading}>
             <DownloadIcon className="mr-2 h-4 w-4" />
             <Trans>CSVエクスポート (電帳法)</Trans>
+          </Button>
+
+          <Button variant="outline" asChild>
+            <Link to={`/t/${team.url}/settings/compliance`}>
+              <ShieldCheckIcon className="mr-2 h-4 w-4 text-emerald-600" />
+              <Trans>事務処理規程・電帳法設定</Trans>
+            </Link>
           </Button>
         </div>
 

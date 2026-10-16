@@ -24,7 +24,15 @@ import { EnvelopeSigningCscStatus } from './envelope-signing-csc-status';
 
 type PendingCscSigning = Extract<EmbedPopupAuthCscOptions, { scope: 'credential' }>;
 
-export const EnvelopeSignerCompleteDialog = () => {
+export type EnvelopeSignerCompleteDialogProps = {
+  buttonSize?: 'sm' | 'lg';
+  className?: string;
+};
+
+export const EnvelopeSignerCompleteDialog = ({
+  buttonSize = 'sm',
+  className,
+}: EnvelopeSignerCompleteDialogProps = {}) => {
   const navigate = useNavigate();
   const analytics = useAnalytics();
 
@@ -385,7 +393,8 @@ export const EnvelopeSignerCompleteDialog = () => {
       allowDictateNextSigner={Boolean(nextRecipient && envelope.documentMeta.allowDictateNextSigner)}
       disableNameInput={!isDirectTemplate && recipient.name !== ''}
       defaultNextSigner={nextRecipient ? { name: nextRecipient.name, email: nextRecipient.email } : undefined}
-      buttonSize="sm"
+      buttonSize={buttonSize}
+      className={className}
       position="center"
     >
       {pendingCsc && (

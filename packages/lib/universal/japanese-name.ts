@@ -5,8 +5,8 @@
  * PDF 上の NAME フィールドに描画される文字列を生成する。
  */
 export type JapaneseNameParts = {
-    sei: string;
-    mei: string;
+  sei: string;
+  mei: string;
 };
 
 /**
@@ -18,27 +18,39 @@ export type JapaneseNameParts = {
  * joinJapaneseName({ sei: '', mei: '太郎' }); // '太郎'
  */
 export const joinJapaneseName = ({ sei, mei }: JapaneseNameParts): string => {
-    return `${sei.trim()} ${mei.trim()}`.replace(/\s+/g, ' ').trim();
+  const cleanedSei = sei.replace(/[\s\u3000]+/g, ' ').trim();
+  const cleanedMei = mei.replace(/[\s\u3000]+/g, ' ').trim();
+
+  if (!cleanedSei) {
+    return cleanedMei;
+  }
+  if (!cleanedMei) {
+    return cleanedSei;
+  }
+
+  return `${cleanedSei} ${cleanedMei}`;
 };
 
 /**
  * 「姓 名」形式の氏名文字列を姓/名に分割する(簡易逆変換)。
- * スペースが無い場合は全体を姓として扱う。
+ * 半角スペースおよび全角スペース(\u3000)に対応。スペースが無い場合は全体を姓として扱う。
  *
  * @example
  * splitJapaneseName('田中 太郎'); // { sei: '田中', mei: '太郎' }
+ * splitJapaneseName('田中　太郎'); // { sei: '田中', mei: '太郎' }
  */
 export const splitJapaneseName = (fullName: string): JapaneseNameParts => {
-    const trimmed = fullName.trim();
+  // 全角スペースおよび連続スペースを半角スペース1個に正規化
+  const trimmed = fullName.replace(/[\s\u3000]+/g, ' ').trim();
 
-    const spaceIndex = trimmed.indexOf(' ');
+  const spaceIndex = trimmed.indexOf(' ');
 
-    if (spaceIndex === -1) {
-        return { sei: trimmed, mei: '' };
-    }
+  if (spaceIndex === -1) {
+    return { sei: trimmed, mei: '' };
+  }
 
-    return {
-        sei: trimmed.slice(0, spaceIndex).trim(),
-        mei: trimmed.slice(spaceIndex + 1).trim(),
-    };
+  return {
+    sei: trimmed.slice(0, spaceIndex).trim(),
+    mei: trimmed.slice(spaceIndex + 1).trim(),
+  };
 };

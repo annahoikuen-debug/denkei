@@ -1,14 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getTimestampAuthority, getTsaFallbackPolicy, tsaCircuitBreaker } from './tsa';
+import {
+  getTimestampAuthority,
+  getTsaFallbackPolicy,
+  isTsaEnabled,
+  resetTimestampAuthoritiesCacheForTesting,
+  tsaCircuitBreaker,
+} from './tsa';
 
 describe('TSA helper & Circuit Breaker', () => {
   beforeEach(() => {
     tsaCircuitBreaker.reset();
+    resetTimestampAuthoritiesCacheForTesting();
     vi.unstubAllEnvs();
   });
 
   afterEach(() => {
     tsaCircuitBreaker.reset();
+    resetTimestampAuthoritiesCacheForTesting();
     vi.unstubAllEnvs();
   });
 
@@ -69,6 +77,28 @@ describe('TSA helper & Circuit Breaker', () => {
       tsaCircuitBreaker.recordFailure();
 
       expect(() => getTimestampAuthority()).toThrow('TSA service is temporarily unavailable');
+    });
+  });
+
+  describe('TSA opt-in behavior (SMB low-cost strategy)', () => {
+    it('is disabled by default', () => {
+      expect(isTsaEnabled()).toBe(false);
+      expect(getTimestampAuthority()).toBe(null);
+    });
+
+    it('returns null when enabled but authority URL is empty', () => {
+      vi.stubEnv('NEXT_PRIVATE_SIGNING_ENABLE_TSA', 'true');
+      vi.stubEnv('NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY', '');
+      expect(isTsaEnabled()).toBe(true);
+      expect(getTimestampAuthority()).toBe(null);
+    });
+
+    it('returns timestamp authority when explicitly enabled with valid URL', () => {
+      vi.stubEnv('NEXT_PRIVATE_SIGNING_ENABLE_TSA', 'true');
+      vi.stubEnv('NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY', 'https://freetsa.org/tsr');
+      expect(isTsaEnabled()).toBe(true);
+      const authority = getTimestampAuthority();
+      expect(authority).not.toBe(null);
     });
   });
 });
