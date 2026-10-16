@@ -1,14 +1,12 @@
 # デンケイ (Denkei) - 日本の中小企業向け電子契約・電子署名プラットフォーム
 
-<img src="https://github.com/documenso/documenso/assets/13398220/a643571f-0239-46a6-a73e-6bef38d1228b" alt="Denkei Logo" width="200">
+デジタル契約を、誰でも簡単に。中小企業向け低コスト・単一コンテナ構成のオープンソース電子契約サービスです。
 
 <p align="center" style="margin-top: 20px">
-  デジタル契約を、誰でも簡単に。中小企業向け低コスト・単一コンテナ構成のオープンソース電子契約サービスです。
-  <br />
-  <br />
-  <a href="https://docs.documenso.com">ドキュメント »</a>
-  ·
-  <a href="https://github.com/documenso/documenso/issues">Issueを報告 »</a>
+  <a href="README.md">プロジェクト概要</a> ·
+  <a href="USER_MANUAL.md">ユーザーマニュアル</a> ·
+  <a href="Q&A.md">よくある質問</a> ·
+  <a href="OPERATIONS_MANUAL.md">運用者マニュアル</a>
 </p>
 
 <p align="center">
@@ -22,13 +20,29 @@
 
 デンケイ（Denkei）は、電子契約・電子署名をシンプルかつ低コストで利用できるオープンソースプラットフォームです。DocuSign のオープンソース代替として開発され、**日本の中小企業（SMB）向けに最適化**されています。
 
-主な特徴：
+### 主な特徴
 
-- **日本語フル対応** - 画面・メール・日付（和暦／西暦）・氏名（姓・名分離）など、日本のビジネス慣習に合わせたUI
-- **低コスト構成** - Redis・有料TSA・従量課金SMSなどの外部依存を排除。PostgreSQL 1台＋アプリ 1台で契約あたり原価約 0.2〜0.5円、月額 2,980 円（月 100 件）運用を実現
-- **日本法対応** - 電子署名法・民法・電子帳簿保存法の要件を技術的に満たす実装（PAdES署名、ハッシュチェーン監査ログ、締結証明書、CSVエクスポート等）
-- **セルフホスティング可能** - Docker コンテナ 1 つで起動。AGPLv3 オープンソースでソースコードを自由に監査・改変可能
-- **電子署名法準拠の本人確認** - メールOTP、WebAuthn/Passkeys、2FA など多要素認証に対応
+| 特徴 | 内容 |
+|------|------|
+| **日本語フル対応** | 画面・メール・日付（和暦／西暦）・氏名（姓・名分離）など、日本のビジネス慣習に合わせたUI |
+| **低コスト構成** | Redis・有料TSA・従量課金SMSなどの外部依存を排除。PostgreSQL 1台＋アプリ 1台で契約あたり原価約 0.2〜0.5円、月額 2,980 円（月 100 件）運用を実現 |
+| **日本法対応** | 電子署名法・民法・電子帳簿保存法の要件を技術的に満たす実装（PAdES署名、ハッシュチェーン監査ログ、締結証明書、CSVエクスポート、インボイス制度対応領収書等） |
+| **セルフホスティング可能** | Docker コンテナ 1 つで起動。AGPLv3 オープンソースでソースコードを自由に監査・改変可能 |
+| **電子署名法準拠の本人確認** | メールOTP、WebAuthn/Passkeys、2FA など多要素認証に対応 |
+
+### 日本語・日本法対応の実装一覧
+
+| 機能 | 実装ファイル | 概要 |
+|------|-------------|------|
+| 和暦（令和）日付 | `packages/lib/universal/wareki-date.ts` | `toWareki()` で「令和X年M月D日」に変換 |
+| 姓・名分離入力 | `packages/lib/universal/japanese-name.ts` | `joinJapaneseName()` / `splitJapaneseName()` |
+| 円金額フォーマット | `packages/lib/universal/format-currency.ts` | `formatJpy()` / `formatJpyWithTaxIncluded()` |
+| 電子印影（丸印・認印） | `packages/lib/universal/seal-image.ts` | `generateElectronicSealDataUrl()` でHanko風画像生成 |
+| 適格請求書（インボイス） | `packages/lib/universal/qualified-invoice.ts` | 10%消費税計算・HTML請求書生成・T番号検証 |
+| 電帳法コンプライアンスキット | `packages/lib/universal/compliance-kit.ts` | 事務処理規程テンプレート生成・NTAチェックリスト |
+| 翻訳漏れ検出 | `scripts/check-translations.mjs` | `ja/web.po` の未訳エントリ検出 |
+| 日本語日付フィールド | `jp-core-signing-flow.spec.ts` | E2E: `yyyy年M月d日` 形式のDATEフィールド検証 |
+| ドキュメントメタ既定日本語 | `migrations/20261015000000_ja_default_document_meta/` | `DocumentMeta.language='ja'` / `timezone='Asia/Tokyo'` |
 
 ## 技術スタック
 
@@ -37,7 +51,7 @@
 | 言語 | TypeScript |
 | フロントエンド | React 19, React Router v7 (Remix) |
 | サーバー | Hono |
-| データベース | PostgreSQL, Prisma ORM, Kysely |
+| データベース | PostgreSQL 15, Prisma ORM, Kysely |
 | API | tRPC (v2/内部), ts-rest (v1), OpenAPI |
 | スタイリング | Tailwind CSS, Radix UI, shadcn/ui |
 | PDF 表示・操作 | pdf.js, @libpdf/core, pdf-lib |
@@ -61,7 +75,7 @@ denkei/
 │   └── docs/           # ドキュメントサイト (ポート3004)
 ├── packages/
 │   ├── lib/            # コアビジネスロジック (server-only/client-only/universal)
-│   ├── prisma/         # データベーススキーマ・クライアント
+│   ├── prisma/         # データベーススキーマ・クライアント・マイグレーション
 │   ├── trpc/           # tRPC APIレイヤー (OpenAPI対応)
 │   ├── api/            # REST APIレイヤー (ts-rest)
 │   ├── ui/             # UIコンポーネントライブラリ (shadcn + Radix + Tailwind)
@@ -71,7 +85,8 @@ denkei/
 │   ├── ee/             # Enterprise Edition 機能
 │   └── assets/         # 静的アセット
 ├── docker/             # Docker設定 (スタンドアロン / 本番)
-├── docs/plans/         # 実装計画書
+├── docs/plans/         # 実装計画書 (phase1, smb-cutdown 等)
+├── scripts/            # check-translations.mjs 等
 └── package.json        # ルートワークスペース設定
 ```
 
@@ -81,15 +96,16 @@ denkei/
 |------|------|
 | 文書アップロード | PDFファイルのアップロード・プレビュー (DOCX変換オプション) |
 | 受取人設定 | 複数受取人への送信順序・署名フィールド配置 |
-| 電子署名 | 手書き署名、タイプド署名、PAdES準拠デジタル署名 |
+| 電子署名 | 手書き署名、タイプド署名、PAdES準拠デジタル署名、電子印影 |
 | エンベロープ | 複数文書をまとめて送信するエンベロープ機能 |
 | テンプレート | よく使う文書のテンプレート化・再利用 |
 | フォルダ管理 | 文書のフォルダ分類・整理 |
 | 監査ログ | すべての操作を記録した改ざん検知可能な監査ログ (ハッシュチェーン) |
 | 締結証明書 | 署名完了時に締結証明書PDFを自動生成・同梱 |
-| 電子帳簿保存法対応 | 取引先名・金額・日付の検索メタデータ、CSVエクスポート |
+| 電子帳簿保存法対応 | 取引先名・金額・日付の検索メタデータ、CSVエクスポート、事務処理規程テンプレート |
 | 和暦対応 | 令和等の和暦日付表示・入力 |
 | 姓・名分離 | 日本の氏名入力慣習に対応 (姓 / 名 の分離入力) |
+| インボイス制度 | 適格請求書・領収書の自動生成 (10%消費税計算、T番号検証) |
 | 認証 | メールOTP、Google OAuth、Microsoft OAuth、OIDC、WebAuthn/Passkeys、2FA |
 | 決済 | Stripe による課金・サブスクリプション管理 (EE) |
 | シングルサインオン | 組織認証ポータル、SSO (EE) |
@@ -105,7 +121,7 @@ denkei/
 ### 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/<your-username>/denkei.git
+git clone https://github.com/annahoikuen-debug/denkei.git
 cd denkei/denkei
 ```
 
@@ -118,7 +134,7 @@ cp .env.example .env
 `.env` ファイルを開き、必要に応じて値を編集してください。最低限以下を設定してください：
 
 - `NEXTAUTH_SECRET` - 認証用シークレット (32文字以上のランダム文字列)
-- `NEXT_PRIVATE_ENCRYPTION_KEY` - �号化鍵 (32文字以上)
+- `NEXT_PRIVATE_ENCRYPTION_KEY` - 暗号化鍵 (32文字以上)
 - `NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY` - 二次暗号化鍵 (32文字以上)
 - `NEXT_PRIVATE_DATABASE_URL` - データベース接続URL
 
@@ -194,11 +210,11 @@ docker compose -f docker/production/compose.yml up -d
 | `NEXT_PRIVATE_SIGNING_TRANSPORT` | 署名トランスポート | `local` |
 | `NEXT_PRIVATE_SIGNING_ENABLE_TSA` | 外部タイムスタンプ局利用 | `false` |
 | `NEXT_PRIVATE_IDENTITY_PROVIDER` | 本人確認プロバイダ | `otp` |
-| `NEXT_PRIVATE_JOBS_PROvider` | ジョブキュープロバイダ | `local` |
+| `NEXT_PRIVATE_JOBS_PROVIDER` | ジョブキュープロバイダ | `local` |
 | `NEXT_PRIVATE_SMTP_TRANSPORT` | メール送信プロバイダ | `smtp-auth` |
 | `PORT` | サーバー待受ポート | `3000` |
 
-詳細な設定は `.env.example` および `docker/README.md` を参照してください。
+詳細な設定は `.env.example` および `docker/README.md`、`OPERATIONS_MANUAL.md` を参照してください。
 
 ### ワンクリックデプロイ
 
@@ -208,13 +224,17 @@ Railway、Render、Koyeb、Elestio などへのワンクリックデプロイボ
 
 日常的な操作手順については `USER_MANUAL.md` を参照してください。文書の作成・送信・署名、テンプレート利用、チーム管理など、エンドユーザー向けの手順をステップバイステップで解説しています。
 
+## 運用者向けマニュアル
+
+デプロイ・運用・バックアップ・アップグレードなどについては `OPERATIONS_MANUAL.md` を参照してください。
+
 ## よくある質問 (Q&A)
 
 運用中によくある質問とその回答については `Q&A.md` を参照してください。
 
 ## セキュリティ
 
-脆弱性を発見した場合は、公開の Issue ではなく、[GitHub Security Advisories](https://github.com/documenso/documenso/security/advisories/new) または `security@documenso.com` まで非公開で報告してください。詳細なポリシーは `SECURITY.md` を参照してください。
+脆弱性を発見した場合は、公開の Issue ではなく、[GitHub Security Advisories](https://github.com/annahoikuen-debug/denkei/security/advisories/new) または `security@documenso.com` まで非公開で報告してください。詳細なポリシーは `SECURITY.md` を参照してください。
 
 ## 日本法における法的根拠
 
@@ -226,7 +246,7 @@ Railway、Render、Koyeb、Elestio などへのワンクリックデプロイボ
 
 ## コントリビュート
 
-バグ報告や機能提案は [Issue](https://github.com/documenso/documenso/issues) で受け付けています。プルリクエストについては `CONTRIBUTING.md` および `CLA.md` を参照してください。
+バグ報告や機能提案は [Issue](https://github.com/annahoikuen-debug/denkei/issues) で受け付けています。プルリクエストについては `CONTRIBUTING.md` および `CLA.md` を参照してください。
 
 > 注意: 外部からのプルリクエストは、信頼できるコントリビューターに限って受け付けています。詳細は [なぜ外部プルリクエストを一時停止しているか](https://documenso.com/blog/why-we-re-pausing-external-pull-requests) を参照してください。
 

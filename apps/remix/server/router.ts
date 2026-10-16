@@ -167,13 +167,23 @@ if (env('NODE_ENV') !== 'development') {
 }
 
 // Start license client to verify license on startup.
-void LicenseClient.start();
+void LicenseClient.start().catch((err: unknown) => {
+  console.warn('[startup] License client skipped:', err instanceof Error ? err.message : err);
+});
 
 // Start cron scheduler for background jobs (e.g. envelope expiration sweep).
 // No-op for Inngest provider which handles cron externally.
-jobsClient.startCron();
+try {
+  jobsClient.startCron();
+} catch (err: unknown) {
+  console.warn('[startup] Cron scheduler skipped:', err instanceof Error ? err.message : err);
+}
 
-void migrateDeletedAccountServiceAccount();
-void migrateLegacyServiceAccount();
+void migrateDeletedAccountServiceAccount().catch((err: unknown) => {
+  console.warn('[startup] Deleted account migration skipped (DB offline):', err instanceof Error ? err.message : err);
+});
+void migrateLegacyServiceAccount().catch((err: unknown) => {
+  console.warn('[startup] Legacy account migration skipped (DB offline):', err instanceof Error ? err.message : err);
+});
 
 export default app;

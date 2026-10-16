@@ -5,8 +5,10 @@ import { Button } from '@documenso/ui/primitives/button';
 import { Card, CardContent } from '@documenso/ui/primitives/card';
 import {
   ArrowRight,
+  Calculator,
   Check,
   CheckCircle2,
+  Clock,
   FileCheck2,
   FileText,
   Lock,
@@ -16,8 +18,7 @@ import {
   Smartphone,
   Sparkles,
   Stamp,
-  Users,
-  X,
+  TrendingDown,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
@@ -26,6 +27,8 @@ export function LandingPage() {
   const [sealName, setSealName] = useState('佐藤');
   const [sealColor, setSealColor] = useState<'vermilion' | 'black' | 'navy'>('vermilion');
   const [isAnnual, setIsAnnual] = useState(false);
+  const [monthlyContracts, setMonthlyContracts] = useState<number>(30);
+  const [includeRegisteredMail, setIncludeRegisteredMail] = useState<boolean>(false);
 
   const sealDataUrl = useMemo(() => {
     return generateElectronicSealDataUrl(sealName.trim() || '印', {
@@ -35,61 +38,109 @@ export function LandingPage() {
     });
   }, [sealName, sealColor]);
 
+  // コスト削減シミュレーション計算
+  // 試算条件:
+  // - 印紙代平均: 400円
+  // - 製本・印刷代: 200円
+  // - 普通郵便代: 110円 (定形郵便50g以内)
+  // - 特定記録郵便（オプション）: +210円
+  // - 契約書1通あたりの事務処理時間: 12分
+  const stampDutyAvg = 400; // 印紙代平均
+  const bindingCost = 200; // 製本代・印刷代
+  const standardPostage = 110; // 普通郵便代
+  const registeredMailFee = 210; // 特定記録郵便代 (オプション)
+
+  const paperCostPerContract =
+    stampDutyAvg + bindingCost + standardPostage + (includeRegisteredMail ? registeredMailFee : 0);
+
+  const annualPaperCost = monthlyContracts * paperCostPerContract * 12;
+
+  const denkeiAnnualCost = useMemo(() => {
+    if (monthlyContracts <= 3) {
+      return 0;
+    }
+    if (monthlyContracts <= 100) {
+      return 2980 * 12; // 35,760
+    }
+    return 4980 * 12; // 59,760
+  }, [monthlyContracts]);
+
+  const annualSavings = Math.max(0, annualPaperCost - denkeiAnnualCost);
+
+  // 1通あたり12分の短縮 (12分 = 0.2時間)
+  const minutesPerContract = 12;
+  const annualHoursSaved = Math.round(monthlyContracts * (minutesPerContract / 60) * 12);
+
+  const denkeiComment = useMemo(() => {
+    if (monthlyContracts <= 5) {
+      return `月数件でも、年約${Math.round(annualSavings / 10000)}万円の経費と約${annualHoursSaved}時間の作業が丸ごと浮くでござる！`;
+    }
+    if (monthlyContracts <= 20) {
+      return `年間で【約${Math.round(annualSavings / 10000)}万円】の経費と【約${annualHoursSaved}時間】の作業から解放されるでござる！`;
+    }
+    if (monthlyContracts <= 50) {
+      return `なんと年間【約${Math.round(annualSavings / 10000)}万円】もの現金を純粋節約！ 浮いた約${annualHoursSaved}時間を本業の商談に集中できるでござる！`;
+    }
+    return `驚異の年間【約${Math.round(annualSavings / 10000)}万円】削減＆【約${annualHoursSaved}時間】の時短！ 経営効率が一変するでござる！`;
+  }, [monthlyContracts, annualSavings, annualHoursSaved]);
+
   const standardPrice = isAnnual ? '2,480' : '2,980';
   const businessPrice = isAnnual ? '3,980' : '4,980';
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased selection:bg-red-500/20 selection:text-red-900 dark:selection:text-red-100">
       {/* ===== グローバルヘッダー ===== */}
-      <header className="sticky top-0 z-50 w-full border-border/40 border-b bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-x-3">
-            <Link to="/" className="flex items-center gap-x-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-600 text-white shadow-md shadow-red-600/20">
-                <Stamp className="h-5 w-5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-foreground text-lg leading-tight tracking-tight">
-                  デンケイ <span className="ml-0.5 font-extrabold text-red-600 text-sm">電子契約</span>
+      <header className="sticky top-0 z-50 w-full border-border/40 border-b bg-background/90 backdrop-blur-md">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link to="/" className="group flex items-center gap-x-3">
+            {/* デンケイアバターブランドマーク */}
+            <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30 ring-2 ring-red-500/20 transition-transform group-hover:scale-105">
+              <img src="/images/denkei-mascot-circle.webp" alt="デンケイ" className="h-full w-full object-cover" />
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-foreground text-xl leading-tight tracking-tight sm:text-2xl">
+                  デンケイ
                 </span>
-                <span className="text-[10px] text-muted-foreground leading-none">
-                  中小企業特化・月額2,980円（100件）
+                <span className="rounded bg-red-600 px-1.5 py-0.5 font-black text-[10px] text-white uppercase tracking-wider">
+                  電子契約
                 </span>
               </div>
-            </Link>
-          </div>
+              <span className="font-medium text-muted-foreground text-xs">中小企業特化・月額2,980円（100件）</span>
+            </div>
+          </Link>
 
-          <nav className="hidden items-center gap-x-6 font-medium text-muted-foreground text-sm md:flex">
-            <a href="#features" className="transition-colors hover:text-foreground">
-              3大特徴
+          <nav className="hidden items-center gap-x-8 font-semibold text-base text-muted-foreground md:flex">
+            <a href="#mascot" className="transition-colors hover:text-foreground">
+              デンケイ
             </a>
-            <a href="#comparison" className="transition-colors hover:text-foreground">
-              他社比較
+            <a href="#features" className="transition-colors hover:text-foreground">
+              七つ道具
+            </a>
+            <a href="#simulator" className="font-bold transition-colors hover:text-red-600">
+              コスト診断
             </a>
             <a href="#templates" className="transition-colors hover:text-foreground">
-              標準雛形
+              契約雛形
             </a>
             <a href="#pricing" className="transition-colors hover:text-foreground">
               料金プラン
             </a>
-            <a href="#compliance" className="transition-colors hover:text-foreground">
-              電帳法適合
-            </a>
             <a href="#faq" className="transition-colors hover:text-foreground">
-              よくある質問
+              FAQ
             </a>
           </nav>
 
-          <div className="flex items-center gap-x-3">
+          <div className="flex items-center gap-x-4">
             <Link to="/signin">
-              <Button variant="ghost" size="sm" className="font-medium">
+              <Button variant="ghost" size="lg" className="font-bold text-base">
                 ログイン
               </Button>
             </Link>
             <Link to="/signup">
               <Button
-                size="sm"
-                className="bg-red-600 font-semibold text-white shadow-md shadow-red-600/20 hover:bg-red-700"
+                size="lg"
+                className="h-11 bg-red-600 px-5 font-bold text-base text-white shadow-lg shadow-red-600/25 hover:bg-red-700"
               >
                 無料ではじめる
               </Button>
@@ -98,599 +149,831 @@ export function LandingPage() {
         </div>
       </header>
 
-      {/* ===== ヒーローセクション ===== */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-red-500/5 via-amber-500/5 to-transparent pt-12 pb-20 md:pt-20 md:pb-32">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.red.100),transparent)] opacity-60 dark:bg-[radial-gradient(45rem_50rem_at_top,theme(colors.red.950/30),transparent)]" />
+      {/* ===== ヒーローセクション（超大型見出し・低認知負荷） ===== */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-red-500/5 via-amber-500/5 to-transparent pt-12 pb-16 md:pt-20 md:pb-24">
+        <div className="mx-auto flex max-w-6xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
+          {/* キャッチバッジ */}
+          <div className="mb-6 inline-flex items-center gap-x-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 font-bold text-red-700 text-sm shadow-sm sm:text-base dark:text-red-400">
+            <Sparkles className="h-4 w-4" />
+            <span>タイムスタンプ不要・国税庁公認の事務処理規程つき</span>
+          </div>
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
-            {/* 左カラム: コピー & CTA */}
-            <div className="flex flex-col items-start text-left lg:col-span-7">
-              <div className="mb-6 inline-flex items-center gap-x-2 rounded-full border border-red-500/20 bg-red-500/10 px-3.5 py-1 font-semibold text-red-700 text-xs dark:text-red-400">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>タイムスタンプ不要・国税庁公認の事務処理規程で電帳法完全適合</span>
-              </div>
+          {/* 超大型メインコピー */}
+          <h1 className="max-w-5xl font-black text-4xl text-foreground leading-[1.15] tracking-tight sm:text-6xl lg:text-7xl">
+            中小企業のための、
+            <br />
+            一番
+            <span className="text-red-600 underline decoration-4 decoration-red-500/40 decoration-wavy">
+              割り切れる
+            </span>
+            電子契約。
+          </h1>
 
-              <h1 className="font-extrabold text-3xl text-foreground leading-[1.15] tracking-tight sm:text-5xl lg:text-5xl">
-                中小企業のための、
-                <br />
-                一番
-                <span className="text-red-600 underline decoration-2 decoration-red-500/40 decoration-wavy">
-                  割り切れる
-                </span>
-                電子契約。
-              </h1>
+          {/* ぱっと目に入る3大要約（大見出し） */}
+          <div className="mt-8 flex flex-wrap justify-center gap-3 font-bold text-base text-foreground sm:gap-6 sm:text-xl">
+            <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 shadow-sm">
+              <Check className="h-5 w-5 flex-shrink-0 text-red-600" /> 月額 2,980円（100件定額）
+            </span>
+            <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 shadow-sm">
+              <Check className="h-5 w-5 flex-shrink-0 text-emerald-600" /> タイムスタンプ費用 0円
+            </span>
+            <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 shadow-sm">
+              <Check className="h-5 w-5 flex-shrink-0 text-primary" /> 相手方はスマホ10秒押印
+            </span>
+          </div>
 
-              <p className="mt-6 max-w-2xl text-base text-muted-foreground leading-relaxed sm:text-lg">
-                大手の高額従量課金（1件220円〜）や外部タイムスタンプ更新料に悩まされる必要はありません。
-                <strong className="font-semibold text-foreground">月額2,980円で月100件まで定額</strong>。
-                受信者はアプリ登録不要・スマホ親指10秒で本物の認印（赤丸電子印影）を押印。
-              </p>
+          {/* 大型CTAボタン */}
+          <div className="mt-10 flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row">
+            <Link to="/signup" className="w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="h-14 w-full bg-red-600 px-10 font-extrabold text-lg text-white shadow-2xl shadow-red-600/30 transition-all hover:scale-105 hover:bg-red-700 active:scale-95 sm:h-16 sm:w-auto sm:px-14 sm:text-xl"
+              >
+                無料ではじめる（月3件まで0円）
+                <ArrowRight className="ml-3 h-6 w-6" />
+              </Button>
+            </Link>
+          </div>
 
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Link to="/signup">
-                  <Button
-                    size="lg"
-                    className="h-12 bg-red-600 px-8 font-bold text-base text-white shadow-red-600/25 shadow-xl transition-all hover:scale-[1.02] hover:bg-red-700 active:scale-[0.98]"
-                  >
-                    無料ではじめる（月3件まで0円）
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <a href="#pricing">
-                  <Button variant="outline" size="lg" className="h-12 px-6 font-medium">
-                    料金プラン（月2,980円〜）
-                  </Button>
-                </a>
-              </div>
+          <p className="mt-3 font-medium text-muted-foreground text-xs sm:text-sm">
+            ※ クレジットカード登録不要・1分で登録完了
+          </p>
 
-              {/* 信頼バッジ */}
-              <div className="mt-10 grid w-full grid-cols-2 gap-4 border-border/60 border-t pt-6 sm:grid-cols-4">
-                <div className="flex items-center gap-x-2 font-medium text-muted-foreground text-xs">
-                  <ShieldCheck className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  <span>電帳法第3条・第4条適合</span>
-                </div>
-                <div className="flex items-center gap-x-2 font-medium text-muted-foreground text-xs">
-                  <Smartphone className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  <span>スマホ10秒親指押印</span>
-                </div>
-                <div className="flex items-center gap-x-2 font-medium text-muted-foreground text-xs">
-                  <Receipt className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  <span>インボイス適格請求書</span>
-                </div>
-                <div className="flex items-center gap-x-2 font-medium text-muted-foreground text-xs">
-                  <Lock className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  <span>改ざん防止WORMログ</span>
-                </div>
-              </div>
-            </div>
+          {/* ===== ヒーロー内 インタラクティブ・ショーケース（マスコット ＆ 認印体験） ===== */}
+          <div className="mt-14 grid w-full grid-cols-1 items-stretch gap-8 text-left lg:grid-cols-12">
+            {/* 左側：公式守護武者「デンケイ」カード */}
+            <div
+              id="mascot"
+              className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 border-red-500/30 bg-card p-6 shadow-2xl sm:p-8 lg:col-span-7"
+            >
+              {/* 装飾の背景グラデーション */}
+              <div className="pointer-events-none absolute top-0 right-0 -mt-8 -mr-8 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
 
-            {/* 右カラム: 電子認印リアルタイム体験インタラクティブカード */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md rounded-2xl border border-border/80 bg-card p-6 shadow-2xl backdrop-blur-sm">
-                <div className="flex items-center justify-between border-border/60 border-b pb-4">
-                  <div className="flex items-center gap-x-2">
-                    <span className="flex h-3 w-3 animate-pulse rounded-full bg-red-500" />
-                    <span className="font-bold text-foreground text-sm">電子認印（赤丸印）リアルタイム生成</span>
+              {/* 吹き出し風メッセージ */}
+              <div className="relative z-10 mb-4 inline-flex items-start gap-3 rounded-2xl border border-red-500/40 bg-background/95 p-4 shadow-lg backdrop-blur-sm">
+                <img
+                  src="/images/denkei-mascot-circle.webp"
+                  alt="デンケイ アイコン"
+                  className="h-10 w-10 flex-shrink-0 rounded-full border border-red-500/30"
+                />
+                <div className="text-xs sm:text-sm">
+                  <div className="mb-0.5 flex items-center gap-1.5 font-black text-red-600">
+                    <span>公式守護武者・デンケイ</span>
                   </div>
-                  <Badge variant="outline" className="border-red-500/30 font-mono text-[10px] text-red-600">
-                    LIVE PREVIEW
-                  </Badge>
+                  <p className="font-bold text-foreground leading-snug">
+                    「紙とハンコの面倒、ぜんぶ拙者にお任せあれ！
+                    相手方はスマホ10秒で押印。高額タイムスタンプ不要で電帳法も鉄壁ガードでござる！」
+                  </p>
                 </div>
+              </div>
 
-                {/* お試し入力コントロール */}
-                <div className="mt-4 space-y-3">
-                  <div>
-                    <label
-                      htmlFor="seal-surname-input"
-                      className="mb-1 block font-medium text-muted-foreground text-xs"
-                    >
-                      苗字を入力して押印を体験してください（1〜4文字）
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="seal-surname-input"
-                        type="text"
-                        maxLength={5}
-                        value={sealName}
-                        onChange={(e) => setSealName(e.target.value)}
-                        placeholder="例: 佐藤"
-                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 font-medium text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      />
-                      <div className="flex gap-1">
-                        {(
-                          [
-                            { key: 'vermilion', label: '朱肉', colorClass: 'bg-red-600' },
-                            { key: 'black', label: '黒', colorClass: 'bg-neutral-800' },
-                            { key: 'navy', label: '藍', colorClass: 'bg-indigo-900' },
-                          ] as const
-                        ).map((c) => (
-                          <button
-                            key={c.key}
-                            type="button"
-                            onClick={() => setSealColor(c.key)}
-                            className={`h-9 rounded border px-2 text-xs transition-all ${
-                              sealColor === c.key
-                                ? 'border-primary font-bold ring-2 ring-primary/20'
-                                : 'border-border text-muted-foreground'
-                            }`}
-                          >
-                            <span className={`inline-block h-2.5 w-2.5 rounded-full ${c.colorClass} mr-1`} />
-                            {c.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 仮想契約書モックアップ */}
-                <div className="relative mt-5 overflow-hidden rounded-lg border border-border bg-neutral-50/50 p-4 dark:bg-neutral-900/40">
-                  <div className="flex items-start justify-between border-neutral-200 border-b pb-2 dark:border-neutral-800">
+              {/* マスコットビジュアル */}
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-neutral-900/10 shadow-inner">
+                <img
+                  src="/images/denkei-mascot.webp"
+                  alt="デンケイ公式マスコット デンケイ"
+                  className="h-auto w-full object-cover transition-transform duration-500 group-hover:scale-102"
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 text-white sm:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <div className="font-bold text-[11px] text-foreground">業務委託基本契約書</div>
-                      <div className="text-[9px] text-muted-foreground">
-                        甲：株式会社デンケイ 乙：{sealName || '貴社'}
-                      </div>
+                      <div className="font-bold text-[11px] text-red-400 tracking-wider">DENKEI OFFICIAL GUARDIAN</div>
+                      <div className="font-black text-lg sm:text-xl">デンケイの「七つ道具」</div>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className="h-5 border-emerald-500/20 bg-emerald-500/10 text-[9px] text-emerald-600"
-                    >
-                      締結完了
-                    </Badge>
-                  </div>
-
-                  <div className="mt-3 line-clamp-3 text-[10px] text-muted-foreground leading-relaxed">
-                    甲及び乙は、本契約書に定める条件に従い、業務の委託及び受託に関する基本合意を成立させるものとし、
-                    本電磁的記録により電子署名（認印）をもって相互に合意を確認した。
-                  </div>
-
-                  {/* 押印エリア */}
-                  <div className="mt-4 flex items-center justify-between border-neutral-200 border-t border-dashed pt-3 dark:border-neutral-800">
-                    <div className="space-y-0.5 text-[9px] text-muted-foreground">
-                      <div>署名日時: 2026-10-16 11:00 (JST)</div>
-                      <div className="font-mono">証跡: SHA-256 c3a89e...8f2b</div>
-                      <div className="flex items-center gap-1 font-semibold text-emerald-600">
-                        <CheckCircle2 className="h-3 w-3" /> 電帳法 事務処理規程適合
-                      </div>
-                    </div>
-
-                    {/* 印影プレビュー */}
-                    <div className="flex flex-col items-center">
-                      <div className="group relative rounded-full p-1 transition-transform duration-200 hover:scale-105">
-                        <img
-                          src={sealDataUrl}
-                          alt={`${sealName}の電子印影`}
-                          className="h-16 w-16 select-none drop-shadow-md"
-                        />
-                      </div>
-                      <span className="mt-0.5 font-medium text-[8px] text-muted-foreground">電子認印（丸印）</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between rounded-lg bg-muted/40 p-2.5 text-muted-foreground text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <Smartphone className="h-4 w-4 text-primary" />
-                    受信者はスマホ片手・10秒でこの印影を押印可能
-                  </span>
-                  <Link to="/signup" className="flex items-center gap-0.5 font-semibold text-red-600 hover:underline">
-                    試す <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== 比較セクション（大手クラウドサイン vs デンケイ） ===== */}
-      <section id="comparison" className="border-border/50 border-y bg-muted/30 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-semibold text-red-600 text-xs uppercase tracking-widest">WHY DENKEI</h2>
-            <p className="mt-2 font-extrabold text-3xl text-foreground tracking-tight sm:text-4xl">
-              なぜ、中小企業に高額な大手電子契約は不要なのか？
-            </p>
-            <p className="mt-4 text-base text-muted-foreground">
-              大企業のコンプライアンス用に作られた重厚なシステムを、そのまま中小企業が使う必要はありません。
-              日常の99%の契約（業務委託・NDA・雇用契約）に特化し、無駄なコストを徹底的にカットしました。
-            </p>
-          </div>
-
-          <div className="mt-12 overflow-x-auto">
-            <div className="min-w-[640px] overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="border-border border-b bg-muted/50">
-                    <th className="w-1/4 p-4 font-bold text-foreground text-sm sm:p-5">比較項目</th>
-                    <th className="w-1/3 p-4 font-semibold text-muted-foreground text-sm sm:p-5">
-                      一般的な大手電子契約
-                    </th>
-                    <th className="w-5/12 bg-red-500/10 p-4 font-bold text-red-600 text-sm sm:p-5">
-                      <div className="flex items-center gap-2">
-                        <Stamp className="h-4 w-4" />
-                        <span>デンケイ (Denkei)</span>
-                        <Badge className="bg-red-600 text-[10px] text-white">中小企業特化</Badge>
-                      </div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border text-sm">
-                  <tr>
-                    <td className="p-4 font-semibold text-foreground">月額料金 & 件数</td>
-                    <td className="p-4 text-muted-foreground">
-                      基本料 11,000円〜 <br />
-                      <span className="font-medium text-red-500 text-xs">＋ 1件ごとに220円（従量課金）</span>
-                    </td>
-                    <td className="bg-red-500/5 p-4 font-bold text-foreground">
-                      <span className="text-lg text-red-600">月額 2,980円</span>（税込）
-                      <div className="font-normal text-muted-foreground text-xs">
-                        月100件まで定額込み（1件あたり29.8円・追加請求なし）
-                      </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="p-4 font-semibold text-foreground">タイムスタンプ費用</td>
-                    <td className="p-4 text-muted-foreground">
-                      毎件数十円〜のTSA費用が強制加算 <br />
-                      （10年ごとのLTV更新料も発生）
-                    </td>
-                    <td className="bg-red-500/5 p-4 font-bold text-foreground">
-                      <span className="font-bold text-emerald-600">完全 0 円</span>
-                      <div className="font-normal text-muted-foreground text-xs">
-                        国税庁認定の「事務処理規程」を自社名で自動作成。電帳法完全適合。
-                      </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="p-4 font-semibold text-foreground">押印・サイン体験</td>
-                    <td className="p-4 text-muted-foreground">
-                      欧米風の筆記体サインが標準 <br />
-                      日本の取引先から「ハンコじゃないのか」と戸惑われる
-                    </td>
-                    <td className="bg-red-500/5 p-4 font-bold text-foreground">
-                      <span className="font-bold text-red-600">日本伝統の「認印（赤丸印）」自動生成</span>
-                      <div className="font-normal text-muted-foreground text-xs">
-                        受信者の苗字から朱肉丸印をリアルタイム描画。誰でも安心。
-                      </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="p-4 font-semibold text-foreground">スマホ署名</td>
-                    <td className="p-4 text-muted-foreground">
-                      PCブラウザ前提の複雑なUI <br />
-                      スマホだと文字が小さく拡大縮小が必要
-                    </td>
-                    <td className="bg-red-500/5 p-4 font-bold text-foreground">
-                      <span className="font-bold text-emerald-600">スマホ片手親指で10秒締結</span>
-                      <div className="font-normal text-muted-foreground text-xs">
-                        画面下部の大型親指バーで、現場や移動中でもタップだけで完結。
-                      </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="p-4 font-semibold text-foreground">電帳法への対応</td>
-                    <td className="p-4 text-muted-foreground">
-                      「電帳法対応」をうたうが、社内規程の策定はユーザー任せ（税理士・弁護士相談要）
-                    </td>
-                    <td className="bg-red-500/5 p-4 font-bold text-foreground">
-                      <span className="font-bold text-red-600">国税庁準拠の規程を1クリック出力</span>
-                      <div className="font-normal text-muted-foreground text-xs">
-                        自社名入りの事務処理規程（Word/PDF/MD）を管理画面から即ダウンロード。
-                      </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td className="p-4 font-semibold text-foreground">初期搭載テンプレート</td>
-                    <td className="p-4 text-muted-foreground">
-                      空の状態で納品。PDFの座標指定やフィールド配置を自力で行う必要あり
-                    </td>
-                    <td className="bg-red-500/5 p-4 font-bold text-foreground">
-                      <span className="font-bold text-foreground">日本の3大契約書を最初からシード</span>
-                      <div className="font-normal text-muted-foreground text-xs">
-                        業務委託・NDA・雇用契約書が最初から入っており、変数入力で即送信。
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== 3大特徴セクション ===== */}
-      <section id="features" className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-semibold text-red-600 text-xs uppercase tracking-widest">KEY FEATURES</h2>
-            <p className="mt-2 font-extrabold text-3xl text-foreground tracking-tight sm:text-4xl">
-              無駄を削ぎ落とし、実務のスピードを10倍にする3つの特長
-            </p>
-          </div>
-
-          <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
-            {/* 特長1 */}
-            <Card className="border-border/80 bg-gradient-to-b from-card to-background shadow-md transition-shadow hover:shadow-xl">
-              <CardContent className="p-6">
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/10 text-red-600">
-                  <Smartphone className="h-6 w-6" />
-                </div>
-                <h3 className="font-bold text-foreground text-xl">
-                  スマホ親指10秒押印 ＆<br />
-                  日本伝統の認印（電子印影）
-                </h3>
-                <p className="mt-3 text-muted-foreground text-sm leading-relaxed">
-                  契約相手にアカウント作成やログインは求めません。
-                  届いたメールのリンクを開くだけで、苗字の朱肉丸印が自動生成。
-                  下部に配置された大型アクションボタンにより、外出先・現場でも親指ひとつで10秒で契約締結できます。
-                </p>
-                <div className="mt-6 flex items-center gap-2 font-semibold text-red-600 text-xs">
-                  <Check className="h-4 w-4" /> 苗字別縦書き自動レイアウト
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 特長2 */}
-            <Card className="border-border/80 bg-gradient-to-b from-card to-background shadow-md transition-shadow hover:shadow-xl">
-              <CardContent className="p-6">
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
-                  <Scale className="h-6 w-6" />
-                </div>
-                <h3 className="font-bold text-foreground text-xl">
-                  国税庁公認の「電帳法規程」を
-                  <br />
-                  ワンクリック自動作成
-                </h3>
-                <p className="mt-3 text-muted-foreground text-sm leading-relaxed">
-                  「タイムスタンプがないと税務調査で否認されるのでは？」という不安は不要です。
-                  国税庁が定める「電子取引の取引情報に係る電磁的記録の保存等取扱規程」に完全準拠した社内規程を、
-                  貴社名入りで即座に出力。税理士への説明もこれで完璧です。
-                </p>
-                <div className="mt-6 flex items-center gap-2 font-semibold text-emerald-600 text-xs">
-                  <Check className="h-4 w-4" /> 電帳法第3条・第4条に適合
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 特長3 */}
-            <Card className="border-border/80 bg-gradient-to-b from-card to-background shadow-md transition-shadow hover:shadow-xl">
-              <CardContent className="p-6">
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
-                  <FileText className="h-6 w-6" />
-                </div>
-                <h3 className="font-bold text-foreground text-xl">
-                  3大契約書を最初から搭載
-                  <br />
-                  変数入力で誰でも1分送信
-                </h3>
-                <p className="mt-3 text-muted-foreground text-sm leading-relaxed">
-                  業務委託契約書、秘密保持契約書（NDA）、雇用契約書の3大定番雛形をあらかじめセットアップ済み。
-                  相手先名や金額を入力するだけで、契約書PDFが自動生成されて相手に送信されます。
-                  WordやPDFの面倒な準備作業から解放されます。
-                </p>
-                <div className="mt-6 flex items-center gap-2 font-semibold text-amber-600 text-xs">
-                  <Check className="h-4 w-4" /> 弁護士監修レベルの定型条文
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== 標準雛形セクション ===== */}
-      <section id="templates" className="border-border/50 border-t bg-muted/20 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-semibold text-red-600 text-xs uppercase tracking-widest">STANDARD TEMPLATES</h2>
-            <p className="mt-2 font-extrabold text-3xl text-foreground tracking-tight sm:text-4xl">
-              アカウント作成直後から使える、日本の3大定型契約書
-            </p>
-            <p className="mt-4 text-base text-muted-foreground">
-              ゼロから書類を作る必要はありません。必要な項目（会社名・報酬・期間）を入力するだけで即時送信できます。
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {/* 雛形1: 業務委託 */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-red-500/50">
-              <div className="mb-4 flex items-center justify-between">
-                <Badge variant="outline" className="border-red-500/20 text-red-600">
-                  フリーランス / B2B外注
-                </Badge>
-                <FileCheck2 className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <h3 className="font-bold text-foreground text-lg">業務委託基本契約書</h3>
-              <p className="mt-2 text-muted-foreground text-xs leading-relaxed">
-                フリーランスや制作会社への業務委託、開発・デザイン・コンサルティング等の受託業務に標準対応。
-                知的財産権の帰属、再委託、損害賠償上限、支払条件を定めた堅牢な条文構成。
-              </p>
-              <div className="mt-4 flex flex-wrap gap-1.5 border-border/50 border-t pt-3">
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">委託料自動計算</span>
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">和暦・西暦対応</span>
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">署名順序ロック</span>
-              </div>
-            </div>
-
-            {/* 雛形2: NDA */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-red-500/50">
-              <div className="mb-4 flex items-center justify-between">
-                <Badge variant="outline" className="border-amber-500/20 text-amber-600">
-                  商談前・提携検討
-                </Badge>
-                <ShieldCheck className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <h3 className="font-bold text-foreground text-lg">秘密保持契約書 (NDA)</h3>
-              <p className="mt-2 text-muted-foreground text-xs leading-relaxed">
-                新規事業の立ち上げ、共同開発、営業秘密の開示前に必須となる秘密保持契約。
-                双方開示（双務契約）形式で、秘密情報の範囲指定、目的外使用禁止、返還破棄義務を網羅。
-              </p>
-              <div className="mt-4 flex flex-wrap gap-1.5 border-border/50 border-t pt-3">
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">有効期間設定</span>
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">双務開示対応</span>
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">損害賠償条項</span>
-              </div>
-            </div>
-
-            {/* 雛形3: 雇用契約 */}
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-red-500/50">
-              <div className="mb-4 flex items-center justify-between">
-                <Badge variant="outline" className="border-emerald-500/20 text-emerald-600">
-                  正社員 / パート・アルバイト
-                </Badge>
-                <Users className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <h3 className="font-bold text-foreground text-lg">雇用契約書 / 労働条件通知書</h3>
-              <p className="mt-2 text-muted-foreground text-xs leading-relaxed">
-                正社員・契約社員・パート採用時に労働基準法で義務付けられている労働条件通知書を兼ねた雇用契約書。
-                就業場所、業務内容、賃金計算、所定労働時間、休日休暇、退職規程を明記。
-              </p>
-              <div className="mt-4 flex flex-wrap gap-1.5 border-border/50 border-t pt-3">
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                  労基法法定要件準拠
-                </span>
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">時給/月給切替</span>
-                <span className="rounded bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">電磁的交付対応</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== 電帳法コンプライアンスセクション ===== */}
-      <section id="compliance" className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-card to-card p-8 shadow-xl sm:p-12">
-            <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
-              <div className="lg:col-span-7">
-                <div className="mb-4 inline-flex items-center gap-x-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-semibold text-emerald-700 text-xs dark:text-emerald-400">
-                  <Scale className="h-3.5 w-3.5" />
-                  <span>電子帳簿保存法（電帳法）完全適合</span>
-                </div>
-
-                <h2 className="font-extrabold text-2xl text-foreground tracking-tight sm:text-3xl">
-                  なぜ、タイムスタンプなしでも税務署・税理士に認められるのか？
-                </h2>
-
-                <p className="mt-4 text-muted-foreground text-sm leading-relaxed sm:text-base">
-                  電子帳簿保存法（電子取引データ保存）における「真実性の確保」には、法律上4つの選択肢が認められています。
-                  そのうちの第4号が
-                  <strong className="text-foreground">
-                    「正当な理由がない訂正及び削除の防止に関する事務処理規程の備え付け」
-                  </strong>
-                  です。
-                </p>
-
-                <div className="mt-6 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
-                    <div>
-                      <span className="font-bold text-foreground text-sm">国税庁標準の規程フォーマットを標準同梱</span>
-                      <p className="mt-0.5 text-muted-foreground text-xs">
-                        デンケイの管理画面から、貴社の社名・管理責任者名が入った事務処理規程を1クリックで即時ダウンロード可能。
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
-                    <div>
-                      <span className="font-bold text-foreground text-sm">
-                        PostgreSQL WORMトリガーによる改ざん不可保護
-                      </span>
-                      <p className="mt-0.5 text-muted-foreground text-xs">
-                        締結完了後の契約ログはデータベースレベルで更新・削除（UPDATE/DELETE）が物理的に拒絶されます。
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
-                    <div>
-                      <span className="font-bold text-foreground text-sm">SHA-256 監査ログハッシュチェーン</span>
-                      <p className="mt-0.5 text-muted-foreground text-xs">
-                        直前の操作ハッシュを次レコードに連鎖記録。文書と監査証跡の同一性を数学的に証明。
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex items-center gap-4">
-                  <Link to="/signup">
-                    <Button className="bg-emerald-600 font-semibold text-white hover:bg-emerald-700">
-                      電帳法対応キット付きで無料開始
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* 右側: 規程プレビューカード */}
-              <div className="lg:col-span-5">
-                <div className="rounded-xl border border-border bg-neutral-900 p-6 font-mono text-neutral-100 text-xs shadow-2xl">
-                  <div className="flex items-center justify-between border-neutral-800 border-b pb-3 text-neutral-400">
-                    <span className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-emerald-400" />
-                      事務処理規程.md (国税庁準拠)
+                    <span className="rounded-full bg-red-600 px-3 py-1 font-black text-xs shadow-md">
+                      電帳法・鉄壁防御
                     </span>
-                    <Badge variant="outline" className="border-emerald-500/40 text-[10px] text-emerald-400">
-                      第3条・第4条適合
-                    </Badge>
-                  </div>
-                  <div className="mt-4 space-y-2 text-[11px] text-neutral-300">
-                    <div className="font-bold text-emerald-400">
-                      # 電子取引の取引情報に係る電磁的記録の保存等取扱規程
-                    </div>
-                    <div className="text-neutral-500">第1条（目的）本規程は、電子帳簿保存法に基づき...</div>
-                    <div className="text-neutral-400">第4条（訂正及び削除の原則禁止）</div>
-                    <div className="rounded border border-neutral-700/80 bg-neutral-800/80 p-2.5 text-[10px] leading-relaxed">
-                      電子取引データは、原則として訂正及び削除を行わないものとする。
-                      デンケイシステム上のWORM監査ログとSHA-256ハッシュチェーンにより、 改ざんの不存在を担保する。
-                    </div>
-                    <div className="flex items-center justify-between pt-2 text-neutral-500">
-                      <span>策定会社: [貴社名が自動挿入]</span>
-                      <span className="text-emerald-400">✓ 規程DL対応</span>
-                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* デンケイの守護タグ */}
+              <div className="mt-4 flex flex-wrap gap-2 font-bold text-xs">
+                <span className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1 text-red-600">
+                  🛡️ タイムスタンプ費用 0円
+                </span>
+                <span className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-600">
+                  ⚡ 相手方はアプリ不要・10秒押印
+                </span>
+                <span className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-blue-600">
+                  📜 国税庁公認の事務処理規程つき
+                </span>
+              </div>
+            </div>
+
+            {/* 右側：【10秒体験】電子認印を押してみる */}
+            <div className="flex flex-col justify-between rounded-3xl border-2 border-border bg-card p-6 shadow-xl sm:p-8 lg:col-span-5">
+              <div>
+                <div className="flex items-center justify-between border-border/80 border-b pb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-3 w-3 animate-ping rounded-full bg-red-500" />
+                    <span className="font-extrabold text-foreground text-lg">【10秒体験】電子認印を押してみる</span>
+                  </div>
+                  <Badge className="bg-red-600 font-bold text-white text-xs">無料体験</Badge>
+                </div>
+
+                <div className="mt-5 space-y-4">
+                  <div>
+                    <label htmlFor="seal-input" className="mb-1.5 block font-bold text-muted-foreground text-xs">
+                      あなたの苗字を入力（1〜4文字）
+                    </label>
+                    <input
+                      id="seal-input"
+                      type="text"
+                      maxLength={5}
+                      value={sealName}
+                      onChange={(e) => setSealName(e.target.value)}
+                      placeholder="例: 佐藤"
+                      className="flex h-12 w-full rounded-xl border-2 border-input bg-background px-4 py-2 font-black text-xl shadow-inner focus:border-red-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="mb-1.5 block font-bold text-muted-foreground text-xs">印影カラーを選択</span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSealColor('vermilion')}
+                        className={`flex-1 rounded-lg border-2 px-3 py-1.5 font-bold text-xs transition-all ${
+                          sealColor === 'vermilion'
+                            ? 'border-red-600 bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300'
+                            : 'border-border bg-muted/40 text-muted-foreground'
+                        }`}
+                      >
+                        伝統の朱肉
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSealColor('black')}
+                        className={`flex-1 rounded-lg border-2 px-3 py-1.5 font-bold text-xs transition-all ${
+                          sealColor === 'black'
+                            ? 'border-neutral-800 bg-neutral-100 text-neutral-900 dark:border-neutral-200 dark:bg-neutral-800 dark:text-white'
+                            : 'border-border bg-muted/40 text-muted-foreground'
+                        }`}
+                      >
+                        格式の黒
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSealColor('navy')}
+                        className={`flex-1 rounded-lg border-2 px-3 py-1.5 font-bold text-xs transition-all ${
+                          sealColor === 'navy'
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
+                            : 'border-border bg-muted/40 text-muted-foreground'
+                        }`}
+                      >
+                        信頼の藍
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 印影プレビュー */}
+                  <div className="flex items-center gap-5 rounded-2xl border border-border bg-neutral-100 p-4 dark:bg-neutral-900">
+                    <img
+                      src={sealDataUrl}
+                      alt={`${sealName}の電子印影`}
+                      className="h-20 w-20 flex-shrink-0 select-none drop-shadow-md"
+                    />
+                    <div className="space-y-1 font-medium text-muted-foreground text-xs">
+                      <div className="font-black text-base text-foreground">公式電子認印プレビュー</div>
+                      <div>相手方はスマホを開いて</div>
+                      <div className="font-extrabold text-red-600 text-sm">この印影を10秒で押印完了</div>
+                    </div>
+                  </div>
+
+                  {/* デンケイのリアクション */}
+                  <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 font-bold text-red-700 text-xs dark:text-red-400">
+                    <Sparkles className="h-4 w-4 flex-shrink-0 text-red-600" />
+                    <span>
+                      お見事！【{sealName.trim() || '貴社'}】殿の認印が整いました。このまま即日契約書に押印可能です。
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 名前を引き継いで無料体験へ */}
+              <Link to={`/signup?name=${encodeURIComponent(sealName.trim() || '佐藤')}`} className="mt-6 block">
+                <Button className="h-12 w-full bg-red-600 font-extrabold text-base text-white shadow-md hover:bg-red-700">
+                  この認印で無料体験をはじめる
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== 料金プランセクション ===== */}
-      <section id="pricing" className="border-border/50 border-t bg-muted/30 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-semibold text-red-600 text-xs uppercase tracking-widest">SIMPLE PRICING</h2>
-            <p className="mt-2 font-extrabold text-3xl text-foreground tracking-tight sm:text-4xl">
-              追加請求の心配がない、明朗な定額使い切りプラン
+      {/* ===== 公式守護武者・デンケイの「七つ道具」セクション（見出し特大 ＋ 詳細アコーディオン） ===== */}
+      <section id="features" className="border-border/60 border-t py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3.5 py-1 font-black text-red-600 text-xs">
+              <ShieldCheck className="h-4 w-4" />
+              <span>7 DIGITAL TOOLS OF DENKEI</span>
+            </div>
+            <h2 className="font-black text-3xl text-foreground tracking-tight sm:text-5xl">
+              公式守護武者・デンケイの「七つ道具」で、
+              <br />
+              中小企業の契約・電帳法を鉄壁ガード
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl font-medium text-base text-muted-foreground sm:text-lg">
+              文字を詰め込まず、要点だけを明快に。詳細はタップして展開できます。
             </p>
-            <p className="mt-4 text-base text-muted-foreground">
-              送信ごとの従量課金やタイムスタンプ更新料はありません。クレジットカード登録不要のフリープランから始められます。
+          </div>
+
+          <Accordion type="single" collapsible className="space-y-4">
+            {/* 道具1 */}
+            <AccordionItem
+              value="tool-1"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-red-600 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-red-500/10 text-red-600 sm:h-14 sm:w-14">
+                  <Stamp className="h-7 w-7" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-bold text-red-600 text-xs uppercase tracking-wider">第一の道具</span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">スマホ10秒 電子認印（赤丸印）</h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    欧米風サインではなく、見慣れた伝統の「朱肉丸印」で誰でも即日押印。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-red-600 text-sm hover:no-underline sm:text-base">
+                    押印方式と相手方負担ゼロの仕組みを見る
+                  </AccordionTrigger>
+                </div>
+              </div>
+
+              <AccordionContent className="mt-4 space-y-3 border-border border-t pt-5 text-foreground text-sm">
+                <p className="font-bold text-base">相手方にアカウント登録やアプリ導入は一切不要</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  契約相手には専用のURL付きメールが届きます。スマホで開いてワンタップするだけで、苗字に合わせた本物の朱肉認印が自動押印されます。
+                  PC・スマホ・タブレットの全端末に対応し、相手方に1円も負担をかけません。
+                </p>
+                <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
+                  <div>✓ 名字入力に応じたベクター印影自動生成エンジン搭載</div>
+                  <div>✓ 民法第522条第2項（契約の成立要件）に基づく完全な合意証跡</div>
+                  <div>✓ 外出先や現場でも親指ひとつで完了するモバイル特化UI</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 道具2 */}
+            <AccordionItem
+              value="tool-2"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-emerald-600 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 sm:h-14 sm:w-14">
+                  <Scale className="h-7 w-7" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-bold text-emerald-600 text-xs uppercase tracking-wider">第二の道具</span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
+                    国税庁公認・事務処理規程キット
+                  </h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    1件ごとの高額タイムスタンプ不要。電帳法第4条に完全適合。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-emerald-600 text-sm hover:no-underline sm:text-base">
+                    電帳法の法的根拠と税理士・税務署対応を見る
+                  </AccordionTrigger>
+                </div>
+              </div>
+
+              <AccordionContent className="mt-4 space-y-3 border-border border-t pt-5 text-foreground text-sm">
+                <p className="font-bold text-base">国税庁「電子取引関係 事務処理規程（第4号）」に完全準拠</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  電子帳簿保存法において、外部タイムスタンプは必須ではありません。
+                  国税庁が公認する「正当な理由がない訂正及び削除の防止に関する事務処理規程」を備え付けることで完全に法要件を満たします。
+                  デンケイは管理画面から貴社名入りの規程をワンクリックでダウンロードして備え付けることができます。
+                </p>
+                <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
+                  <div>✓ 貴社名入り国税庁公認規程PDFを1クリック自動生成</div>
+                  <div>✓ 取引年月日・取引先・取引金額による電帳法CSV一括検索出力</div>
+                  <div>✓ 税理士や税務署への説明資料がこれ1枚で即座に完結</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 道具3 */}
+            <AccordionItem
+              value="tool-3"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-primary sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-14 sm:w-14">
+                  <Lock className="h-7 w-7" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-bold text-primary text-xs uppercase tracking-wider">第三の道具</span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
+                    改ざん防止 WORM監査ログ＆SHA-256ハッシュ
+                  </h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    契約締結後の削除・改ざんをシステムレベルで物理的に遮断。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-primary text-sm hover:no-underline sm:text-base">
+                    データベース改ざん防止技術の詳細を見る
+                  </AccordionTrigger>
+                </div>
+              </div>
+
+              <AccordionContent className="mt-4 space-y-3 border-border border-t pt-5 text-foreground text-sm">
+                <p className="font-bold text-base">管理者でも書き換え不可能なブロックチェーン同等の堅牢性</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  データベース層にWORM（Write Once Read
+                  Many）トリガーを実装。一度完了した契約文書のステータス変更や物理削除はシステムが拒否します。
+                  さらに、直前の操作履歴と連鎖するSHA-256ハッシュチェーンにより、いかなる不正な改ざんも即座に検知されます。
+                </p>
+                <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
+                  <div>✓ PostgreSQL WORM物理削除不可トリガー常時稼働</div>
+                  <div>✓ 操作ごとに直前ハッシュと連鎖するSHA-256改ざん防止台帳</div>
+                  <div>✓ PDF内部署名検証ルーチンによるファイル破損・改ざん検知</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 道具4 */}
+            <AccordionItem
+              value="tool-4"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-amber-600 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 sm:h-14 sm:w-14">
+                  <Smartphone className="h-7 w-7" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-bold text-amber-600 text-xs uppercase tracking-wider">第四の道具</span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
+                    メールワンタイム認証（OTP二要素認証）
+                  </h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    誤送信やなりすましを二重に防ぐ、安心の本人確認機能。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-amber-600 text-sm hover:no-underline sm:text-base">
+                    二要素認証の流れとセキュリティを見る
+                  </AccordionTrigger>
+                </div>
+              </div>
+
+              <AccordionContent className="mt-4 space-y-3 border-border border-t pt-5 text-foreground text-sm">
+                <p className="font-bold text-base">相手方のメールボックス到達を確実に検証</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  署名時に相手方のメールアドレスへ6桁のワンタイムパスコードを発行。
+                  契約者本人しか閲覧できないメールアカウント経由で認証を行うことで、なりすましリスクを劇的に低減します。
+                </p>
+                <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
+                  <div>✓ 10分間有効な暗号学的ランダム6桁コード生成</div>
+                  <div>✓ 連続誤入力時の自動ロックによる総当たり攻撃防止</div>
+                  <div>✓ IPアドレス・ブラウザUA情報・認証時刻の監査ログ完全記録</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 道具5 */}
+            <AccordionItem
+              value="tool-5"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-purple-600 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 sm:h-14 sm:w-14">
+                  <FileCheck2 className="h-7 w-7" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-bold text-purple-600 text-xs uppercase tracking-wider">第五の道具</span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">日本の3大定型契約書ひな形</h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    業務委託・秘密保持(NDA)・雇用契約を標準搭載。PDFの用意すら不要。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-purple-600 text-sm hover:no-underline sm:text-base">
+                    搭載テンプレートと差し込み機能を見る
+                  </AccordionTrigger>
+                </div>
+              </div>
+
+              <AccordionContent className="mt-4 space-y-3 border-border border-t pt-5 text-foreground text-sm">
+                <p className="font-bold text-base">相手先名と金額を入れるだけで即座に送信完了</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  日本の商取引で最も頻発する3大契約書の法的条文をプリセット。WordやPDFを自作していなくても、フォームに入力するだけで綺麗な契約書PDFが自動生成されます。
+                </p>
+                <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
+                  <div>✓ 業務委託基本契約書（知的財産・納品検収・損害賠償上限完備）</div>
+                  <div>✓ 秘密保持契約書（NDA・双務開示対応標準書式）</div>
+                  <div>✓ 雇用契約書 / 労働条件通知書（労基法義務付け事項適合）</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 道具6 */}
+            <AccordionItem
+              value="tool-6"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-cyan-600 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-600 sm:h-14 sm:w-14">
+                  <FileText className="h-7 w-7" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-bold text-cyan-600 text-xs uppercase tracking-wider">第六の道具</span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
+                    インボイス適格請求書（T番号対応）
+                  </h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    毎月の利用料も、T番号入りの適格請求書を管理画面からワンクリック出力。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-cyan-600 text-sm hover:no-underline sm:text-base">
+                    インボイス制度対応と経理処理の簡略化を見る
+                  </AccordionTrigger>
+                </div>
+              </div>
+
+              <AccordionContent className="mt-4 space-y-3 border-border border-t pt-5 text-foreground text-sm">
+                <p className="font-bold text-base">税理士にそのまま渡せる完全準拠の領収書・請求書</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  適格請求書発行事業者の登録番号（T+13桁）、10%消費税額、適用税率を正確に記載した帳票をいつでもダウンロード可能。
+                  仕入税額控除の適用要件を完全に満たし、経理の手間をゼロにします。
+                </p>
+                <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
+                  <div>✓ 国税庁登録T番号自動印字</div>
+                  <div>✓ 10%消費税計算および税率別内訳の完全表示</div>
+                  <div>✓ 過去の全請求書・領収書を年度ごとにいつでも再発行可能</div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* 道具7 */}
+            <AccordionItem
+              value="tool-7"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-red-600 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-red-500/10 text-red-600 sm:h-14 sm:w-14">
+                  <Receipt className="h-7 w-7" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-bold text-red-600 text-xs uppercase tracking-wider">第七の道具</span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
+                    従量課金の恐怖ゼロ・月額2,980円定額（100件）
+                  </h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    大手の「1件220円課金」は一切なし。1件あたり実質29.8円で使い切り定額。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-red-600 text-sm hover:no-underline sm:text-base">
+                    詳しいコスト比較表を見る
+                  </AccordionTrigger>
+                </div>
+              </div>
+
+              <AccordionContent className="mt-4 border-border border-t pt-5 text-foreground text-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-border text-left">
+                    <thead className="bg-muted font-bold text-xs uppercase">
+                      <tr>
+                        <th className="border border-border p-3">項目</th>
+                        <th className="border border-border p-3 text-muted-foreground">大手クラウドサイン等</th>
+                        <th className="border border-border bg-red-500/10 p-3 font-extrabold text-red-600">
+                          デンケイ (Denkei)
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border text-sm">
+                      <tr>
+                        <td className="border border-border p-3 font-bold">月額基本料金</td>
+                        <td className="border border-border p-3 text-muted-foreground">
+                          基本料 11,000円〜 ＋ 1件220円
+                        </td>
+                        <td className="border border-border bg-red-500/5 p-3 font-bold text-red-600">
+                          月額 2,980円 (100件込み)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border border-border p-3 font-bold">月100件送信時</td>
+                        <td className="border border-border p-3 text-muted-foreground">合計 約 33,000円 / 月</td>
+                        <td className="border border-border bg-red-500/5 p-3 font-bold text-red-600">
+                          定額 2,980円（約91%コスト削減）
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border border-border p-3 font-bold">タイムスタンプ費</td>
+                        <td className="border border-border p-3 text-muted-foreground">月額費用または従量に内包</td>
+                        <td className="border border-border bg-red-500/5 p-3 font-bold text-emerald-600">
+                          0円（国税庁事務処理規程で完全適合）
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border border-border p-3 font-bold">契約の縛り</td>
+                        <td className="border border-border p-3 text-muted-foreground">
+                          年契約・途中解約違約金あり多数
+                        </td>
+                        <td className="border border-border bg-red-500/5 p-3 font-bold text-foreground">
+                          月々更新・いつでも解約可能
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </section>
+
+      {/* ===== 【1分診断】年間コスト削減シミュレーター ===== */}
+      <section
+        id="simulator"
+        className="border-border/60 border-t bg-gradient-to-b from-transparent via-red-500/5 to-transparent py-16 sm:py-24"
+      >
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 text-center">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3.5 py-1 font-black text-red-600 text-xs">
+              <Calculator className="h-4 w-4" />
+              <span>1-MINUTE COST SAVINGS CALCULATOR</span>
+            </div>
+            <h2 className="font-black text-3xl text-foreground tracking-tight sm:text-5xl">
+              紙の契約書からデンケイに切り替えると、
+              <br className="hidden sm:inline" />
+              年間いくら浮く？
+            </h2>
+            <p className="mt-3 font-medium text-base text-muted-foreground sm:text-lg">
+              貴社の月間契約書件数を選ぶだけで、削減できるコストと時間が瞬時にわかります。
+            </p>
+          </div>
+
+          <div className="space-y-8 rounded-3xl border-2 border-border/80 bg-card p-6 shadow-2xl sm:p-10">
+            {/* 件数セレクター ＆ オプション */}
+            <div>
+              <div className="mb-4 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                <label htmlFor="contracts-slider" className="font-black text-foreground text-lg sm:text-xl">
+                  月間の契約書・合意書 送信件数
+                </label>
+                <span className="font-black text-2xl text-red-600 sm:text-3xl">月 {monthlyContracts} 件</span>
+              </div>
+
+              {/* プリセットボタングループ */}
+              <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[10, 30, 50, 100].map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setMonthlyContracts(count)}
+                    className={`rounded-xl border-2 px-4 py-3 font-black text-sm transition-all sm:text-base ${
+                      monthlyContracts === count
+                        ? 'scale-102 border-red-600 bg-red-600 text-white shadow-lg shadow-red-600/25'
+                        : 'border-border bg-muted/40 text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    月 {count} 件{' '}
+                    {count === 30 && <span className="block font-normal text-[10px]">（平均的中小企業）</span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* スライダー */}
+              <input
+                id="contracts-slider"
+                type="range"
+                min={3}
+                max={100}
+                step={1}
+                value={monthlyContracts}
+                onChange={(e) => setMonthlyContracts(Number(e.target.value))}
+                className="h-3 w-full cursor-pointer appearance-none rounded-lg bg-muted accent-red-600"
+              />
+              <div className="mt-2 flex justify-between font-bold text-muted-foreground text-xs">
+                <span>月3件（無料枠）</span>
+                <span>月50件</span>
+                <span>月100件（上限目安）</span>
+              </div>
+
+              {/* 特定記録郵便オプション */}
+              <div className="mt-6 flex flex-col justify-between gap-3 rounded-2xl border border-border/80 bg-muted/30 p-4 sm:flex-row sm:items-center">
+                <label className="flex cursor-pointer select-none items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={includeRegisteredMail}
+                    onChange={(e) => setIncludeRegisteredMail(e.target.checked)}
+                    className="h-5 w-5 cursor-pointer rounded border-2 border-red-500 text-red-600 accent-red-600"
+                  />
+                  <div>
+                    <span className="font-bold text-foreground text-sm sm:text-base">
+                      特定記録郵便（+210円/通）を付ける
+                    </span>
+                    <span className="block text-muted-foreground text-xs">
+                      契約書の紛失防止・配達記録・追跡番号が必要な場合の加算
+                    </span>
+                  </div>
+                </label>
+                <Badge
+                  variant={includeRegisteredMail ? 'default' : 'outline'}
+                  className="self-start font-bold text-xs sm:self-auto"
+                >
+                  {includeRegisteredMail ? '1通あたり 920円' : '1通あたり 710円（基本）'}
+                </Badge>
+              </div>
+            </div>
+
+            {/* 結果表示ハイライトカード */}
+            <div className="grid grid-cols-1 gap-6 border-border border-t pt-6 md:grid-cols-2">
+              {/* 年間削減コスト */}
+              <div className="flex flex-col justify-between rounded-2xl border-2 border-red-500/30 bg-red-500/5 p-6 sm:p-8">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 font-black text-red-600 text-xs uppercase tracking-wider">
+                    <TrendingDown className="h-4 w-4" />
+                    <span>年間コスト削減額（見込み）</span>
+                  </div>
+                  <div className="font-black text-4xl text-red-600 tracking-tight sm:text-6xl">
+                    ¥{annualSavings.toLocaleString()}
+                  </div>
+                  <div className="mt-2 font-medium text-muted-foreground text-xs sm:text-sm">
+                    従来の紙費用 約 ¥{annualPaperCost.toLocaleString()} → デンケイなら ¥
+                    {denkeiAnnualCost.toLocaleString()}
+                  </div>
+                </div>
+                <div className="mt-4 border-red-500/20 border-t pt-3 font-bold text-red-700 text-xs dark:text-red-400">
+                  ※ 印紙代（平均400円）＋ 製本印刷代（200円）＋ 定形郵送代（110円
+                  {includeRegisteredMail ? ' ＋ 特定記録210円' : ''}）
+                </div>
+              </div>
+
+              {/* 年間削減時間 */}
+              <div className="flex flex-col justify-between rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/5 p-6 sm:p-8">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 font-black text-emerald-600 text-xs uppercase tracking-wider">
+                    <Clock className="h-4 w-4" />
+                    <span>年間削減できる作業時間</span>
+                  </div>
+                  <div className="font-black text-4xl text-emerald-600 tracking-tight sm:text-6xl">
+                    約 {annualHoursSaved} 時間
+                  </div>
+                  <div className="mt-2 font-medium text-muted-foreground text-xs sm:text-sm">
+                    印刷・割印・製本・封入・郵便局窓口の往復作業を丸ごと削減
+                  </div>
+                </div>
+                <div className="mt-4 border-emerald-500/20 border-t pt-3 font-bold text-emerald-700 text-xs dark:text-emerald-400">
+                  ※ 契約書1通あたり約12分の事務処理時間短縮で試算
+                </div>
+              </div>
+            </div>
+
+            {/* 公式守護武者・デンケイのアドバイス吹き出し */}
+            <div className="relative flex items-start gap-4 rounded-2xl border-2 border-red-500/30 bg-background/90 p-5 shadow-lg">
+              <img
+                src="/images/denkei-mascot-circle.webp"
+                alt="デンケイ"
+                className="h-12 w-12 flex-shrink-0 rounded-full border border-red-500/30"
+              />
+              <div className="flex-1">
+                <div className="mb-1 font-black text-red-600 text-xs">公式守護武者・デンケイの診断結果</div>
+                <p className="font-bold text-foreground text-sm leading-snug sm:text-base">「{denkeiComment}」</p>
+              </div>
+            </div>
+
+            {/* 試算の内訳詳細アコーディオン */}
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="sim-breakdown" className="rounded-xl border bg-muted/20 px-4">
+                <AccordionTrigger className="font-bold text-muted-foreground text-xs hover:no-underline sm:text-sm">
+                  試算の根拠と内訳・大手他社との比較を見る
+                </AccordionTrigger>
+                <AccordionContent className="space-y-2 pt-2 pb-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
+                  <div>
+                    <span className="font-bold text-foreground">従来の紙契約書にかかる1通あたり想定コスト内訳：</span>
+                    収入印紙代平均 400円 ＋ 製本代・印刷用紙トナー代 200円 ＋ 定形郵便基本料
+                    110円（特定記録郵便オプション選択時は +210円加算） ＝ <strong>約710円〜920円 / 通</strong>
+                  </div>
+                  <div>
+                    <span className="font-bold text-foreground">作業時間短縮の根拠：</span>
+                    契約書2部印刷、製本テープ貼り付け、割印・押印、返信用封筒同封、宛名ラベル印刷、ポスト投函にかかる一連の事務時間（
+                    <strong>1通あたり平均12分</strong>）を電子化によってゼロに短縮。
+                  </div>
+                  <div>
+                    <span className="font-bold text-foreground">大手電子契約サービスとの年間費用の差：</span>
+                    大手では基本料（月11,000円）＋従量送信料（1件220円）が発生するため、月30件の場合で年間約21.1万円、月100件で年間約39.6万円かかります。
+                    デンケイならスタンダード月額2,980円（年間35,760円）の完全定額で、約83%〜91%のコスト削減となります。
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* シミュレーター内CTA */}
+            <div className="pt-2 text-center">
+              <Link to={`/signup?name=${encodeURIComponent(sealName.trim() || '佐藤')}`}>
+                <Button
+                  size="lg"
+                  className="h-14 w-full bg-red-600 px-10 font-extrabold text-lg text-white shadow-red-600/25 shadow-xl hover:bg-red-700 sm:w-auto"
+                >
+                  この削減効果を無料で試す（月3件まで0円）
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== 初期搭載テンプレート（見出し大 ＋ アコーディオン） ===== */}
+      <section id="templates" className="border-border/60 border-t bg-muted/20 py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h2 className="font-bold text-red-600 text-xs uppercase tracking-widest">TEMPLATES</h2>
+            <p className="mt-2 font-black text-3xl text-foreground tracking-tight sm:text-5xl">
+              日本の3大定型契約書を初期搭載
+            </p>
+            <p className="mt-3 font-medium text-base text-muted-foreground sm:text-lg">
+              PDFの準備は不要。相手名と金額を入れるだけで即日送信できます。
+            </p>
+          </div>
+
+          <Accordion type="single" collapsible className="space-y-4">
+            <AccordionItem value="tmpl-1" className="rounded-2xl border-2 border-border/80 bg-card p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 font-bold text-red-600">
+                    1
+                  </div>
+                  <div>
+                    <h3 className="font-black text-foreground text-xl sm:text-2xl">業務委託基本契約書</h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm">
+                      フリーランス・外注先とのトラブルを防ぐ標準契約
+                    </p>
+                  </div>
+                </div>
+                <AccordionTrigger className="font-bold text-red-600 text-sm hover:no-underline">
+                  条文詳細
+                </AccordionTrigger>
+              </div>
+              <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
+                知的財産権の帰属、納品検査、支払期日、再委託、秘密保持、損害賠償上限条項を完全網羅。
+                差し込み変数（委託料・業務内容・期日）を入力するだけで即時PDF生成。
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="tmpl-2" className="rounded-2xl border-2 border-border/80 bg-card p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 font-bold text-amber-600">
+                    2
+                  </div>
+                  <div>
+                    <h3 className="font-black text-foreground text-xl sm:text-2xl">秘密保持契約書 (NDA)</h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm">商談前・新規提携検討時の必須契約</p>
+                  </div>
+                </div>
+                <AccordionTrigger className="font-bold text-amber-600 text-sm hover:no-underline">
+                  条文詳細
+                </AccordionTrigger>
+              </div>
+              <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
+                双務開示（双方が秘密情報を開示し合う）に対応。秘密情報の定義、目的外利用の禁止、
+                契約終了時の返還破棄、有効期間（締結から2年間等）を規定。
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="tmpl-3" className="rounded-2xl border-2 border-border/80 bg-card p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 font-bold text-emerald-600">
+                    3
+                  </div>
+                  <div>
+                    <h3 className="font-black text-foreground text-xl sm:text-2xl">雇用契約書 / 労働条件通知書</h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm">正社員・パート採用時の労基法義務付け文書</p>
+                  </div>
+                </div>
+                <AccordionTrigger className="font-bold text-emerald-600 text-sm hover:no-underline">
+                  条文詳細
+                </AccordionTrigger>
+              </div>
+              <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
+                就業場所、業務内容、所定労働時間、休日休暇、賃金計算、退職に関する事項を兼ね備えた合一書面。
+                電磁的交付に関する労働基準法規則に適合。
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </section>
+
+      {/* ===== 料金プラン（大数字・明朗・比較アコーディオン） ===== */}
+      <section id="pricing" className="border-border/60 border-t py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h2 className="font-bold text-red-600 text-xs uppercase tracking-widest">PRICING</h2>
+            <p className="mt-2 font-black text-3xl text-foreground tracking-tight sm:text-5xl">
+              追加請求なし。シンプルな定額プラン。
             </p>
 
             {/* 年払い/月払いトグル */}
-            <div className="mt-8 flex items-center justify-center gap-3">
+            <div className="mt-6 flex items-center justify-center gap-3">
               <span className={`text-sm ${!isAnnual ? 'font-bold text-foreground' : 'text-muted-foreground'}`}>
                 月々払い
               </span>
               <button
                 type="button"
                 onClick={() => setIsAnnual(!isAnnual)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
                   isAnnual ? 'bg-red-600' : 'bg-muted-foreground/30'
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
                     isAnnual ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
@@ -698,167 +981,114 @@ export function LandingPage() {
               <span
                 className={`flex items-center gap-1.5 text-sm ${isAnnual ? 'font-bold text-foreground' : 'text-muted-foreground'}`}
               >
-                年一括払い
-                <Badge className="bg-red-600 px-1.5 py-0 text-[10px] text-white">2ヶ月分実質無料</Badge>
+                年一括払い <Badge className="bg-red-600 text-[10px] text-white">2ヶ月実質無料</Badge>
               </span>
             </div>
           </div>
 
-          <div className="mt-16 grid grid-cols-1 items-stretch gap-8 md:grid-cols-3">
-            {/* 1. フリープラン */}
-            <Card className="flex flex-col border-border/80 bg-card shadow-md">
-              <CardContent className="flex flex-1 flex-col p-8">
-                <div className="font-bold text-muted-foreground text-xs uppercase tracking-wider">FREE PLAN</div>
-                <h3 className="mt-2 font-bold text-2xl text-foreground">フリープラン</h3>
-                <p className="mt-1 text-muted-foreground text-xs">まずは試したい個人・小規模事業者向け</p>
-
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-extrabold text-4xl text-foreground">¥0</span>
-                  <span className="text-muted-foreground text-xs">/ 月</span>
+          <div className="grid grid-cols-1 items-stretch gap-8 md:grid-cols-3">
+            {/* フリー */}
+            <Card className="flex flex-col rounded-2xl border-2 border-border bg-card p-6 sm:p-8">
+              <CardContent className="flex flex-1 flex-col p-0">
+                <span className="font-bold text-muted-foreground text-xs">FREE</span>
+                <h3 className="mt-1 font-black text-2xl text-foreground">フリープラン</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="font-black text-5xl text-foreground">¥0</span>
                 </div>
-                <div className="mt-1 text-muted-foreground text-xs">永久無料・クレジットカード登録不要</div>
+                <div className="mt-1 text-muted-foreground text-xs">クレカ登録不要・期限なし</div>
 
-                <ul className="mt-8 flex-1 space-y-3 text-foreground text-sm">
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>
-                      <strong>月3件</strong>まで送信可能
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>電子認印（朱肉丸印）自動生成</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>スマホ10秒親指押印</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>メールOTP二要素認証</span>
-                  </li>
-                  <li className="flex items-center gap-2.5 text-muted-foreground">
-                    <X className="h-4 w-4 flex-shrink-0 text-neutral-400" />
-                    <span>電帳法事務処理規程キット</span>
-                  </li>
-                </ul>
+                <div className="mt-6 flex-1 space-y-2 font-bold text-sm">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> 月3件まで送信無料
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> 電子認印（赤丸印）
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> メールOTP二要素認証
+                  </div>
+                </div>
 
                 <Link to="/signup" className="mt-8 block">
-                  <Button variant="outline" className="w-full font-semibold">
-                    無料で今すぐ登録
+                  <Button variant="outline" size="lg" className="h-12 w-full font-bold text-base">
+                    無料で今すぐ試す
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            {/* 2. スタンダードプラン（主力） */}
-            <Card className="relative z-10 flex scale-105 flex-col border-2 border-red-600 bg-card shadow-2xl">
+            {/* スタンダード（一番人気・デンケイのおすすめ） */}
+            <Card className="relative z-10 flex scale-105 flex-col rounded-2xl border-3 border-red-600 bg-card p-6 shadow-2xl sm:p-8">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                <Badge className="bg-red-600 px-4 py-1 font-bold text-white text-xs shadow-md shadow-red-600/30">
-                  一番人気・中小企業標準
+                <Badge className="flex items-center gap-1.5 bg-red-600 px-4 py-1 font-extrabold text-white text-xs shadow-md">
+                  <img src="/images/denkei-mascot-circle.webp" alt="デンケイ" className="h-3.5 w-3.5 rounded-full" />
+                  <span>デンケイのおすすめ・中小企業標準</span>
                 </Badge>
               </div>
 
-              <CardContent className="flex flex-1 flex-col p-8">
-                <div className="font-bold text-red-600 text-xs uppercase tracking-wider">STANDARD PLAN</div>
-                <h3 className="mt-2 font-bold text-2xl text-foreground">スタンダード</h3>
-                <p className="mt-1 text-muted-foreground text-xs">日常の契約業務をこれ1つで網羅する定額プラン</p>
-
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-extrabold text-4xl text-red-600">¥{standardPrice}</span>
-                  <span className="text-muted-foreground text-xs">（税込） / 月</span>
+              <CardContent className="flex flex-1 flex-col p-0">
+                <span className="font-bold text-red-600 text-xs">STANDARD</span>
+                <h3 className="mt-1 font-black text-2xl text-foreground">スタンダード</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="font-black text-5xl text-red-600">¥{standardPrice}</span>
+                  <span className="font-bold text-muted-foreground text-xs">（税込）/ 月</span>
                 </div>
-                <div className="mt-1 text-muted-foreground text-xs">
-                  {isAnnual ? '年払い一括（実質2ヶ月OFF）' : '月々更新・縛りなし'}
-                </div>
+                <div className="mt-1 text-muted-foreground text-xs">月100件まで定額込み</div>
 
-                <ul className="mt-8 flex-1 space-y-3 text-foreground text-sm">
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-red-600" />
-                    <span>
-                      <strong>月100件</strong>まで送信定額（1件約29.8円）
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-red-600" />
-                    <span>
-                      <strong>電帳法 事務処理規程キット</strong>（1クリック出力）
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-red-600" />
-                    <span>
-                      <strong>3大定型契約雛形</strong>（業務委託・NDA・雇用）
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-red-600" />
-                    <span>
-                      <strong>適格請求書（インボイス T番号）</strong>自動発行
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-red-600" />
-                    <span>電子認印（朱肉丸印）＆スマホ10秒親指押印</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-red-600" />
-                    <span>WORM暗号化＆SHA-256監査ログハッシュ</span>
-                  </li>
-                </ul>
+                <div className="mt-6 flex-1 space-y-2.5 font-bold text-sm">
+                  <div className="flex items-center gap-2 text-red-600">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" /> 月100件まで送信可能
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 電帳法 事務処理規程キット
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 3大定型契約雛形＆差し込み
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> インボイス適格請求書（T番号）
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 改ざん防止WORM監査ログ
+                  </div>
+                </div>
 
                 <Link to="/signup" className="mt-8 block">
-                  <Button className="h-11 w-full bg-red-600 font-bold text-white shadow-lg shadow-red-600/30 hover:bg-red-700">
+                  <Button
+                    size="lg"
+                    className="h-14 w-full bg-red-600 font-black text-lg text-white shadow-lg shadow-red-600/30 hover:bg-red-700"
+                  >
                     スタンダードで始める
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            {/* 3. ビジネスプラン */}
-            <Card className="flex flex-col border-border/80 bg-card shadow-md">
-              <CardContent className="flex flex-1 flex-col p-8">
-                <div className="font-bold text-muted-foreground text-xs uppercase tracking-wider">BUSINESS PLAN</div>
-                <h3 className="mt-2 font-bold text-2xl text-foreground">ビジネス</h3>
-                <p className="mt-1 text-muted-foreground text-xs">大量送信・チーム複数名での運用向け</p>
-
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="font-extrabold text-4xl text-foreground">¥{businessPrice}</span>
-                  <span className="text-muted-foreground text-xs">（税込） / 月</span>
+            {/* ビジネス */}
+            <Card className="flex flex-col rounded-2xl border-2 border-border bg-card p-6 sm:p-8">
+              <CardContent className="flex flex-1 flex-col p-0">
+                <span className="font-bold text-muted-foreground text-xs">BUSINESS</span>
+                <h3 className="mt-1 font-black text-2xl text-foreground">ビジネス</h3>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="font-black text-5xl text-foreground">¥{businessPrice}</span>
+                  <span className="font-bold text-muted-foreground text-xs">（税込）/ 月</span>
                 </div>
-                <div className="mt-1 text-muted-foreground text-xs">
-                  {isAnnual ? '年払い一括（実質2ヶ月OFF）' : '月々更新・縛りなし'}
-                </div>
+                <div className="mt-1 text-muted-foreground text-xs">大量送信・チーム運用</div>
 
-                <ul className="mt-8 flex-1 space-y-3 text-foreground text-sm">
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>
-                      <strong>件数無制限</strong>（送信し放題）
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>
-                      <strong>CSV一括送信</strong>（数十社へ一斉締結）
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>チームメンバー複数アカウント管理</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>スタンダードの全機能込み</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    <span>優先サポート窓口</span>
-                  </li>
-                </ul>
+                <div className="mt-6 flex-1 space-y-2 font-bold text-sm">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> 送信件数 無制限（使い放題）
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> CSV一括送信（数十社へ一斉締結）
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> 複数チームメンバー管理
+                  </div>
+                </div>
 
                 <Link to="/signup" className="mt-8 block">
-                  <Button variant="outline" className="w-full font-semibold">
+                  <Button variant="outline" size="lg" className="h-12 w-full font-bold text-base">
                     ビジネスで始める
                   </Button>
                 </Link>
@@ -868,162 +1098,102 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ===== よくあるご質問 (FAQ) ===== */}
-      <section id="faq" className="py-20">
+      {/* ===== よくあるご質問（大文字アコーディオン） ===== */}
+      <section id="faq" className="border-border/60 border-t bg-muted/20 py-16 sm:py-24">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="font-semibold text-red-600 text-xs uppercase tracking-widest">FAQ</h2>
-            <p className="mt-2 font-extrabold text-3xl text-foreground tracking-tight sm:text-4xl">よくあるご質問</p>
+          <div className="mb-10 text-center">
+            <h2 className="font-bold text-red-600 text-xs uppercase tracking-widest">FAQ</h2>
+            <p className="mt-2 font-black text-3xl text-foreground tracking-tight sm:text-5xl">よくあるご質問</p>
+            <div className="mt-3 flex items-center justify-center gap-2 font-bold text-muted-foreground text-xs sm:text-sm">
+              <img src="/images/denkei-mascot-circle.webp" alt="デンケイ" className="h-5 w-5 rounded-full" />
+              <span>疑問があれば、拙者にお尋ねあれ！</span>
+            </div>
           </div>
 
-          <div className="mt-12">
-            <Accordion type="single" collapsible className="w-full space-y-4">
-              <AccordionItem value="item-1" className="rounded-xl border border-border/80 bg-card px-6">
-                <AccordionTrigger className="py-5 text-left font-bold text-base hover:no-underline">
-                  Q. タイムスタンプがなくても、電子帳簿保存法に違反しませんか？
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                  はい、完全に合法です。国税庁の「電子帳簿保存法一問一答（スキャナ保存・電子取引関係）」において、
-                  真実性の確保要件として「正当な理由がない訂正及び削除の防止に関する事務処理規程を定め、これに沿った運用を行うこと」が明確に認められています。
-                  デンケイでは管理画面からワンクリックで国税庁準拠の社内規程（貴社名入り）をダウンロードして備え付けることができるため、外部タイムスタンプ費用を一切払わずに適法運用が可能です。
-                </AccordionContent>
-              </AccordionItem>
+          <Accordion type="single" collapsible className="space-y-4">
+            <AccordionItem value="faq-1" className="rounded-2xl border-2 border-border/80 bg-card px-6">
+              <AccordionTrigger className="py-5 text-left font-black text-lg hover:no-underline sm:text-xl">
+                Q. タイムスタンプなしで電帳法に違反しませんか？
+              </AccordionTrigger>
+              <AccordionContent className="pb-5 text-base text-muted-foreground leading-relaxed">
+                違反しません。国税庁が定める「電子取引関係
+                事務処理規程（第4号）」を備え付けることで法令に完全に適合します。
+                デンケイでは貴社名入りの規程をワンクリックでダウンロードできます。
+              </AccordionContent>
+            </AccordionItem>
 
-              <AccordionItem value="item-2" className="rounded-xl border border-border/80 bg-card px-6">
-                <AccordionTrigger className="py-5 text-left font-bold text-base hover:no-underline">
-                  Q. 契約相手（受信者）はお金がかかりますか？アカウント登録は必要ですか？
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                  契約相手の費用は一切不要（完全無料）です。また、相手方がデンケイのアカウントを作成したりログインしたりする必要もありません。
-                  届いたメールのリンクをクリックするだけで、スマホやPCのブラウザから直ちに契約内容を確認し、10秒で電子認印を押印して締結を完了できます。
-                </AccordionContent>
-              </AccordionItem>
+            <AccordionItem value="faq-2" className="rounded-2xl border-2 border-border/80 bg-card px-6">
+              <AccordionTrigger className="py-5 text-left font-black text-lg hover:no-underline sm:text-xl">
+                Q. 契約相手はお金がかかりますか？ 登録は必要ですか？
+              </AccordionTrigger>
+              <AccordionContent className="pb-5 text-base text-muted-foreground leading-relaxed">
+                完全無料です。相手方は会員登録もアプリのインストールも不要で、届いたメールを開くだけでスマホから10秒で認印を押印できます。
+              </AccordionContent>
+            </AccordionItem>
 
-              <AccordionItem value="item-3" className="rounded-xl border border-border/80 bg-card px-6">
-                <AccordionTrigger className="py-5 text-left font-bold text-base hover:no-underline">
-                  Q. スタンダードプランの月100件を超えた場合はどうなりますか？
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                  勝手に追加課金されて想定外の請求が発生することは一切ありません。
-                  100件に達した場合は送信が一時的に制限される安全設計となっております。
-                  翌月にリセットされるか、必要に応じて件数無制限の「ビジネスプラン（月額4,980円）」へワンクリックでアップグレードできます。
-                </AccordionContent>
-              </AccordionItem>
+            <AccordionItem value="faq-3" className="rounded-2xl border-2 border-border/80 bg-card px-6">
+              <AccordionTrigger className="py-5 text-left font-black text-lg hover:no-underline sm:text-xl">
+                Q. 月100件を超えた場合はどうなりますか？
+              </AccordionTrigger>
+              <AccordionContent className="pb-5 text-base text-muted-foreground leading-relaxed">
+                勝手に追加課金されることはありません。制限がかかる安全設計ですので、必要に応じて無制限プラン（月額4,980円）にいつでもアップグレードできます。
+              </AccordionContent>
+            </AccordionItem>
 
-              <AccordionItem value="item-4" className="rounded-xl border border-border/80 bg-card px-6">
-                <AccordionTrigger className="py-5 text-left font-bold text-base hover:no-underline">
-                  Q. 画面で押印される「認印（赤丸印）」は法的に有効ですか？
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                  はい、法的に有効です。日本の民法522条第2項（契約の成立要件）により、契約は書面や実印の有無にかかわらず、当事者の意思表示の合致によって成立します。
-                  デンケイの認印システムは、受信者の苗字をもとに高解像度ベクターで日本の伝統的丸印を自動描画すると同時に、
-                  押印日時・IPアドレス・メール認証コード・SHA-256ハッシュをデータベース（WORM監査ログ）に不可逆連鎖記録するため、
-                  「いつ、誰が合意したか」を確実に証拠化できます。
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-5" className="rounded-xl border border-border/80 bg-card px-6">
-                <AccordionTrigger className="py-5 text-left font-bold text-base hover:no-underline">
-                  Q. インボイス制度（適格請求書）に対応していますか？
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                  はい、完全対応しています。ご契約プランのお支払いごとに、管理画面の「請求履歴」から
-                  適格請求書発行事業者登録番号（T+13桁）および10%消費税額の内訳が明記された「適格請求書」をワンクリックでプレビュー・PDF印刷していただけます。
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-6" className="rounded-xl border border-border/80 bg-card px-6">
-                <AccordionTrigger className="py-5 text-left font-bold text-base hover:no-underline">
-                  Q. フリープランから自動的に有料プランに課金されることはありますか？
-                </AccordionTrigger>
-                <AccordionContent className="pb-5 text-muted-foreground text-sm leading-relaxed">
-                  一切ありません。フリープランの登録時にはクレジットカードの入力自体が不要です。
-                  有料プラン（月額2,980円〜）をご利用になりたい場合のみ、管理画面から自発的にお手続きいただく安心設計です。
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
+            <AccordionItem value="faq-4" className="rounded-2xl border-2 border-border/80 bg-card px-6">
+              <AccordionTrigger className="py-5 text-left font-black text-lg hover:no-underline sm:text-xl">
+                Q. インボイス制度（適格請求書）に対応していますか？
+              </AccordionTrigger>
+              <AccordionContent className="pb-5 text-base text-muted-foreground leading-relaxed">
+                対応しています。管理画面から登録番号（T+13桁）および10%消費税額が記載された適格請求書をいつでも出力・印刷いただけます。
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </section>
 
-      {/* ===== 最終CTAセクション ===== */}
-      <section className="border-border/50 border-t bg-gradient-to-t from-red-500/10 via-background to-background py-20">
-        <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
-          <div className="mb-6 inline-flex items-center justify-center rounded-2xl bg-red-600 p-3 text-white shadow-red-600/30 shadow-xl">
-            <Stamp className="h-8 w-8" />
+      {/* ===== 最終CTA ===== */}
+      <section className="border-border/60 border-t bg-gradient-to-t from-red-500/10 via-background to-background py-20 text-center">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          {/* デンケイの掛け声バッジ */}
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 font-bold text-red-600 text-sm">
+            <img src="/images/denkei-mascot-circle.webp" alt="デンケイ" className="h-5 w-5 rounded-full" />
+            <span>「月3件まで0円でござる！ まずは1分でお試しあれ！」</span>
           </div>
 
-          <h2 className="font-extrabold text-3xl text-foreground tracking-tight sm:text-5xl">
-            今日から、契約書の印刷・製本・郵送・印紙代を
-            <br className="hidden sm:inline" />
+          <h2 className="font-black text-3xl text-foreground tracking-tight sm:text-5xl">
+            今日から、契約書の印刷・郵送・印紙代を
+            <br />
             すべて<span className="text-red-600">ゼロ</span>に。
           </h2>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-            月額2,980円で100件まで契約し放題。電帳法対応キットも認印機能もすべて込み。
-            <br />
-            まずはクレジットカード不要の無料プランで、10秒押印を体験してください。
-          </p>
-
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link to="/signup">
+          <div className="mt-8 flex justify-center">
+            <Link to={`/signup?name=${encodeURIComponent(sealName.trim() || '佐藤')}`}>
               <Button
                 size="lg"
-                className="h-14 bg-red-600 px-10 font-bold text-lg text-white shadow-2xl shadow-red-600/30 transition-all hover:scale-105 hover:bg-red-700"
+                className="h-16 bg-red-600 px-12 font-black text-white text-xl shadow-2xl shadow-red-600/30 transition-all hover:scale-105 hover:bg-red-700"
               >
-                無料ではじめる（月3件まで0円・クレカ不要）
-                <ArrowRight className="ml-2 h-5 w-5" />
+                無料ではじめる（月3件まで0円）
+                <ArrowRight className="ml-3 h-6 w-6" />
               </Button>
             </Link>
           </div>
 
-          <p className="mt-4 text-muted-foreground text-xs">登録は1分で完了。いつでも退会・ダウングレード可能です。</p>
+          <p className="mt-4 font-medium text-muted-foreground text-sm">クレジットカード不要・1分で登録完了</p>
         </div>
       </section>
 
       {/* ===== フッター ===== */}
-      <footer className="border-border/60 border-t bg-muted/40 py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="flex items-center gap-x-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded bg-red-600 font-bold text-white text-xs">
-                印
-              </div>
-              <span className="font-bold text-foreground text-sm">
-                デンケイ{' '}
-                <span className="font-normal text-muted-foreground text-xs">| 中小企業特化型 電子契約サービス</span>
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-muted-foreground text-xs">
-              <a href="#features" className="hover:text-foreground">
-                特徴
-              </a>
-              <a href="#comparison" className="hover:text-foreground">
-                他社比較
-              </a>
-              <a href="#pricing" className="hover:text-foreground">
-                料金プラン
-              </a>
-              <a href="#compliance" className="hover:text-foreground">
-                電帳法適合
-              </a>
-              <a href="#faq" className="hover:text-foreground">
-                FAQ
-              </a>
-              <Link to="/articles/signature-disclosure" className="hover:text-foreground">
-                電子署名に関する開示情報
-              </Link>
-            </div>
+      <footer className="border-border/60 border-t bg-muted/40 py-10 text-center text-muted-foreground text-xs">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row">
+          <div className="flex items-center gap-2 font-bold text-foreground">
+            <img src="/images/denkei-mascot-circle.webp" alt="デンケイ" className="h-6 w-6 rounded-full" />
+            <span>デンケイ</span>
+            <span className="font-normal text-muted-foreground">
+              | 中小企業特化型 電子契約サービス（公式キャラクター：デンケイ）
+            </span>
           </div>
-
-          <div className="mt-8 flex flex-col items-center justify-between gap-4 border-border/40 border-t pt-8 text-muted-foreground text-xs sm:flex-row">
-            <div>© 2026 デンケイ (Denkei). All rights reserved.</div>
-            <div className="flex items-center gap-4">
-              <span>電子帳簿保存法 第3条・第4条準拠</span>
-              <span>インボイス制度（適格請求書）対応</span>
-            </div>
-          </div>
+          <div>© 2026 デンケイ (Denkei). 電子帳簿保存法第3条・第4条準拠 / インボイス制度対応</div>
         </div>
       </footer>
     </div>

@@ -11,6 +11,7 @@ import { getRecipientSignatures } from '@documenso/lib/server-only/recipient/get
 import { getUserByEmail } from '@documenso/lib/server-only/user/get-user-by-email';
 import { isDocumentCompleted } from '@documenso/lib/utils/document';
 import { trpc } from '@documenso/trpc/react';
+import { DenkeiCallout } from '@documenso/ui';
 import { DocumentShareButton } from '@documenso/ui/components/document/document-share-button';
 import { SigningCard3D } from '@documenso/ui/components/signing-card';
 import { cn } from '@documenso/ui/lib/utils';
@@ -22,13 +23,11 @@ import { DocumentStatus, FieldType, RecipientRole } from '@prisma/client';
 import { CheckCircle2, Clock8, DownloadIcon, Loader2 } from 'lucide-react';
 import { Link } from 'react-router';
 import { match } from 'ts-pattern';
-
 import { EnvelopeDownloadDialog } from '~/components/dialogs/envelope-download-dialog';
 import { ClaimAccount } from '~/components/general/claim-account';
 import { DocumentSigningAuthPageView } from '~/components/general/document-signing/document-signing-auth-page';
 import { RecipientBranding } from '~/components/general/recipient-branding';
 import { useCspNonce } from '~/utils/nonce';
-import { DenkeiCallout } from '@documenso/ui';
 
 import type { Route } from './+types/complete';
 
@@ -249,16 +248,21 @@ export default function CompletedSigningPage({ loaderData }: Route.ComponentProp
                 </p>
               ))}
 
-            <div className="mt-6 w-full max-w-md">
+            <div className="mt-6 w-full max-w-md space-y-2">
               <DenkeiCallout
                 variant="success"
-                title="デンケイの署名完了証明"
+                title="デンケイの合意・押印完了証明"
                 message={
                   <Trans>
-                    署名が正常に記録され、監査証跡（タイムスタンプ・IP・本人確認）が安全に保護されました。全当事者の合意完了後、署名済み合意書が自動送付されます。
+                    電子認印の押印と合意が正常に記録され、監査証跡（タイムスタンプ・IP・本人確認）が安全に保護されました。全当事者の合意完了後、署名済み合意書が自動送付されます。
                   </Trans>
                 }
               />
+              <div className="flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-center font-medium text-[11px] text-slate-600">
+                <span>⚖️ 民法第522条第2項・電帳法第4条準拠</span>
+                <span className="text-slate-300">|</span>
+                <span>PostgreSQL WORM改ざん遮断済</span>
+              </div>
             </div>
 
             <div className="mt-8 flex w-full max-w-xs flex-col items-stretch gap-4 md:w-auto md:max-w-none md:flex-row md:items-center">
@@ -296,15 +300,27 @@ export default function CompletedSigningPage({ loaderData }: Route.ComponentProp
           <div className="flex flex-col items-center">
             {canSignUp && (
               <div className="flex max-w-xl flex-col items-center justify-center p-4 md:p-12">
-                <h2 className="mt-8 text-center font-semibold text-xl md:mt-0">
-                  <Trans>Need to sign documents?</Trans>
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 font-semibold text-orange-800 text-xs shadow-sm">
+                  <img
+                    src="/images/denkei-mascot-circle.webp"
+                    alt="デンケイ"
+                    className="h-5 w-5 rounded-full object-cover"
+                  />
+                  <span>デンケイ公式</span>
+                </div>
+                <h2 className="text-center font-bold text-foreground text-xl md:text-2xl">
+                  <Trans>自社でも電子契約を始めてみませんか？</Trans>
                 </h2>
 
-                <p className="mt-4 max-w-[55ch] text-center text-muted-foreground/60 leading-normal">
-                  <Trans>Create your account and start using state-of-the-art document signing.</Trans>
+                <p className="mt-3 max-w-[50ch] text-center text-muted-foreground text-sm leading-relaxed">
+                  <Trans>
+                    デンケイなら月額2,980円で契約書が送り放題。印紙代・製本・郵送の手間を99%削減できます。まずは無料プラン（月3通まで無料）から登録。
+                  </Trans>
                 </p>
 
-                <ClaimAccount defaultName={recipientName} defaultEmail={recipient.email} />
+                <div className="mt-6 w-full max-w-md">
+                  <ClaimAccount defaultName={recipientName} defaultEmail={recipient.email} />
+                </div>
               </div>
             )}
           </div>

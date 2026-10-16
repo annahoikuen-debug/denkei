@@ -288,6 +288,25 @@ export const DocumentSigningCompleteDialog = ({
           <p className="font-medium text-muted-foreground text-sm">{documentTitle}</p>
         </div>
 
+        {recipient.role === RecipientRole.SIGNER && (
+          <div className="rounded-lg border border-red-200 bg-red-50/70 p-3.5 text-left text-xs">
+            <div className="flex items-center gap-2 font-bold text-red-950">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] text-white">
+                印
+              </span>
+              <span>
+                <Trans>電子認印による合意確定の確認</Trans>
+              </span>
+            </div>
+            <p className="mt-1.5 text-red-900 leading-relaxed">
+              <span className="font-semibold text-red-950">【{recipient.name || recipient.email}】</span>
+              <Trans>
+                様の電子認印（または署名）にて本契約を確定します。この操作は民法第522条第2項に基づき、法的拘束力を持つ有効な契約締結となります。
+              </Trans>
+            </p>
+          </div>
+        )}
+
         {match({ hasChildren: Boolean(children), showTwoFactorForm })
           .with({ hasChildren: true }, () => children)
           .with({ showTwoFactorForm: true }, () => (
@@ -409,10 +428,19 @@ export const DocumentSigningCompleteDialog = ({
                       <Trans>Cancel</Trans>
                     </Button>
 
-                    <Button type="submit" disabled={!isComplete} loading={form.formState.isSubmitting}>
+                    <Button
+                      type="submit"
+                      disabled={!isComplete}
+                      loading={form.formState.isSubmitting}
+                      className={
+                        recipient.role === RecipientRole.SIGNER
+                          ? 'bg-red-600 font-bold text-white hover:bg-red-700'
+                          : undefined
+                      }
+                    >
                       {match(recipient.role)
                         .with(RecipientRole.VIEWER, () => <Trans>Mark as Viewed</Trans>)
-                        .with(RecipientRole.SIGNER, () => <Trans>Sign</Trans>)
+                        .with(RecipientRole.SIGNER, () => <Trans>合意して電子認印を押印する</Trans>)
                         .with(RecipientRole.APPROVER, () => <Trans>Approve</Trans>)
                         .with(RecipientRole.CC, () => <Trans>Mark as Viewed</Trans>)
                         .with(RecipientRole.ASSISTANT, () => <Trans>Complete</Trans>)

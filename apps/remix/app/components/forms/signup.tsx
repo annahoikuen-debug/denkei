@@ -1,4 +1,3 @@
-import communityCardsImage from '@documenso/assets/images/community-cards.png';
 import { authClient } from '@documenso/auth/client';
 import { useAnalytics } from '@documenso/lib/client-only/hooks/use-analytics';
 import {
@@ -32,8 +31,6 @@ import { FaIdCardClip } from 'react-icons/fa6';
 import { FcGoogle } from 'react-icons/fc';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
-
-import { UserProfileTimur } from '~/components/general/user-profile-timur';
 
 export const ZSignUpFormSchema = z
   .object({
@@ -209,11 +206,15 @@ export const SignUpForm = ({
   };
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const nameParam = searchParams.get('name');
+    if (nameParam) {
+      form.setValue('name', nameParam);
+    }
+
     const hash = window.location.hash.slice(1);
-
-    const params = new URLSearchParams(hash);
-
-    const email = params.get('email');
+    const hashParams = new URLSearchParams(hash);
+    const email = searchParams.get('email') || hashParams.get('email');
 
     if (email) {
       form.setValue('email', email);
@@ -222,27 +223,29 @@ export const SignUpForm = ({
 
   return (
     <div className={cn('flex justify-center gap-x-12', className)}>
-      <div className="relative hidden flex-1 overflow-hidden rounded-xl border border-border xl:flex">
-        <div className="absolute -inset-8 -z-[2] backdrop-blur">
+      <div className="relative hidden flex-1 flex-col justify-between overflow-hidden rounded-2xl border border-red-500/20 bg-card p-8 shadow-xl xl:flex">
+        <div className="relative z-10 flex items-center gap-3 rounded-2xl border border-red-500/30 bg-background/95 p-3.5 shadow-md backdrop-blur-sm">
           <img
-            src={communityCardsImage}
-            alt="community-cards"
-            className="h-full w-full object-cover dark:brightness-95 dark:contrast-[70%] dark:invert"
+            src="/images/denkei-mascot-circle.webp"
+            alt="デンケイ"
+            className="h-11 w-11 flex-shrink-0 rounded-full border border-red-500/30"
           />
+          <div>
+            <div className="font-black text-red-600 text-xs">公式守護武者・デンケイ</div>
+            <div className="font-bold text-foreground text-sm">
+              「まずは月3件まで0円！ 拙者が貴社の契約を鉄壁ガードするでござる！」
+            </div>
+          </div>
         </div>
 
-        <div className="absolute -inset-8 -z-[1] bg-background/50 backdrop-blur-[2px]" />
+        <div className="relative my-auto overflow-hidden rounded-2xl border border-border bg-neutral-900/10 shadow-inner">
+          <img src="/images/denkei-mascot.webp" alt="デンケイ" className="h-auto w-full object-cover" />
+        </div>
 
-        <div className="relative flex h-full w-full flex-col items-center justify-evenly">
-          <div className="rounded-2xl border bg-background px-4 py-1 font-medium text-sm">
-            <Trans>User profiles are here!</Trans>
-          </div>
-
-          <div className="w-full max-w-md">
-            <UserProfileTimur rows={2} className="rounded-2xl border border-border bg-background shadow-md" />
-          </div>
-
-          <div />
+        <div className="relative z-10 flex justify-around border-border border-t pt-4 font-bold text-muted-foreground text-xs">
+          <span>✓ クレジットカード不要</span>
+          <span>✓ タイムスタンプ代 0円</span>
+          <span>✓ 電帳法 事務処理規程つき</span>
         </div>
       </div>
 

@@ -34,6 +34,7 @@
 **A.** 以下の方法が使えます：
 - **手書き署名** - マウスや指で直接書く
 - **タイプド署名** - 名前を入力し、署名風のフォントで表示
+- **電子印影** - 丸印・認印風の印影画像を生成して捺印
 
 受取人によっては、本人確認（メールOTP、パスワード、Passkeys等）を求められる場合があります。
 
@@ -60,19 +61,27 @@
 
 **A.** 文書の署名完了時に自動生成される証明書PDFです。署名者ごとの氏名、メールアドレス、認証方法、署名日時、IPアドレス、デバイス情報などを記録し、電子契約の証跡として利用できます。
 
+### Q11. 電子印影（丸印・認印）は使えますか？
+
+**A.** はい、使えます。デンケイには電子印影生成機能があり、氏名や会社名から丸印・認印風のPNG画像を生成して文書に捺印できます。朱色（#dc2626）が既定の捺印色です。
+
+### Q12. インボイス（適格請求書）は発行できますか？
+
+**A.** はい、発行できます。デンケイには適格請求書発行事業者登録番号（T番号、T+13桁）の検証、10%消費税の計算、インボイス対応請求書HTMLの生成機能があります。請求書・領収書のPDF出力も可能です。
+
 ---
 
 ## 管理者・セルフホスティング向け Q&A
 
-### Q11. デンケイを自分でホスティングできますか？
+### Q13. デンケイを自分でホスティングできますか？
 
 **A.** はい、できます。デンケイは AGPLv3 のオープンソースソフトウェアで、Docker コンテナ 1 つでセルフホスティング可能です。`docker compose -f docker/compose.standalone.yml up -d` で最小構成（PostgreSQL＋アプリ）を起動できます。
 
-### Q12. 最小構成でどれくらいのコストで運用できますか？
+### Q14. 最小構成でどれくらいのコストで運用できますか？
 
 **A.** 外部Redis・有料TSA・従量課金SMSなどの依存を排除し、PostgreSQL 1台＋アプリ 1台で動作するよう設計されています。契約あたり原価約 0.2〜0.5円、月額 2,980 円（月 100 件）程度での運用を想定しています（インフラ費用は別途）。
 
-### Q13. 必要な環境変数は何ですか？
+### Q15. 必要な環境変数は何ですか？
 
 **A.** 最低限以下を設定してください（`.env.example` を参照）：
 - `NEXTAUTH_SECRET` - 認証用シークレット（32文字以上のランダム文字列）
@@ -82,15 +91,15 @@
 
 その他は `.env.example` のデフォルト値で動作します。
 
-### Q14. 署名用の証明書（P12ファイル）は必要ですか？
+### Q16. 署名用の証明書（P12ファイル）は必要ですか？
 
 **A.** 開発・セルフホスティングでは P12 ファイル（`local` トランスポート）でも動作します。ただし、**本番環境では Google Cloud HSM（`gcloud-hsm`）を使用することが推奨・必須**です（電子署名法第3条への対応）。P12を本番で使う場合は `NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION=true` の明示的なオプトインが必要です。
 
-### Q15. タイムスタンプ局（TSA）は必須ですか？
+### Q17. タイムスタンプ局（TSA）は必須ですか？
 
 **A.** いいえ、必須ではありません。既定では `NEXT_PRIVATE_SIGNING_ENABLE_TSA="false"` で、外部TSAを使わない構成（SMB低コスト戦略）です。内部の監査ログハッシュチェーンで改ざん検知を行います。本格的な長期検証（LTV）が必要な場合は、総務省認定TSA事業者を設定してください。
 
-### Q16. メール送信の設定方法は？
+### Q18. メール送信の設定方法は？
 
 **A.** 以下のプロバイダから選べます（`NEXT_PRIVATE_SMTP_TRANSPORT`）：
 - `smtp-auth` - 通常のSMTP認証（既定）
@@ -100,29 +109,29 @@
 
 開発環境では Docker Compose で Inbucket メールサーバーが自動起動し、`http://localhost:9000` で送信メールをWeb確認できます。
 
-### Q17. データベースは PostgreSQL だけですか？
+### Q19. データベースは PostgreSQL だけですか？
 
 **A.** はい、デンケイは PostgreSQL を使用します。Prisma ORM と Kysely を使ってデータアクセスを行います。
 
-### Q18. ファイルストレージはどこに保存されますか？
+### Q20. ファイルストレージはどこに保存されますか？
 
 **A.** 以下から選べます（`NEXT_PUBLIC_UPLOAD_TRANSPORT`）：
 - `database` - データベース内包（既定、Base64保存、小規模運用向け）
 - `s3` - S3互換ストレージ（AWS S3、Cloudflare R2等、大容量運用向け）
 
-### Q19. バックアップはどう取ればよいですか？
+### Q21. バックアップはどう取ればよいですか？
 
 **A.** PostgreSQL の標準的なバックアップ（`pg_dump` 等）を定期的に取得してください。アップロードファイルがデータベース内包の場合、DBバックアップでファイルも含めてバックアップされます。S3を使用する場合は、S3側のバックアップ設定も必要です。
 
-### Q20. アップグレード方法は？
+### Q22. アップグレード方法は？
 
 **A.** Docker イメージを最新版にプルし、`docker compose up -d` で再起動します。マイグレーションはコンテナ起動時に自動適用されます。本番運用前には staging 環境で動作確認を行うことを推奨します。
 
-### Q21. 複数チーム・組織を管理できますか？
+### Q23. 複数チーム・組織を管理できますか？
 
 **A.** はい、できます。チームごとにメンバー・役割・設定を分けて管理できます。組織認証ポータル（SSO）は Enterprise Edition 機能です。
 
-### Q22. 請求・課金機能はありますか？
+### Q24. 請求・課金機能はありますか？
 
 **A.** Stripe との連携により、サブスクリプション課金などの課金機能が利用できます（`NEXT_PUBLIC_FEATURE_BILLING_ENABLED` で有効化）。課金関連機能の一部は Enterprise Edition 対象です。
 
@@ -130,15 +139,15 @@
 
 ## 開発者向け Q&A
 
-### Q23. このプロジェクトの技術構成は？
+### Q25. このプロジェクトの技術構成は？
 
 **A.** TypeScript、React 19、React Router v7 (Remix)、Hono サーバー、PostgreSQL（Prisma ORM）、Tailwind CSS、shadcn/ui + Radix UI、tRPC、ts-rest、pdf.js、@libpdf/core、Lingui（国際化）、Biome（リンター）、Playwright（E2Eテスト）、Turborepo（モノレポ管理）です。
 
-### Q24. モノレポの構造はどうなっていますか？
+### Q26. モノレポの構造はどうなっていますか？
 
 **A.** `apps/` にアプリケーション（remix, openpage-api, docs）、`packages/` にライブラリ（lib, prisma, trpc, api, ui, email, auth, signing, ee）を配置した npm ワークスペース + Turborepo モノレポです。
 
-### Q25. 新しい機能を追加するには？
+### Q27. 新しい機能を追加するには？
 
 **A.** 以下の手順で開発します：
 1. `git clone` してリポジトリを取得
@@ -150,7 +159,7 @@
 
 ビルドは `npm run build` ですが、開発時は `npx tsc --noEmit` で型チェックのみ行うことを推奨します（ビルドは時間がかかります）。
 
-### Q26. APIはどうなっていますか？
+### Q28. APIはどうなっていますか？
 
 **A.** 2つのAPIバージョンがあります：
 - **API V1** (`/api/v1/*`): ts-rest ベースのREST API（非推奨だが維持）
@@ -159,11 +168,11 @@
 
 認証は APIトークンまたはセッションクッキーを使用します。
 
-### Q27. 電子署名の仕組みは？
+### Q29. 電子署名の仕組みは？
 
 **A.** PDFファイルに対して PAdES (ETSI.CAdES.detached) 形式でデジタル署名を行います。`packages/signing/` に署名ロジックがあり、`local`（P12ファイル）または `gcloud-hsm`（Google Cloud KMS）のトランスポートを選択できます。RFC 3161 準拠のタイムスタンプ局（TSA）との連携も可能です。
 
-### Q28. 日本語対応はどうなっていますか？
+### Q30. 日本語対応はどうなっていますか？
 
 **A.** 以下のように日本語・日本ビジネス慣習に対応しています：
 - 画面・メールの日本語化（Lingui、既定言語は日本語）
@@ -171,45 +180,48 @@
 - 姓・名分離入力（`packages/lib/universal/japanese-name.ts`）
 - タイムゾーン Asia/Tokyo 固定
 - 日付形式の複数パターン対応（`packages/lib/constants/date-formats.ts`）
+- 電子印影（`packages/lib/universal/seal-image.ts`）
+- 適格請求書（`packages/lib/universal/qualified-invoice.ts`）
 
-### Q29. テストはどう書けばよいですか？
+### Q31. テストはどう書けばよいですか？
 
-**A.** 単体テストは Vitest、E2Eテストは Playwright を使用します。E2Eテストは `packages/app-tests/e2e/` に配置されています。`npm run test:e2e` で実行できます。
+**A.** 単体テストは Vitest、E2Eテストは Playwright を使用します。E2Eテストは `packages/app-tests/e2e/` に配置されています。`npm run test:e2e` で実行できます。日本語コア署名フローのテストは `jp-core-signing-flow.spec.ts` にあります。
 
-### Q30. 翻訳はどう管理していますか？
+### Q32. 翻訳はどう管理していますか？
 
-**A.** Lingui を使用し、Crowdin で翻訳を管理しています。`npm run translate:extract` で翻訳キーを抽出し、`npm run translate:compile` でコンパイルします。CI で翻訳チェックも自動実行されます。
+**A.** Lingui を使用し、Crowdin で翻訳を管理しています。`npm run translate:extract` で翻訳キーを抽出し、`npm run translate:compile` でコンパイルします。`scripts/check-translations.mjs` で ja 翻訳の未訳エントリを検出できます。CI で翻訳チェックも自動実行されます。
 
 ---
 
 ## 法的・セキュリティ向け Q&A
 
-### Q31. 日本の電子署名法に対応していますか？
+### Q33. 日本の電子署名法に対応していますか？
 
 **A.** はい、対応しています。PAdES (ETSI.CAdES.detached) 形式での電子署名、本人確認（メールOTP、Passkeys、2FA等）、改ざん検知、締結証明書の生成など、電子署名法第2条・第3条の要件を技術的に満たす実装を備えています。詳細は `LEGAL_BASIS_JP.md` を参照してください。
 
-### Q32. 電子帳簿保存法に対応していますか？
+### Q34. 電子帳簿保存法に対応していますか？
 
 **A.** はい、以下の要件に対応しています：
 - **真実性の確保**: ハッシュチェーン監査ログ（`DocumentAuditLog.prevHash/hash`）、改ざん検知
 - **検索要件**: 取引先名・取引金額・取引年月日のメタデータ、CSVエクスポート
 - **締結証明書**: 署名証跡PDFの自動生成・同梱
+- **事務処理規程**: 国税庁準拠の「訂正削除防止に関する事務処理規程」テンプレートをアプリ内からダウンロード可能
 
-詳細は `LEGAL_BASIS_JP.md` および `packages/lib/universal/electronic-ledger-csv.ts` を参照してください。
+詳細は `LEGAL_BASIS_JP.md` および `packages/lib/universal/compliance-kit.ts`、`packages/lib/universal/electronic-ledger-csv.ts` を参照してください。
 
-### Q33. 監査ログは改ざんできますか？
+### Q35. 監査ログは改ざんできますか？
 
 **A.** 監査ログは SHA-256 によるハッシュチェーンで連結されており、1レコードでも改ざんするとチェーン全体が破綻し、検知されます。また、更新・削除APIは排除される予定です（Phase 1 Step 33）。
 
-### Q34. セキュリティ脆弱性を発見したらどうすればよいですか？
+### Q36. セキュリティ脆弱性を発見したらどうすればよいですか？
 
-**A.** 公開の Issue ではなく、[GitHub Security Advisories](https://github.com/documenso/documenso/security/advisories/new) または `security@documenso.com` まで非公開で報告してください。詳細は `SECURITY.md` を参照してください。
+**A.** 公開の Issue ではなく、[GitHub Security Advisories](https://github.com/annahoikuen-debug/denkei/security/advisories/new) または `security@documenso.com` まで非公開で報告してください。詳細は `SECURITY.md` を参照してください。
 
-### Q35. ライセンスは何ですか？
+### Q37. ライセンスは何ですか？
 
 **A.** GNU AGPL v3 です。ネットワーク経由で利用する場合もソースコードの開示義務があります。商用利用・改変・再配布は可能ですが、変更版をネットワーク経由で提供する場合はソースコードを公開する必要があります。
 
-### Q36. データの所在地はどこになりますか？
+### Q38. データの所在地はどこになりますか？
 
 **A.** セルフホスティングの場合、ご自身で選択したサーバー・リージョンにデータが保存されます。個人情報保護法第28条（第三国への移転制限）に対応するため、国内リージョンの使用を推奨します。S3を使用する場合はバケットのリージョンを指定できます。
 
@@ -220,5 +232,5 @@
 - `USER_MANUAL.md` で操作手順を確認してください
 - `LEGAL_BASIS_JP.md` で法的根拠を確認してください
 - `ARCHITECTURE.md` でシステム構成を確認してください
-- [GitHub Issues](https://github.com/documenso/documenso/issues) で質問・報告してください
+- [GitHub Issues](https://github.com/annahoikuen-debug/denkei/issues) で質問・報告してください
 - エンタープライズサポートが必要な場合は、READMEに記載のカレンダーからご相談ください

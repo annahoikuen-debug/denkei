@@ -220,6 +220,7 @@ docker compose -f docker/production/compose.yml up -d
 | `NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY` | TSA URL | - |
 | `NEXT_PRIVATE_SIGNING_REASON` | 署名理由 | `Signed by Documenso` |
 | `NEXT_PUBLIC_SIGNING_CONTACT_INFO` | 連絡先情報 | WebApp URL |
+| `NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION` | 本番でのP12許可フラグ | 未設定 |
 
 ### メール送信
 
@@ -338,6 +339,13 @@ docker compose -f docker/compose.standalone.yml exec app \
 # またはホストから直接
 npm run prisma:migrate-deploy
 ```
+
+### 主なマイグレーション
+
+| マイグレーション | 内容 |
+|----------------|------|
+| `20261015000000_ja_default_document_meta` | `DocumentMeta.language` の既定を `'ja'`、`timezone` の既定を `'Asia/Tokyo'` に変更 |
+| `20261016000001_add_audit_log_worm_trigger` | `DocumentAuditLog` に WORM 保護トリガーを追加（UPDATE/DELETE禁止） |
 
 ### データベースGUI（Prisma Studio）
 

@@ -10574,7 +10574,7 @@ msgstr "署名アルゴリズムはサポートされていません"
 #: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
 #: packages/lib/server-only/pdf/render-certificate.ts
 msgid "Signing Certificate"
-msgstr "署名証明書"
+msgstr "合意締結証明書 (Certificate of Agreement)"
 
 #: apps/remix/app/components/general/document-signing/csc-recipient-blocked-page.tsx
 msgid "Signing certificate is invalid"
@@ -10583,7 +10583,7 @@ msgstr "署名証明書が無効です"
 #: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
 #: packages/lib/server-only/pdf/render-certificate.ts
 msgid "Signing certificate provided by"
-msgstr "署名証明書の提供元"
+msgstr "合意締結証明書 提供元"
 
 #: packages/lib/jobs/definitions/emails/send-document-completed-emails.handler.ts
 #: packages/lib/jobs/definitions/emails/send-document-completed-emails.handler.ts
@@ -15427,4 +15427,180 @@ msgstr "苗字を入力 (例: 田中)"
 #: packages/ui/primitives/signature-pad/signature-pad-type.tsx
 msgid "お名前を入力してください"
 msgstr "お名前を入力してください"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "民法第522条第2項および電子帳簿保存法に基づく法的合意成立の証明"
+msgstr "民法第522条第2項および電子帳簿保存法に基づく法的合意成立の証明"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "発行日時"
+msgstr "発行日時"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "契約文書名"
+msgstr "契約文書名"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "作成者"
+msgstr "作成者"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "法的効力および真正性表明"
+msgstr "法的効力および真正性表明"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "ハッシュチェーン検証 合格（改ざん痕跡なし）"
+msgstr "ハッシュチェーン検証 合格（改ざん痕跡なし）"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "検証警告: ハッシュ不一致"
+msgstr "検証警告: ハッシュ不一致"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "民法第522条第2項（電子的合意の成立）"
+msgstr "民法第522条第2項（電子的合意の成立）"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "本契約は、当事者双方による電子的意思表示（電子認印押印・署名）および合意手続きを経て、民法第522条第2項に定める適法な契約として合意締結されたことを証明します。"
+msgstr "本契約は、当事者双方による電子的意思表示（電子認印押印・署名）および合意手続きを経て、民法第522条第2項に定める適法な契約として合意締結されたことを証明します。"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "電子帳簿保存法（電子取引データ保存）適合"
+msgstr "電子帳簿保存法（電子取引データ保存）適合"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "国税庁『不当な訂正削除防止に関する事務処理規程』の要件に準拠し、適切な電子取引記録として保管・検索が可能です。"
+msgstr "国税庁『不当な訂正削除防止に関する事務処理規程』の要件に準拠し、適切な電子取引記録として保管・検索が可能です。"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "PostgreSQL WORMトリガーにより監査証跡の物理削除・改ざんを遮断しています。"
+msgstr "PostgreSQL WORMトリガーにより監査証跡の物理削除・改ざんを遮断しています。"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "署名当事者一覧"
+msgstr "署名当事者一覧"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "連鎖ハッシュ監査ログ履歴 (Audit Trail & Hash Chain)"
+msgstr "連鎖ハッシュ監査ログ履歴 (Audit Trail & Hash Chain)"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "記録日時 (JST)"
+msgstr "記録日時 (JST)"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "アクション"
+msgstr "アクション"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "当事者"
+msgstr "当事者"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "SHA-256ハッシュ"
+msgstr "SHA-256ハッシュ"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "契約書送信"
+msgstr "契約書送信"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "案内メール送信"
+msgstr "案内メール送信"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "契約書閲覧"
+msgstr "契約書閲覧"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "認印・署名入力"
+msgstr "認印・署名入力"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "合意・押印完了"
+msgstr "合意・押印完了"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "合意却下"
+msgstr "合意却下"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "合意締結証明書 発行元: デンケイ (Denkei)"
+msgstr "合意締結証明書 発行元: デンケイ (Denkei)"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "本書は、デンケイの暗号化監査システムにより自動生成された法的合意証跡文書です。"
+msgstr "本書は、デンケイの暗号化監査システムにより自動生成された法的合意証跡文書です。"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "全"
+msgstr "全"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "件の記録"
+msgstr "件の記録"
+
+#: apps/remix/app/components/general/document-signing/document-signing-complete-dialog.tsx
+msgid "電子認印による合意確定の確認"
+msgstr "電子認印による合意確定の確認"
+
+#: apps/remix/app/components/general/document-signing/document-signing-complete-dialog.tsx
+msgid "合意して電子認印を押印する"
+msgstr "合意して電子認印を押印する"
+
+#: apps/remix/app/routes/_recipient+/sign.$token+/complete.tsx
+msgid "自社でも電子契約を始めてみませんか？"
+msgstr "自社でも電子契約を始めてみませんか？"
+
+#: apps/remix/app/routes/_recipient+/sign.$token+/complete.tsx
+msgid "デンケイなら月額2,980円で契約書が送り放題。印紙代・製本・郵送の手間を99%削減できます。まずは無料プラン（月3通まで無料）から登録。"
+msgstr "デンケイなら月額2,980円で契約書が送り放題。印紙代・製本・郵送の手間を99%削減できます。まずは無料プラン（月3通まで無料）から登録。"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "Account Re-Authentication"
+msgstr "アカウント再認証"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "Two-Factor Re-Authentication"
+msgstr "二要素再認証"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "Password Re-Authentication"
+msgstr "パスワード再認証"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "Passkey Re-Authentication"
+msgstr "パスキー再認証"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "Account Authentication"
+msgstr "アカウント認証"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "Two-Factor Authentication"
+msgstr "二要素認証"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "Email OTP Verification"
+msgstr "メールワンタイム認証 (OTP)"
+
+#: apps/remix/app/routes/_internal+/[__htmltopdf]+/certificate.tsx
+msgid "Verified Email (Firebase)"
+msgstr "認証済みメール (Firebase)"
+
+#: apps/remix/app/components/general/document-signing/document-signing-complete-dialog.tsx
+msgid "様の電子認印（または署名）にて本契約を確定します。この操作は民法第522条第2項に基づき、法的拘束力を持つ有効な契約締結となります。"
+msgstr "様の電子認印（または署名）にて本契約を確定します。この操作は民法第522条第2項に基づき、法的拘束力を持つ有効な契約締結となります。"
+
+#: apps/remix/app/routes/_recipient+/sign.$token+/complete.tsx
+msgid "デンケイの合意・押印完了証明"
+msgstr "デンケイの合意・押印完了証明"
+
+#: apps/remix/app/routes/_recipient+/sign.$token+/complete.tsx
+msgid "電子認印の押印と合意が正常に記録され、監査証跡（タイムスタンプ・IP・本人確認）が安全に保護されました。全当事者の合意完了後、署名済み合意書が自動送付されます。"
+msgstr "電子認印の押印と合意が正常に記録され、監査証跡（タイムスタンプ・IP・本人確認）が安全に保護されました。全当事者の合意完了後、署名済み合意書が自動送付されます。"
+
+
+
+
 
