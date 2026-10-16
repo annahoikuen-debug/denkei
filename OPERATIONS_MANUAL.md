@@ -716,6 +716,7 @@ docker compose -f docker/compose.standalone.yml logs app | grep -i error
 | `SECURITY.md` | セキュリティポリシー |
 | `docker/README.md` | Docker セットアップ詳細 |
 | `docs/plans/remaining-tasks-implementation-plan.md` | 実装進捗マスタープラン |
+| `docs/plans/saas-launch-architecture-guide.md` | 0円・極小コストSaaS公開＆運用設計ガイド |
 
 ---
 
