@@ -117,12 +117,46 @@ export const canSendDocument = ({
  * 月次カウンタの月キー(Asia/Tokyo 基準)を返す。
  * 例: '2026-10'
  */
-export const getMonthlyCounterKey = (date: Date = new Date()): string => {
-  // タイムゾーン: Asia/Tokyo(JST)基準で月を区切る
-  const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+/**
+ * Stripe Price ID 環境変数のマッピング。
+ * 本番・ステージング環境の Stripe ダッシュボードで設定した Price ID と紐付ける。
+ */
+export const getStripePriceIdForPlan = (plan: PlanId): string | undefined => {
+  if (typeof process === 'undefined' || !process.env) {
+    return undefined;
+  }
 
-  const year = jst.getUTCFullYear();
-  const month = String(jst.getUTCMonth() + 1).padStart(2, '0');
+  switch (plan) {
+    case 'STANDARD':
+      return process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD;
+    case 'BUSINESS':
+      return process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS;
+    default:
+      return undefined;
+  }
+};
 
-  return `${year}-${month}`;
+/**
+ * Stripe Price ID からプラン ID を逆引きする。
+ */
+export const getPlanIdFromStripePriceId = (priceId: string): PlanId => {
+  if (typeof process !== 'undefined' && process.env) {
+    if (priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD) {
+      return 'STANDARD';
+    }
+    if (priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS) {
+      return 'BUSINESS';
+    }
+  }
+
+  // フォールバック（priceId 文字列自身にプラン名が含まれる場合）
+  const upper = priceId.toUpperCase();
+  if (upper.includes('BUSINESS')) {
+    return 'BUSINESS';
+  }
+  if (upper.includes('STANDARD')) {
+    return 'STANDARD';
+  }
+
+  return 'FREE';
 };

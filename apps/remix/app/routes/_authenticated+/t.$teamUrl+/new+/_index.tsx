@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { DocumentDropzone } from '@documenso/ui/primitives/document-dropzone';
 import { useToast } from '@documenso/ui/primitives/use-toast';
 import { msg } from '@lingui/core/macro';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { useLingui } from '@lingui/react';
+import { Trans } from '@lingui/react/macro';
 import { EnvelopeType } from '@prisma/client';
 import {
   BriefcaseIcon,
+  DollarSignIcon,
   FileSignatureIcon,
   FileTextIcon,
   PlusIcon,
@@ -24,6 +26,7 @@ import {
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 
+import { PlanLimitUpgradeDialog } from '~/components/dialogs/plan-limit-upgrade-dialog';
 import { TemplateUseDialog } from '~/components/dialogs/template-use-dialog';
 import { useCurrentTeam } from '~/providers/team';
 
@@ -53,7 +56,7 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
       await templatesQuery.refetch();
       toast({
         title: _(msg`標準雛形を追加しました`),
-        description: _(msg`業務委託・秘密保持・雇用の3大雛形が追加されました。`),
+        description: _(msg`売買・業務委託・秘密保持(NDA)の3大雛形が追加されました。`),
       });
     } catch (err) {
       toast({
@@ -63,6 +66,8 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
       });
     }
   };
+
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
   const onDropPdf = async (files: File[]) => {
     if (!files.length) {
@@ -92,7 +97,13 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
       });
 
       navigate(`/t/${team.url}/new/recipients?envelopeId=${id}`);
-    } catch (err) {
+    } catch (err: unknown) {
+      const errMessage = err instanceof Error ? err.message : String(err);
+      if (errMessage.includes('LIMIT_EXCEEDED') || errMessage.includes('上限') || errMessage.includes('limit')) {
+        setUpgradeDialogOpen(true);
+        return;
+      }
+
       toast({
         title: _(msg`アップロードに失敗しました`),
         description: _(msg`PDFファイルの読み込みに失敗しました。もう一度お試しください。`),
@@ -104,6 +115,9 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
   };
 
   const getTemplateIcon = (title: string) => {
+    if (title.includes('売買')) {
+      return <DollarSignIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />;
+    }
     if (title.includes('業務委託')) {
       return <BriefcaseIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />;
     }
@@ -125,7 +139,7 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
             <Trans>新しい契約書を作成・送信</Trans>
           </h1>
           <p className="mt-1 text-muted-foreground text-sm">
-            <Trans>標準雛形から変数を入力して即座に作成するか、手元のPDFをアップロードして作成します</Trans>
+            <Trans>標準雛形から変数を入力して契約書を作成・送信するか、手元のPDFをアップロードして作成します</Trans>
           </p>
         </div>
 
@@ -172,7 +186,7 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
 
         <p className="mb-6 text-muted-foreground text-sm">
           <Trans>
-            業務委託・秘密保持(NDA)・雇用の主要3雛形。取引先名や金額などの必要項目を入力するだけで、数秒で契約書を完成・送信できます。
+            売買・業務委託・秘密保持(NDA)の主要3雛形。取引先名や金額などの必要項目を入力して契約書を作成・送信できます。
           </Trans>
         </p>
 
@@ -188,7 +202,7 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
                 </h3>
                 <p className="mt-1 text-muted-foreground text-xs">
                   <Trans>
-                    ワンクリックで業務委託契約書・秘密保持契約書(NDA)・雇用契約書の3大雛形をチームに追加できます。
+                    ワンクリックで売買契約書・業務委託契約書・秘密保持契約書(NDA)の3大雛形をチームに追加できます。
                   </Trans>
                 </p>
               </div>
@@ -328,6 +342,13 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
           <Trans>事務処理規程・電帳法設定へ →</Trans>
         </Link>
       </div>
+
+      <PlanLimitUpgradeDialog
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        teamUrl={team.url}
+        limitCount={quota.documents || 3}
+      />
     </div>
   );
 }

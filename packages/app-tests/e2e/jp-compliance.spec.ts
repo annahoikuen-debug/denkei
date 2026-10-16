@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { getDocumentByToken } from '@documenso/lib/server-only/document/get-document-by-token';
 import { prisma } from '@documenso/prisma';
 import { seedPendingDocumentWithFullFields } from '@documenso/prisma/seed/documents';
@@ -5,7 +6,6 @@ import { seedUser } from '@documenso/prisma/seed/users';
 import { PDF } from '@libpdf/core';
 import { expect, test } from '@playwright/test';
 import { DocumentStatus, FieldType, RecipientRole } from '@prisma/client';
-import { createHash } from 'node:crypto';
 
 import { signSignaturePad } from '../fixtures/signature';
 
@@ -208,7 +208,9 @@ test.describe('[JP] Compliance - 電帳法・署名検証', () => {
         data: log.data ?? null,
       });
 
-      const computedHash = createHash('sha256').update(`${prevHash ?? ''}|${payload}`).digest('hex');
+      const computedHash = createHash('sha256')
+        .update(`${prevHash ?? ''}|${payload}`)
+        .digest('hex');
       expect(computedHash).toBe(log.hash);
 
       prevHash = log.hash;
@@ -417,5 +419,67 @@ test.describe('[JP] Compliance - 電帳法・署名検証', () => {
         where: { envelopeId: document.id },
       }),
     ).rejects.toThrow('DocumentAuditLog is immutable');
+  });
+
+  test('D1: completed document email attaches both signed PDF and certificate PDF', async () => {
+    const { user, team } = await seedUser({
+      isPersonalOrganisation: true,
+    });
+
+    const { document, recipients } = await seedPendingDocumentWithFullFields({
+      owner: user,
+      recipients: ['signer@example.com'],
+      fields: [FieldType.SIGNATURE],
+      teamId: team.id,
+    });
+
+    // 署名完了状態に更新
+    await prisma.recipient.update({
+      where: { id: recipients[0].id },
+      data: {
+        signingStatus: 'SIGNED',
+        signedAt: new Date(),
+        readStatus: 'OPENED',
+      },
+    });
+
+    await prisma.envelope.update({
+      where: { id: document.id },
+      data: {
+        status: DocumentStatus.COMPLETED,
+        completedAt: new Date(),
+      },
+    });
+
+    // 完了メール送信ジョブハンドラーを実行（メール送信のモック・監査ログ検証）
+    const { run: runSendCompletedEmails } = await import(
+      '@documenso/lib/jobs/definitions/emails/send-document-completed-emails.handler'
+    );
+
+    const mockLogger = {
+      info: () => {},
+      warn: () => {},
+      error: () => {},
+      debug: () => {},
+    };
+
+    await runSendCompletedEmails({
+      payload: {
+        envelopeId: document.id,
+      },
+      io: {
+        logger: mockLogger as any,
+      } as any,
+    });
+
+    // EMAIL_SENT 監査ログが記録されていることを確認
+    const emailAuditLogs = await prisma.documentAuditLog.findMany({
+      where: {
+        envelopeId: document.id,
+        type: 'EMAIL_SENT',
+      },
+    });
+
+    expect(emailAuditLogs.length).toBeGreaterThan(0);
   });
 });

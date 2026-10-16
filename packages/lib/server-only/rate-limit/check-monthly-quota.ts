@@ -21,10 +21,10 @@ const COUNTER_COLUMN = {
 
 export const checkMonthlyQuota = async (opts: CheckMonthlyQuotaOptions): Promise<void> => {
   if (opts.quota === 0) {
-    throw new AppError(AppErrorCode.TOO_MANY_REQUESTS, {
+    throw new AppError(AppErrorCode.LIMIT_EXCEEDED, {
       message:
         'Your request could not be completed at this time due to your account exceeding the fair use limits of your current plan. Please contact support.',
-      // Not tossing headers here to avoid confusion, this isn't rate limits.
+      userMessage: '当月の送信可能件数に達しました。プラン変更で上限を引き上げることができます。',
     });
   }
 
@@ -92,10 +92,10 @@ export const checkMonthlyQuota = async (opts: CheckMonthlyQuotaOptions): Promise
   }
 
   if (newCount > opts.quota) {
-    throw new AppError(AppErrorCode.TOO_MANY_REQUESTS, {
+    throw new AppError(AppErrorCode.LIMIT_EXCEEDED, {
       message:
         'Your request could not be completed at this time due to your account exceeding the fair use limits of your current plan. Please contact support.',
-      // Not tossing headers here to avoid confusion, this isn't rate limits.
+      userMessage: '当月の送信可能件数に達しました。プラン変更で上限を引き上げることができます。',
     });
   }
 };

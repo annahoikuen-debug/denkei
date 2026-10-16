@@ -7,6 +7,61 @@
 | ステップ数 | 36ステップ(Stage A〜F) |
 | 前提 | フェーズ1完了(ja UI・ウィザード・タイムスタンプ・監査ログハッシュチェーンが導入済み) |
 | テスト方針 | 各Stageでリグレッション防止テストを併せて作成(第4章参照)。セキュリティ系はユニット+E2Eの二重化 |
+| 実装状態 | **ほぼ完了、一部残あり**(2026-10-16 時点。最新状態は直下の「§0 実装進捗サマリ」を優先) |
+
+---
+
+## 0. 実装進捗サマリ(2026-10-16 現在)
+
+> 本節が最新の実装状態です。§1 以降の本文は計画時点の記述を保持します。
+> 対応コミット: `65680482`(日本語コンプライアンス機能一括実装) / `01bcdb2c`(v1.0 ドキュメント) / `d23fb711`(運用マニュアル)。
+> 残タスクは `docs/plans/remaining-tasks-implementation-plan.md`(R2-1〜R2-3、ステップ14〜16相当)を参照。
+> 凡例: ✅ 実装済み / 🟡 一部実装(残あり) / ⬜ 未着手
+
+### 実装メモ(計画時点からの差分)
+- Firebase は **SDK 依存を追加せず REST 経由**で実装(`packages/lib/server-only/otp/firebase-admin-client.ts` + `identity-verification-provider.ts`)。
+- 同時アクセス排他は `recipient/signing-session.ts` で実装済みだが、2ブラウザコンテキスト E2E が残(remaining-tasks R2-2)。
+
+### ステップ別状態
+
+| ステップ | 状態 | 実装成果物・備考 |
+| --- | --- | --- |
+| 1 | ✅ | `docs/plans/phase2-baseline.md` |
+| 2 | ✅ | `packages/lib/types/document-auth.ts`(+test)、`packages/lib/constants/document-auth.ts`(EMAIL_OTP/FIREBASE_EMAIL) |
+| 3 | ✅ | `20261016000000_add_recipient_verification_token`(受取人有効期限は上流 `20260219091107_add_recipient_expirations` を活用) |
+| 4 | ✅ | `packages/lib/server-only/otp/otp.ts`(+test) |
+| 5 | ✅ | `packages/email/templates/otp-verification.tsx`、`send-otp-email` ジョブ |
+| 6 | ✅ | `packages/ui/components/general/otp-gate.tsx` |
+| 7 | ✅ | `otp/recipient-verification.ts`、`recipient/signing-session.ts`、`document/is-recipient-authorized.ts` |
+| 8 | ✅ | `packages/lib/server-only/otp/otp-audit-logs.ts` |
+| 9 | ✅ | `jp-otp-auth.spec.ts`(185行) |
+| 10 | ✅ | `otp/firebase-admin-client.ts`(REST)+`identity-verification-provider.ts`(+test) |
+| 11 | 🟡 | 再送クールダウン・期限は実装。月次送信上限(Counter)と独立ジョブ化は残 |
+| 12 | ✅ | `add-signers.tsx` で宛先ごとの認証レベル選択 |
+| 13 | ✅ | `packages/lib/server-only/ekyc/ekyc.ts`(MockEkycProvider) |
+| 14 | 🟡 | 証明書への本人確認記載は実装。PDFテキスト抽出アサーション(R2-1)は残 |
+| 15 | ✅ | `recipient/token-lifecycle.ts`+`expire-recipients-sweep` 連携 |
+| 16 | ✅ | `recipient/token-lifecycle.ts`(+test) |
+| 17 | ✅ | 完了後失効(`signing-session.ts`/`token-lifecycle.ts`) |
+| 18 | ⬜ | 閲覧/署名リンク分離は未実装 |
+| 19 | 🟡 | `signing-session.ts` あり。2コンテキスト同時アクセス E2E(R2-2)は残 |
+| 20 | ✅ | IP/UA 記録(監査ログ+otp-audit-logs) |
+| 21 | ✅ | `rate-limit/signing-rate-limits.ts` |
+| 22 | ⬜ | ダウンロード証明(R2-3)は未実装 |
+| 23 | ✅ | `jp-access-control.spec.ts`(117行) |
+| 24 | ✅ | `docs/plans/phase2-reminder-gap-analysis.md` |
+| 25 | ✅ | `envelope/automation-settings.ts`+`20261015000003_add_envelope_automation_settings` |
+| 26 | 🟡 | ja 文面は web.po。オーナー宛コピーは未確認 |
+| 27 | ✅ | 有効期限 UI+自動キャンセル(`jp-reminder-expiry.spec.ts` で担保) |
+| 28 | ✅ | `jp-reminder-expiry.spec.ts`(136行) |
+| 29 | ✅ | `find-documents-internal.ts` 拡張+`universal/dashboard-progress.ts`(+test) |
+| 30 | ✅ | `packages/ui/components/general/dashboard/dashboard-4col.tsx` |
+| 31 | 🟡 | 締結証明書は生成済み。完了メールへの自動添付(`send-document-completed-emails` 改修)は未確認 |
+| 32 | 🟡 | リマインダー ON/OFF は実装。完了/期限通知の個別 ON/OFF は未確認 |
+| 33 | ⬜ | 視覚回帰スナップショット未追加 |
+| 34 | 🟡 | 翻訳チェック0件。手動 a11y チェックリストの記録なし |
+| 35 | 🟡 | レート制限・トークン実装済み。セキュリティレビュー記録なし |
+| 36 | ✅ | 全 jp spec コミット済み(フル実行は CI 要確認) |
 
 ---
 

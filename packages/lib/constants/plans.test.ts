@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { canSendDocument, getMonthlyCounterKey, isFeatureEnabledForPlan, PLANS } from './plans';
+import { canSendDocument, getPlanIdFromStripePriceId, isFeatureEnabledForPlan, PLANS } from './plans';
 
 describe('プラン定義(フェーズ3 ステップ26)', () => {
   it('3プランが定義されている', () => {
@@ -55,12 +55,10 @@ describe('プラン制限ゲート(ステップ27)', () => {
   });
 });
 
-describe('月次カウンタ(ステップ26)', () => {
-  it('Asia/Tokyo 基準で月キーを返す', () => {
-    // 2026-10-14T18:00:00Z = JST 2026-10-15 03:00 → '2026-10'
-    expect(getMonthlyCounterKey(new Date('2026-10-14T18:00:00Z'))).toBe('2026-10');
-
-    // 2026-09-30T15:00:00Z = JST 2026-10-01 00:00 → '2026-10'(月跨ぎ)
-    expect(getMonthlyCounterKey(new Date('2026-09-30T15:00:00Z'))).toBe('2026-10');
+describe('Stripe Price ID マッピング', () => {
+  it('環境変数およびフォールバックからプランIDを正しく判定できる', () => {
+    expect(getPlanIdFromStripePriceId('price_standard_test123')).toBe('STANDARD');
+    expect(getPlanIdFromStripePriceId('price_business_test456')).toBe('BUSINESS');
+    expect(getPlanIdFromStripePriceId('price_unknown_000')).toBe('FREE');
   });
 });

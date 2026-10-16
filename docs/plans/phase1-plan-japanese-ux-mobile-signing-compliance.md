@@ -7,6 +7,58 @@
 | ステップ数 | 36ステップ(Stage A〜F) |
 | 前提 | 本リポジトリ(Documenso フォーク)を SaaS 化するブランチ戦略が決まっていること |
 | テスト方針 | 各Stageでリグレッション防止テストを併せて作成(第4章参照)。ステップ内の「検証」はコミット前の必須確認事項 |
+| 実装状態 | **大部分完了**(2026-10-16 時点。最新状態は直下の「§0 実装進捗サマリ」を優先) |
+
+---
+
+## 0. 実装進捗サマリ(2026-10-16 現在)
+
+> 本節が最新の実装状態です。§1 以降の本文は計画時点の記述を保持します。
+> 対応コミット: `65680482`(日本語コンプライアンス機能一括実装) / `01bcdb2c`(v1.0 日本語ドキュメント整備) / `d23fb711`(運用マニュアル)。
+> 残タスクは `docs/plans/remaining-tasks-implementation-plan.md`、方針変更は `docs/plans/smb-cutdown-implementation-plan.md` を参照。
+> 凡例: ✅ 実装済み / 🟡 一部実装(残あり) / ⬜ 未着手 / 🔄 方針変更により要件変更
+
+### 方針変更(計画時点からの差分)
+- **ステップ27(TSAデフォルトON)→ 🔄**: SMB低コスト方針により、タイムスタンプは**初期OFF・オプトイン**に変更。`NEXT_PRIVATE_SIGNING_ENABLE_TSA` + `NEXT_PRIVATE_SIGNING_TSA_FALLBACK_POLICY`('continue'/'block')で制御(`packages/signing/helpers/tsa.ts`、`tsa.test.ts`)。
+- **ステップ28**: 本番での P12(local)署名を禁止し、`NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION=true` の明示オプトインで許可する形で実装済み(`packages/signing/index.ts`)。
+- **未コミットの作業中変更**: `landing-page.tsx`、`document-signing-complete-dialog.tsx`、`[__htmltopdf]+/certificate.tsx`、`sign.$token+/complete.tsx`、`ja/web.po` 等。
+
+### ステップ別状態
+
+| ステップ | 状態 | 実装成果物・備考 |
+| --- | --- | --- |
+| 1 | ✅ | `docs/plans/phase1-baseline.md` |
+| 2 | ✅ | `packages/app-tests/e2e/jp-core-signing-flow.spec.ts` |
+| 3 | ✅ | `packages/prisma/migrations/20261015000000_ja_default_document_meta/` |
+| 4 | ✅ | `packages/lib/constants/date-formats.ts`(+test)、`packages/lib/universal/format-currency.ts` |
+| 5 | ✅ | ja既定マイグレーション+E2Eのja日時アサーション |
+| 6 | ✅ | `scripts/check-translations.mjs`、`scripts/fill-ja-translations.mjs`、`.github/workflows/translations-check.yml` |
+| 7-8 | ✅ | `packages/lib/translations/ja/web.po`(大規模更新) |
+| 9 | 🟡 | OTP/承認テンプレートは ja 対応済み。全メールの言語分岐は残検証 |
+| 10 | ✅ | `packages/lib/errors/app-error-ja.ts` |
+| 11 | ✅ | `packages/lib/universal/japanese-name.ts`(+test) |
+| 12 | ✅ | `packages/lib/universal/wareki-date.ts`(+test)。視覚回帰スナップショットは未追加 |
+| 13 | ✅ | `docs/plans/phase1-wizard-spec.md` |
+| 14-17 | ✅ | `apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/{_index,recipients,fields}.tsx`(確認・送信は fields ステップに統合) |
+| 18 | ⬜ | 下書き保存・再開は未実装 |
+| 19 | 🟡 | `app-nav-desktop.tsx` の軽微な修正のみ。メニューの詳細設定退避は未実装 |
+| 20 | ✅ | `packages/app-tests/e2e/jp-wizard-flow.spec.ts` |
+| 21 | ✅ | `packages/ui/primitives/signature-pad/signature-pad-draw.tsx`(touch-action/pointer 対応) |
+| 22 | ✅ | `signature-pad-dialog.tsx` 全画面化+`document-signing-mobile-widget.tsx` |
+| 23 | ✅ | `add-signers.tsx` で署名方式トグル露出 |
+| 24 | ✅ | `signature-pad-draw.tsx` 線幅調整 |
+| 25 | ✅ | `packages/lib/universal/seal-image.ts`(+test) |
+| 26 | ✅ | `packages/app-tests/e2e/jp-mobile-signing.spec.ts` |
+| 27 | 🔄 | タイムスタンプはオプトイン化(上記方針変更参照) |
+| 28 | ✅ | `packages/signing/index.ts` 本番 P12 禁止+オプトイン |
+| 29 | 🟡 | B-LTA(署名チェーン+RFC3161トークン)実装あり。LTV 完全性の検証記録は残 |
+| 30 | ✅ | `packages/lib/server-only/cert/cert-status.ts`+`/api/certificate-status` |
+| 31 | ✅ | `packages/signing/pdf-tamper-detection.test.ts` |
+| 32 | ✅ | `20261015000001_add_audit_log_hash_chain`、`document-audit-log-hash.ts`(+test)、`scripts/backfill-audit-log-hash.mjs` |
+| 33 | ✅ | `20261016000001_add_audit_log_worm_trigger`(UPDATE/DELETE 拒否トリガー) |
+| 34 | ✅ | `render-certificate.ts` 拡張、`get-document-certificate-audit-logs.ts`、`[__htmltopdf]+/certificate.tsx` |
+| 35 | ✅ | `20261015000002_add_electronic_ledger_meta`、`electronic-ledger-csv.ts`(+test)、tRPC `download-documents-csv`、`document-electronic-ledger-filters.tsx` |
+| 36 | ✅ | `packages/app-tests/e2e/jp-compliance.spec.ts`(421行) |
 
 ---
 

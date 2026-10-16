@@ -1,6 +1,6 @@
-# デンケイ 運用者・デプロイヤー向けマニュアル (v1.0)
+# デンケイ 運用者・デプロイヤー向けマニュアル (v1.1)
 
-このマニュアルは、デンケイ（Denkei）を自社サーバーやクラウドにデプロイ・運用する管理者・運用者向けです。Docker によるセルフホスティング、環境変数設定、監視・バックアップ、アップグレード手順を解説します。
+このマニュアルは、デンケイ（Denkei）を自社サーバーやクラウドにデプロイ・運用する管理者・運用者向けです。Docker によるセルフホスティング、環境変数設定、監視・バックアップ、アップグレード手順、課金運用を解説します。
 
 エンドユーザー向けの操作手順は `USER_MANUAL.md`、よくある質問は `Q&A.md` を参照してください。
 
@@ -13,13 +13,14 @@
 3. [スタンドアロン構成で起動（SMB低コスト）](#3-スタンドアロン構成で起動smb低コスト)
 4. [本番構成で起動](#4-本番構成で起動)
 5. [環境変数の完全リファレンス](#5-環境変数の完全リファレンス)
-6. [電子署名証明書の設定](#6-電子署名証明書の設定)
-7. [データベース管理・マイグレーション](#7-データベース管理マイグレーション)
-8. [バックアップとリストア](#8-バックアップとリストア)
-9. [アップグレード手順](#9-アップグレード手順)
-10. [モニタリング・ヘルスチェック](#10-モニタリングヘルスチェック)
-11. [トラブルシューティング](#11-トラブルシューティング)
-12. [セキュリティ運用チェックリスト](#12-セキュリティ運用チェックリスト)
+6. [プラン・課金の運用](#6-プラン課金の運用)
+7. [電子署名証明書の設定](#7-電子署名証明書の設定)
+8. [データベース管理・マイグレーション](#8-データベース管理マイグレーション)
+9. [バックアップとリストア](#9-バックアップとリストア)
+10. [アップグレード手順](#10-アップグレード手順)
+11. [モニタリング・ヘルスチェック](#11-モニタリングヘルスチェック)
+12. [トラブルシューティング](#12-トラブルシューティング)
+13. [セキュリティ運用チェックリスト](#13-セキュリティ運用チェックリスト)
 
 ---
 
@@ -37,13 +38,27 @@
 | メール送信 | 署名依頼・完了通知メール | SMTP / Resend / MailChannels / SES |
 | ジョブキュー | 非同期処理（メール送信、文書シール等） | PostgreSQL 内蔵 (local) |
 | 電子署名 | PDFへのPAdESデジタル署名 | P12ファイル (local) または Google Cloud HSM |
+| 決済 | Stripe サブスクリプション課金 (JPY) | Stripe ダッシュボード連携 |
 
 ### 推奨最小構成（SMB Standalone）
 
-外部 Redis・有料TSA・従量課金SMSを排除し、PostgreSQL 1台＋アプリ 1台で運用します。
+外部 Redis・有料TSA・従量課金SMSを排除し、PostgreSQL 1台＋アプリ 1台で運用します。`docker/compose.standalone.yml` の Lean Profile では、ジョブキュー `local`・TSA 無効・本人確認メールOTP・ストレージ `database` が既定です。
 
 - 契約あたり原価: 約 0.2〜0.5 円
-- 月額目安: 2,980 円（月 100 契約）
+- 月額目安: 2,980 円（スタンダードプラン・月 100 契約、`packages/lib/constants/plans.ts`）
+
+#### サービス提供者側コスト内訳
+
+| コスト種別 | 項目 | 目安 |
+|-----------|------|------|
+| 変動費（1契約） | メール送信（依頼・OTP・リマインダー・完了の5〜8通） | 約 0.1〜0.3 円 |
+| 変動費（1契約） | 文書PDF＋監査ログの保存 | 0.1 円未満 |
+| 変動費（1契約） | 外部TSA（タイムスタンプ）・SMS認証 | 0 円（不使用） |
+| 固定費（月額） | アプリ＋PostgreSQL コンテナのホスティング | 数百円〜数千円 |
+| 固定費（月額） | S3互換ストレージ（database トランスポート時は不要） | 数百円 |
+| 固定費（月額） | Stripe決済手数料（課金有効時） | 売上の約 3.6% |
+
+タイムスタンプは外部TSAを使用せず、WORMストレージ＋監査ログ（SHA-256ハッシュチェーン）で電帳法の保存要件に対応します（`docker/README.md` 参照）。
 
 ---
 
@@ -74,7 +89,7 @@
 ```bash
 git clone https://github.com/annahoikuen-debug/denkei.git
 cd denkei/denkei
-git checkout v1.0
+git checkout v1.1
 ```
 
 #### 2. 環境変数ファイルを作成
@@ -107,6 +122,16 @@ NEXT_PRIVATE_SMTP_FROM_NAME="デンケイ 電子契約"
 NEXT_PRIVATE_SMTP_FROM_ADDRESS="noreply@example.com"
 ```
 
+課金機能を有効にする場合は、さらに以下を設定してください（§6 参照）：
+
+```bash
+NEXT_PUBLIC_FEATURE_BILLING_ENABLED="true"
+NEXT_PRIVATE_STRIPE_API_KEY="sk_live_..."
+NEXT_PRIVATE_STRIPE_WEBHOOK_SECRET="whsec_..."
+NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD="price_..."
+NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS="price_..."
+```
+
 #### 3. コンテナを起動
 
 ```bash
@@ -126,7 +151,7 @@ docker compose -f docker/compose.standalone.yml logs -f app
 | サービス | URL | 説明 |
 |---------|-----|------|
 | メインアプリ | http://localhost:3000 | デンケイ本体 |
-| データベース | localhost:5432 | PostgreSQL（コンテナ内） |
+| データベース | コンテナ内:5432 | PostgreSQL（ホストへポート公開なし。`docker compose -f docker/compose.standalone.yml exec db psql -U denkei denkei` で接続） |
 
 ---
 
@@ -152,6 +177,14 @@ cp .env.example .env
 - `NEXT_PRIVATE_SMTP_TRANSPORT`
 - `NEXT_PRIVATE_SMTP_FROM_NAME`
 - `NEXT_PRIVATE_SMTP_FROM_ADDRESS`
+
+課金機能を有効にする場合は、さらに以下が必須です：
+
+- `NEXT_PUBLIC_FEATURE_BILLING_ENABLED="true"`
+- `NEXT_PRIVATE_STRIPE_API_KEY`
+- `NEXT_PRIVATE_STRIPE_WEBHOOK_SECRET`
+- `NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD`
+- `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS`
 
 #### 2. 署名証明書を配置（P12を使用する場合）
 
@@ -207,7 +240,7 @@ docker compose -f docker/production/compose.yml up -d
 | `NEXT_PRIVATE_UPLOAD_ENDPOINT` | S3エンドポイント | - |
 | `NEXT_PRIVATE_UPLOAD_REGION` | S3リージョン | `us-east-1` |
 | `NEXT_PRIVATE_UPLOAD_BUCKET` | S3バケット名 | - |
-| `NEXT_PUBLIC_DOCUMENT_SIZE_UPLOAD_LIMIT` | アップロード制限MB | `5` |
+| `NEXT_PUBLIC_DOCUMENT_SIZE_UPLOAD_LIMIT` | アップロード制限MB | `10`（スタンドアロン構成プリセット） |
 
 ### 電子署名
 
@@ -227,10 +260,10 @@ docker compose -f docker/production/compose.yml up -d
 | 変数 | 説明 | デフォルト |
 |------|------|-----------|
 | `NEXT_PRIVATE_SMTP_TRANSPORT` | メールプロバイダ | `smtp-auth` |
-| `NEXT_PRIVATE_SMTP_HOST` | SMTPホスト | `127.0.0.1` |
-| `NEXT_PRIVATE_SMTP_PORT` | SMTPポート | `2500` |
-| `NEXT_PRIVATE_SMTP_USERNAME` | SMTPユーザー | `documenso` |
-| `NEXT_PRIVATE_SMTP_PASSWORD` | SMTPパスワード | `password` |
+| `NEXT_PRIVATE_SMTP_HOST` | SMTPホスト | `127.0.0.1:2500` |
+| `NEXT_PRIVATE_SMTP_PORT` | SMTPポート | `587` |
+| `NEXT_PRIVATE_SMTP_USERNAME` | SMTPユーザー | -（未設定時は認証なし） |
+| `NEXT_PRIVATE_SMTP_PASSWORD` | SMTPパスワード | - |
 | `NEXT_PRIVATE_RESEND_API_KEY` | Resend APIキー | - |
 | `NEXT_PRIVATE_MAILCHANNELS_API_KEY` | MailChannels APIキー | - |
 
@@ -250,15 +283,35 @@ docker compose -f docker/production/compose.yml up -d
 | 変数 | 説明 | デフォルト |
 |------|------|-----------|
 | `NEXT_PRIVATE_JOBS_PROVIDER` | ジョブプロバイダ | `local` |
-| `NEXT_PRIVATE_REDIS_URL` | Redis URL (BullMQ用) | `redis://localhost:63790` |
+| `NEXT_PRIVATE_REDIS_URL` | Redis URL (BullMQ用) | -（BullMQ使用時のみ必須） |
 
-### 請求・課金
+### プラン定義（`packages/lib/constants/plans.ts`）
+
+| プラン | 月額(税抜) | 月次送信上限 | 主な機能 |
+|-------|-----------|------------|---------|
+| 無料(FREE) | 0円 | 3件 | 基本署名フロー |
+| 中小応援スタンダード(STANDARD) | 2,980円 | 100件 | Firebaseメール認証・テンプレート共有 |
+| ビジネス(BUSINESS) | 4,980円 | 無制限 | ＋承認フロー・CSV一括送信 |
+
+- タイムスタンプ(RFC3161)は全プランで外部TSAを使用しません。電帳法対応はWORMストレージ＋監査ログ（SHA-256ハッシュチェーン）で実現します。
+- 取引先の本人確認はメールOTP(LOW)とFirebase Authenticationメール認証(MEDIUM)のみで、SMS認証は提供しません。
+- 課金を有効化する場合は `NEXT_PUBLIC_FEATURE_BILLING_ENABLED=true` に加え、Stripe の設定が必要です。
+
+### 請求・課金（Stripe）
 
 | 変数 | 説明 | デフォルト |
 |------|------|-----------|
 | `NEXT_PUBLIC_FEATURE_BILLING_ENABLED` | 課金機能有効化 | - |
 | `NEXT_PRIVATE_STRIPE_API_KEY` | Stripe APIキー | - |
 | `NEXT_PRIVATE_STRIPE_WEBHOOK_SECRET` | Stripe Webhookシークレット | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD` | STANDARDプランのStripe Price ID | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS` | BUSINESSプランのStripe Price ID | - |
+
+Stripe ダッシュボードで以下を設定してください：
+
+1. 製品とプラン価格を作成（STANDARD: 2,980円/月、BUSINESS: 4,980円/月、JPY）
+2. Price ID を `.env` の対応変数に設定
+3. Webhook エンドポイントを `https://<ホスト>/api/webhooks/stripe` に設定し、イベント `customer.subscription.updated`, `invoice.paid` などを購読
 
 ### テレメトリー
 
@@ -269,7 +322,56 @@ docker compose -f docker/production/compose.yml up -d
 
 ---
 
-## 6. 電子署名証明書の設定
+## 6. プラン・課金の運用
+
+### プラン判定ロジック
+
+チームのプランは `packages/lib/server-only/team/get-team-plan.ts` で判定されます。優先順位は以下の通りです：
+
+1. **Stripe サブスクリプション** - `organisation.subscription.planId` から STANDARD / BUSINESS を判定
+2. **組織クレーム（文書クオータ）** - `organisation.organisationClaim.documentQuota` が 100 以上なら STANDARD、null なら BUSINESS
+3. **デフォルト** - FREE（月3件）
+
+### 月次送信カウンタ
+
+当月の送信件数は `organisationMonthlyStat` テーブルでカウントされ、Asia/Tokyo 基準の月単位（`YYYY-MM`）でリセットされます。カウンタは `packages/lib/server-only/rate-limit/check-monthly-quota.ts` で管理されます。
+
+### 送信上限チェックの流れ
+
+1. 文書送信リクエストが `createEnvelope` に到達
+2. `assertCanSendDocumentForTeam` でチームのプランと当月送信数をチェック
+3. 上限超過時は `AppError`（ja: 「当月の送信上限（N通）に達しました。プランをアップグレードしてください。」）でブロック
+4. 承認フロー（APPROVER 役割）を使用する場合は、`assertFeatureEnabledForTeam` で BUSINESS プランかチェック
+
+### Stripe Webhook の設定
+
+Stripe ダッシュボードで Webhook エンドポイントを登録し、以下のイベントを購読してください：
+
+- `customer.subscription.created` - サブスクリプション作成
+- `customer.subscription.updated` - プラン変更（即時反映）
+- `customer.subscription.deleted` - サブスクリプション解約（FREE にダウングレード）
+- `invoice.paid` - 請求支払完了（領収書発行トリガー）
+
+Webhook 受信後、`packages/ee/server-only/stripe/` でプラン即時昇格と領収書PDF生成を行います。
+
+### 負荷テスト結果（v1.1 Stage E3）
+
+`scripts/load-test-burst.ts` で 100件のドキュメント生成・送信を並行実行した結果：
+
+| 項目 | 結果 | 基準 |
+|------|------|------|
+| 総作成件数 | 100件 | - |
+| 成功数 | 100件 | - |
+| 失敗数 | 0件 | - |
+| エラー率 | 0.00% | < 0.1% |
+| 総所要時間 | 1.28秒 | - |
+| p50 レスポンスタイム | 109ms | < 1秒 |
+| p95 レスポンスタイム | 294ms | < 1秒 |
+| p99 レスポンスタイム | 295ms | - |
+
+---
+
+## 7. 電子署名証明書の設定
 
 デンケイはPDFにPAdES (ETSI.CAdES.detached) 形式で電子署名を行います。
 
@@ -279,6 +381,7 @@ docker compose -f docker/production/compose.yml up -d
 |--------------|------|------|
 | `local` | P12ファイルによる署名 | 開発・セルフホスティングSMB |
 | `gcloud-hsm` | Google Cloud KMSによる署名 | 本番・電子署名法厳格対応 |
+| `csc` | CSC (Cloud Signature Consortium) 連携 | AES/QES トラストサービスプロバイダ |
 
 ### P12証明書の作成（OpenSSL）
 
@@ -325,7 +428,7 @@ http://<ホスト>:3000/api/certificate-status
 
 ---
 
-## 7. データベース管理・マイグレーション
+## 8. データベース管理・マイグレーション
 
 ### マイグレーションの適用
 
@@ -371,7 +474,7 @@ npx prisma generate
 
 ---
 
-## 8. バックアップとリストア
+## 9. バックアップとリストア
 
 ### データベースバックアップ
 
@@ -410,7 +513,7 @@ docker run --rm \
 
 ---
 
-## 9. アップグレード手順
+## 10. アップグレード手順
 
 ### バージョン確認
 
@@ -446,7 +549,7 @@ docker compose -f docker/compose.standalone.yml logs app
 
 ---
 
-## 10. モニタリング・ヘルスチェック
+## 11. モニタリング・ヘルスチェック
 
 ### ヘルスチェックエンドポイント
 
@@ -479,10 +582,11 @@ docker compose -f docker/compose.standalone.yml logs -f app
 - メール送信失敗率
 - 署名処理失敗率
 - ディスク使用量（アップロードファイル）
+- Stripe Webhook 受信エラー
 
 ---
 
-## 11. トラブルシューティング
+## 12. トラブルシューティング
 
 ### よくある問題と対処法
 
@@ -494,6 +598,8 @@ docker compose -f docker/compose.standalone.yml logs -f app
 | 署名が機能しない | 証明書未設定 | P12ファイルパスとパスフレーズを確認。`/api/certificate-status` で状態確認 |
 | アップロード失敗 | ファイルサイズ超過 | `NEXT_PUBLIC_DOCUMENT_SIZE_UPLOAD_LIMIT` を調整 |
 | ログインできない | 認証設定誤り | `NEXTAUTH_SECRET` を確認。セッションクッキーを削除 |
+| 送信がブロックされる | プラン上限超過 | プランをアップグレードするか、翌月までお待ちください |
+| Stripe Webhook が処理されない | Webhookシークレット不一致 | `NEXT_PRIVATE_STRIPE_WEBHOOK_SECRET` を確認 |
 
 ### ログレベルの確認
 
@@ -504,7 +610,7 @@ docker compose -f docker/compose.standalone.yml logs app | grep -i error
 
 ---
 
-## 12. セキュリティ運用チェックリスト
+## 13. セキュリティ運用チェックリスト
 
 運用開始前に以下を確認してください：
 
@@ -517,6 +623,8 @@ docker compose -f docker/compose.standalone.yml logs app | grep -i error
 - [ ] バックアップスケジュールを設定済み
 - [ ] 不要なサインアップ方法を無効化済み（`NEXT_PUBLIC_DISABLE_*`）
 - [ ] 電子署名法・電子帳簿保存法への対応状況を確認済み（`LEGAL_BASIS_JP.md` 参照）
+- [ ] Stripe Webhook シークレットを適切に設定済み（課金有効時）
+- [ ] Stripe Price ID を `.env` に設定済み（課金有効時）
 
 ---
 
@@ -531,6 +639,7 @@ docker compose -f docker/compose.standalone.yml logs app | grep -i error
 | `LEGAL_BASIS_JP.md` | 日本法における法的根拠 |
 | `SECURITY.md` | セキュリティポリシー |
 | `docker/README.md` | Docker セットアップ詳細 |
+| `docs/plans/remaining-tasks-implementation-plan.md` | 実装進捗マスタープラン |
 
 ---
 

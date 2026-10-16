@@ -2,6 +2,7 @@ import type { DocumentMeta, Envelope, Field, Recipient } from '@prisma/client';
 
 import { NEXT_PUBLIC_WEBAPP_URL } from '../constants/app';
 import type { TTemplateLite } from '../types/template';
+import { parseTemplateAutomationSettings } from '../types/template-automation';
 import { mapSecondaryIdToTemplateId } from './envelope';
 import { mapFieldToLegacyField } from './fields';
 import { mapRecipientToLegacyRecipient } from './recipients';
@@ -106,6 +107,6 @@ export const mapEnvelopeToTemplateMany = (envelope: EnvelopeWithTemplateManyRela
     recipients: envelope.recipients.map((recipient) => mapRecipientToLegacyRecipient(recipient, envelope)),
     templateMeta: envelope.documentMeta,
     directLink: envelope.directLink,
-    automationSettings: envelope.automationSettings,
+    automationSettings: parseTemplateAutomationSettings(envelope.automationSettings),
   };
 };

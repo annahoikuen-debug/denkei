@@ -7,6 +7,63 @@
 | ステップ数 | 36ステップ(Stage A〜F) |
 | 前提 | フェーズ1・2完了(ja UI・ウィザード・モバイル署名・OTP・Firebase Authenticationメール認証・アクセス制御・リマインダー・ダッシュボードが導入済み) |
 | テスト方針 | 各Stageでリグレッション防止テストを併せて作成(第4章参照)。削除系変更(案9)は移行テストとバックアップ手順を必須化 |
+| 実装状態 | **部分実装、残タスク多数**(2026-10-16 時点。最新状態は直下の「§0 実装進捗サマリ」を優先) |
+
+---
+
+## 0. 実装進捗サマリ(2026-10-16 現在)
+
+> 本節が最新の実装状態です。§1 以降の本文は計画時点の記述を保持します。
+> 対応コミット: `65680482`(日本語コンプライアンス機能一括実装) / `01bcdb2c`(v1.0 ドキュメント) / `d23fb711`(運用マニュアル)。
+> 残タスクは `docs/plans/remaining-tasks-implementation-plan.md`(22ステップ)、アーキテクチャ簡素化の方針は `docs/plans/smb-cutdown-implementation-plan.md` を参照。
+> 凡例: ✅ 実装済み / 🟡 一部実装(残あり) / ⬜ 未着手 / 🔄 方針変更により要件変更
+
+### 方針変更(計画時点からの差分)
+- **料金プラン 🔄**: `packages/lib/constants/plans.ts` により FREE(0円/月3件)/STANDARD(2,980円/月100件)/BUSINESS(4,980円)に改定。「無制限」表記は廃止。
+- **タイムスタンプ 🔄**: プラン機能からも外れオプトイン化(STANDARD の `features.timestamp = false` を確認)。
+- **SMS 廃止**: 本人確認はメールOTP(LOW)+Firebaseメール認証(MEDIUM)のみ。
+- **簡素化(ステップ17〜23)**: 具体的な削除作業は `smb-cutdown-implementation-plan.md`(5ステージ20ステップ)へ移管。
+
+### ステップ別状態
+
+| ステップ | 状態 | 実装成果物・備考 |
+| --- | --- | --- |
+| 1 | ✅ | `docs/plans/phase3-baseline.md` |
+| 2 | ✅ | `packages/lib/types/merge-variables.ts`(+test)、`packages/lib/types/template-automation.ts` |
+| 3 | ✅ | `apps/remix/app/components/dialogs/template-merge-variable-dialog.tsx`、`template-use-dialog.tsx` |
+| 4 | ✅ | `template/merge.ts`(+test)、`create-document-from-template.ts` へ統合 |
+| 5 | ✅ | `apps/remix/app/components/general/wizard/merge-variables-form.tsx` |
+| 6 | 🟡 | `bulk-send-csv.ts`/`validate-bulk-send-csv.ts`(+test)、handler 改修。**変数列差し込みは残**(remaining ステップ4) |
+| 7 | ✅ | `template-bulk-send-dialog.tsx`(行番号付き ja エラー) |
+| 8 | ✅ | `template-automation.ts` の `signingOrderLock` |
+| 9 | ⬜ | 署名順固定 UI+ウィザード反映(remaining ステップ5) |
+| 10 | ✅ | `RecipientRole.APPROVER`+`envelope/approval-flow.ts`+`approval-router/` |
+| 11 | ✅ | `_authenticated+/approvals.tsx`、`approval-action-dialog.tsx`、`packages/email/templates/approval-request.tsx` |
+| 12 | ✅ | approval-flow による監査記録(目視確認推奨) |
+| 13 | ✅ | `packages/prisma/seed/japanese-templates.ts`(309行) |
+| 14 | ✅ | merge/merge-variables/bulk-send-csv/plans のテスト群 |
+| 15 | ✅ | `jp-template-automation.spec.ts`(391行) |
+| 16 | ✅ | `jp-bulk-send.spec.ts` |
+| 17 | ✅ | `smb-cutdown-implementation-plan.md` §2+`remaining-tasks-implementation-plan.md` §1.3 で棚卸し済み |
+| 18 | 🟡 | 方針は smb-cutdown。詳細設計・移行手順は未整備 |
+| 19 | ⬜ | 組織階層 UI 削除は未着手 |
+| 20 | ⬜ | Embedding/EE のビルド除外は未着手 |
+| 21 | ⬜ | API v1 は現存(`server/router.ts` の未コミット変更は要確認) |
+| 22 | ✅ | ジョブは既定 local(運用マニュアル明記)。Inngest/BullMQ はオプトイン(物理分離は残) |
+| 23 | 🟡 | database 既定+standalone 構成。R2 推奨は方針記録のみ、Object Lock ガイド未整備 |
+| 24 | ✅ | `docker/compose.standalone.yml`、`docker/production/compose.yml`、`docker/README.md` |
+| 25 | ⬜ | 負荷テスト未実施 |
+| 26 | ✅ | `packages/lib/constants/plans.ts`(+test)。料金は上記方針変更どおり |
+| 27 | 🟡 | `feature-flags.ts` 拡張+`jp-plan-gates.spec.ts`。**送信実経路へのゲート適用は残**(remaining ステップ9) |
+| 28 | 🟡 | `to-human-price.ts`/`get-internal-claim-plans.ts` は既存。priceId 紐付け・webhook 整合は残(remaining ステップ11) |
+| 29 | ✅ | `[__htmltopdf]+/receipt.tsx`、`universal/qualified-invoice.ts`(+test)、`organisation-billing-invoices-table.tsx`。webhook 自動発行連携は要確認 |
+| 30 | 🟡 | `landing-page.tsx`・`_unauthenticated+/_layout.tsx` 改修中(未コミット)。専用料金ページ未確認 |
+| 31 | 🟡 | `packages/ui/components/denkei/denkei-guide.tsx`(オンボーディングガイド) |
+| 32 | 🟡 | `jp-plan-gates.spec.ts` 実装。実経路拡張は remaining ステップ9と一体的に残 |
+| 33 | ⬜ | 移行リハーサル(既存テナントなし・手順書未作成) |
+| 34 | 🟡 | 全 jp spec コミット済み。フル実行の記録は CI 要確認 |
+| 35 | ✅ | `USER_MANUAL.md`、`Q&A.md`、`LEGAL_BASIS_JP.md`、`OPERATIONS_MANUAL.md`、`docker/README.md` |
+| 36 | ✅ | v1.0 リリース(`01bcdb2c`) |
 
 ---
 

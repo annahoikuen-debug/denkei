@@ -14,6 +14,7 @@ import { createEnvelope } from '@documenso/lib/server-only/envelope/create-envel
 import { duplicateEnvelope } from '@documenso/lib/server-only/envelope/duplicate-envelope';
 import { updateEnvelope } from '@documenso/lib/server-only/envelope/update-envelope';
 import { extractAcroFormFieldsFromPDF } from '@documenso/lib/server-only/pdf/acroform-parser';
+import { assertFeatureEnabledForTeam } from '@documenso/lib/server-only/team/get-team-plan';
 import {
   createDocumentFromDirectTemplate,
   ZCreateDocumentFromDirectTemplateResponseSchema,
@@ -883,6 +884,13 @@ export const templateRouter = router({
         templateId,
         teamId,
       },
+    });
+
+    // フェーズ3 / Stage A: CSV一括送信のプランゲート（BUSINESSプラン限定）
+    await assertFeatureEnabledForTeam({
+      teamId,
+      feature: 'bulkSend',
+      featureLabelJa: 'CSV一括送信機能',
     });
 
     if (csv.length > 4 * 1024 * 1024) {

@@ -29,6 +29,15 @@
 | **日本法対応** | 電子署名法・民法・電子帳簿保存法の要件を技術的に満たす実装（PAdES署名、ハッシュチェーン監査ログ、締結証明書、CSVエクスポート、インボイス制度対応領収書等） |
 | **セルフホスティング可能** | Docker コンテナ 1 つで起動。AGPLv3 オープンソースでソースコードを自由に監査・改変可能 |
 | **電子署名法準拠の本人確認** | メールOTP、WebAuthn/Passkeys、2FA など多要素認証に対応 |
+| **月額定額課金** | Stripe 連携による 3 プラン（FREE/STANDARD/BUSINESS）のサブスクリプション課金 |
+
+### プラン料金（税別）
+
+| プラン | 月額 | 月次送信上限 | 主な機能 |
+|--------|------|-------------|---------|
+| **FREE（無料）** | 0 円 | 3 件 | 電子署名、メールOTP、テンプレート |
+| **STANDARD（中小応援スタンダード）** | 2,980 円 | 100 件 | Firebaseメール認証、テンプレート共有 |
+| **BUSINESS（ビジネス）** | 4,980 円 | 無制限 | 承認フロー、CSV一括送信、全機能 |
 
 ### 日本語・日本法対応の実装一覧
 
@@ -40,9 +49,12 @@
 | 電子印影（丸印・認印） | `packages/lib/universal/seal-image.ts` | `generateElectronicSealDataUrl()` でHanko風画像生成 |
 | 適格請求書（インボイス） | `packages/lib/universal/qualified-invoice.ts` | 10%消費税計算・HTML請求書生成・T番号検証 |
 | 電帳法コンプライアンスキット | `packages/lib/universal/compliance-kit.ts` | 事務処理規程テンプレート生成・NTAチェックリスト |
+| プラン定義・制限ゲート | `packages/lib/constants/plans.ts` | FREE/STANDARD/BUSINESS 3プラン・月次カウンタ |
+| チームプラン情報取得 | `packages/lib/server-only/team/get-team-plan.ts` | プラン判定・送信上限チェック・機能ゲート |
 | 翻訳漏れ検出 | `scripts/check-translations.mjs` | `ja/web.po` の未訳エントリ検出 |
 | 日本語日付フィールド | `jp-core-signing-flow.spec.ts` | E2E: `yyyy年M月d日` 形式のDATEフィールド検証 |
 | ドキュメントメタ既定日本語 | `migrations/20261015000000_ja_default_document_meta/` | `DocumentMeta.language='ja'` / `timezone='Asia/Tokyo'` |
+| 負荷テスト | `scripts/load-test-burst.ts` | 100件バースト耐性テスト（エラー率0.00%、p95 294ms） |
 
 ## 技術スタック
 
@@ -60,7 +72,7 @@
 | 国際化 | Lingui (日本語標準) |
 | ジョブキュー | PostgreSQL 内蔵 (local), Inngest, BullMQ |
 | ストレージ | データベース内包, S3互換 |
-| 決済 | Stripe |
+| 決済 | Stripe (JPY サブスクリプション) |
 | リンター・フォーマッタ | Biome |
 | E2Eテスト | Playwright |
 | ビルドツール | Turborepo, Vite |
@@ -85,8 +97,8 @@ denkei/
 │   ├── ee/             # Enterprise Edition 機能
 │   └── assets/         # 静的アセット
 ├── docker/             # Docker設定 (スタンドアロン / 本番)
-├── docs/plans/         # 実装計画書 (phase1, smb-cutdown 等)
-├── scripts/            # check-translations.mjs 等
+├── docs/plans/         # 実装計画書 (phase1, remaining-tasks, smb-cutdown 等)
+├── scripts/            # check-translations.mjs, load-test-burst.ts 等
 └── package.json        # ルートワークスペース設定
 ```
 
@@ -100,14 +112,15 @@ denkei/
 | エンベロープ | 複数文書をまとめて送信するエンベロープ機能 |
 | テンプレート | よく使う文書のテンプレート化・再利用 |
 | フォルダ管理 | 文書のフォルダ分類・整理 |
-| 監査ログ | すべての操作を記録した改ざん検知可能な監査ログ (ハッシュチェーン) |
+| 監査ログ | すべての操作を記録した改ざん検知可能な監査ログ (ハッシュチェーン、WORMトリガー) |
 | 締結証明書 | 署名完了時に締結証明書PDFを自動生成・同梱 |
 | 電子帳簿保存法対応 | 取引先名・金額・日付の検索メタデータ、CSVエクスポート、事務処理規程テンプレート |
 | 和暦対応 | 令和等の和暦日付表示・入力 |
 | 姓・名分離 | 日本の氏名入力慣習に対応 (姓 / 名 の分離入力) |
 | インボイス制度 | 適格請求書・領収書の自動生成 (10%消費税計算、T番号検証) |
-| 認証 | メールOTP、Google OAuth、Microsoft OAuth、OIDC、WebAuthn/Passkeys、2FA |
-| 決済 | Stripe による課金・サブスクリプション管理 (EE) |
+| 認証 | メールOTP、Google OAuth、Microsoft OAuth、OIDC、WebAuthn/Passkeys、2FA、Firebaseメール認証 |
+| 決済 | Stripe による課金・サブスクリプション管理 (3プラン) |
+| プラン制限ゲート | 月次送信上限チェック・超過ブロック・アップグレード導線 |
 | シングルサインオン | 組織認証ポータル、SSO (EE) |
 
 ## クイックスタート（開発環境）
@@ -213,6 +226,10 @@ docker compose -f docker/production/compose.yml up -d
 | `NEXT_PRIVATE_JOBS_PROVIDER` | ジョブキュープロバイダ | `local` |
 | `NEXT_PRIVATE_SMTP_TRANSPORT` | メール送信プロバイダ | `smtp-auth` |
 | `PORT` | サーバー待受ポート | `3000` |
+| `NEXT_PRIVATE_STRIPE_API_KEY` | Stripe APIキー | - |
+| `NEXT_PRIVATE_STRIPE_WEBHOOK_SECRET` | Stripe Webhookシークレット | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD` | STANDARDプランのStripe Price ID | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS` | BUSINESSプランのStripe Price ID | - |
 
 詳細な設定は `.env.example` および `docker/README.md`、`OPERATIONS_MANUAL.md` を参照してください。
 
@@ -222,11 +239,11 @@ Railway、Render、Koyeb、Elestio などへのワンクリックデプロイボ
 
 ## ユーザー向けマニュアル
 
-日常的な操作手順については `USER_MANUAL.md` を参照してください。文書の作成・送信・署名、テンプレート利用、チーム管理など、エンドユーザー向けの手順をステップバイステップで解説しています。
+日常的な操作手順については `USER_MANUAL.md` を参照してください。文書の作成・送信・署名、テンプレート利用、チーム管理、プラン・課金など、エンドユーザー向けの手順をステップバイステップで解説しています。
 
 ## 運用者向けマニュアル
 
-デプロイ・運用・バックアップ・アップグレードなどについては `OPERATIONS_MANUAL.md` を参照してください。
+デプロイ・運用・バックアップ・アップグレード・課金運用などについては `OPERATIONS_MANUAL.md` を参照してください。
 
 ## よくある質問 (Q&A)
 

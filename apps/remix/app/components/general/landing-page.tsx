@@ -30,13 +30,11 @@ export function LandingPage() {
   const [monthlyContracts, setMonthlyContracts] = useState<number>(30);
   const [includeRegisteredMail, setIncludeRegisteredMail] = useState<boolean>(false);
 
+  const sealColorHex = sealColor === 'black' ? '#1f2937' : sealColor === 'navy' ? '#1e3a8a' : '#dc2626';
+
   const sealDataUrl = useMemo(() => {
-    return generateElectronicSealDataUrl(sealName.trim() || '印', {
-      color: sealColor,
-      width: 256,
-      height: 256,
-    });
-  }, [sealName, sealColor]);
+    return generateElectronicSealDataUrl(sealName.trim() || '印', 256, sealColorHex);
+  }, [sealName, sealColorHex]);
 
   // コスト削減シミュレーション計算
   // 試算条件:
@@ -542,7 +540,7 @@ export function LandingPage() {
                   <span className="font-bold text-purple-600 text-xs uppercase tracking-wider">第五の道具</span>
                   <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">日本の3大定型契約書ひな形</h3>
                   <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
-                    業務委託・秘密保持(NDA)・雇用契約を標準搭載。PDFの用意すら不要。
+                    売買・業務委託・秘密保持(NDA)を標準搭載。法務レビュー前提の参考雛形です。
                   </p>
                   <AccordionTrigger className="mt-2 pt-2 font-bold text-purple-600 text-sm hover:no-underline sm:text-base">
                     搭載テンプレートと差し込み機能を見る
@@ -551,14 +549,14 @@ export function LandingPage() {
               </div>
 
               <AccordionContent className="mt-4 space-y-3 border-border border-t pt-5 text-foreground text-sm">
-                <p className="font-bold text-base">相手先名と金額を入れるだけで即座に送信完了</p>
+                <p className="font-bold text-base">差し込み変数付きテンプレートから契約書を作成・送信</p>
                 <p className="text-muted-foreground leading-relaxed">
-                  日本の商取引で最も頻発する3大契約書の法的条文をプリセット。WordやPDFを自作していなくても、フォームに入力するだけで綺麗な契約書PDFが自動生成されます。
+                  日本の商取引で頻発する3大契約書の参考書式をプリセット。取引先名や金額などの差し込み変数を入力して契約書PDFを生成し、署名依頼を送信します。利用にあたっては法務部門等のレビューをお願いします。
                 </p>
                 <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
+                  <div>✓ 売買契約書（取引先名・売買金額などの差し込み対応）</div>
                   <div>✓ 業務委託基本契約書（知的財産・納品検収・損害賠償上限完備）</div>
                   <div>✓ 秘密保持契約書（NDA・双務開示対応標準書式）</div>
-                  <div>✓ 雇用契約書 / 労働条件通知書（労基法義務付け事項適合）</div>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -763,7 +761,7 @@ export function LandingPage() {
                   </div>
                 </label>
                 <Badge
-                  variant={includeRegisteredMail ? 'default' : 'outline'}
+                  variant={includeRegisteredMail ? 'default' : 'secondary'}
                   className="self-start font-bold text-xs sm:self-auto"
                 >
                   {includeRegisteredMail ? '1通あたり 920円' : '1通あたり 710円（基本）'}

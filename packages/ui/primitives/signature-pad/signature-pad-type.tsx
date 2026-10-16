@@ -1,8 +1,7 @@
 import { splitJapaneseName } from '@documenso/lib/universal/japanese-name';
 import { generateElectronicSealDataUrl } from '@documenso/lib/universal/seal-image';
 import { Button } from '@documenso/ui/primitives/button';
-import { msg } from '@lingui/core/macro';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { Trans } from '@lingui/react/macro';
 import { CheckIcon, SparklesIcon, TypeIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -24,8 +23,6 @@ const SEAL_COLORS = [
 ] as const;
 
 export const SignaturePadType = ({ className, value, defaultValue = '', onChange }: SignaturePadTypeProps) => {
-  const { _ } = useLingui();
-
   const isJapaneseName = JAPANESE_CHAR_REGEX.test(defaultValue);
   const initialSurname = defaultValue ? splitJapaneseName(defaultValue).sei || defaultValue.trim().slice(0, 4) : '田中';
 
@@ -127,7 +124,7 @@ export const SignaturePadType = ({ className, value, defaultValue = '', onChange
                 maxLength={6}
                 value={sealName}
                 onChange={(e) => setSealName(e.target.value.trim())}
-                placeholder={_(msg`苗字を入力 (例: 田中)`)}
+                placeholder="苗字を入力 (例: 田中)"
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-center font-semibold text-foreground text-sm tracking-wide shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 autoComplete="off"
                 autoCorrect="off"
@@ -164,7 +161,7 @@ export const SignaturePadType = ({ className, value, defaultValue = '', onChange
         <div className="flex flex-1 items-center justify-center">
           <input
             data-testid="signature-pad-type-input"
-            placeholder={_(msg`お名前を入力してください`)}
+            placeholder="お名前を入力してください"
             className="w-full bg-transparent px-4 text-center font-signature text-5xl text-foreground placeholder:text-2xl focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:text-7xl sm:placeholder:text-4xl"
             value={typedText}
             onChange={(event) => {

@@ -121,6 +121,7 @@ export function TemplateUseDialog({
   documentRootPath,
   envelopeId,
   templateId,
+  templateSigningOrder,
   automationSettings: initialAutomationSettings,
   trigger,
 }: TemplateUseDialogProps) {

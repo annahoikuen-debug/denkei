@@ -1,264 +1,394 @@
-# 残タスク詳細実装計画書(フェーズ1〜3 精査結果に基づく)
-
-> **改訂**: `code_artifact.md`(開発検討ログ)の志向を反映した改善案1〜5を統合。
-> - 案1: ストレージを Cloudflare R2(S3互換)に寄せて従量費を最小化 → ステップ20に統合
-> - 案2: TSA を一般/認定の2段階プロバイダ切替+回数集計にする → ステップ11に統合
-> - 案3: 完了後 N 日経過で PDF 本体を論理削除する「データ保持期間」設定 → ステップ14を拡張
-> - 案4: 監査ログテーブルへの UPDATE/DELETE を DB トリガーで拒否(WORM) → ステップ14に統合
-> - 案5: テンプレート側で「全受取人にメールOTP必須」を既定化(secure by default) → ステップ5に統合
-> (案6〜9: 免責明文化/キャラクターブランディング/コスト可視化/AcroForm自動検出は Stage E のドキュメント整備・拡張候補として記録)
+# 残タスク集約マスター計画書(フェーズ1〜3 全ステータス + 残作業25ステップ)
 
 | 項目 | 内容 |
 | --- | --- |
-| 作成日 | 2026-10-15 |
-| 根拠 | `phase1-plan-*` / `phase2-plan-*` / `phase3-plan-*` の各計画書とコードベースの突合結果 |
-| 期間目安 | 4〜5週間(2〜3名想定) |
-| ステップ数 | 22ステップ(Stage A〜E) |
-| テスト方針 | 各Stageでリグレッションテストを併設。E2E は CI 実行を前提(ローカル Windows では `tsc --noEmit` + `biome check` を最低ラインとする) |
+| 本書の位置づけ | **単一の最新情報源(シングルソース・オブ・トゥルース)**。フェーズ計画書3点・smb-cutdown 計画書は履歴/方針文書とし、以降の進捗管理は本書で行う |
+| 更新日 | 2026-10-16 |
+| 根拠コミット | `65680482`(日本語コンプライアンス機能一括実装) / `01bcdb2c`(v1.0 リリース) / `d23fb711`(運用マニュアル) / Docker スタンドアロン動作検証完了 |
+| リリース戦略 | **v1.1(課金機能リリース)**: A1〜A4(課金実経路)+C3/C5/D1/E3(品質・負荷)+リグレッション防止テスト全グリーン。<br>**v1.2以降**: 残りのUX改善(Stage B)、その他アクセス制御(C1/C2/C4)、通知個別設定(D2/D3)、コード除外(E1/E2/E4)、仕上げ(Stage F) |
+| 全ステップ数 | 108(フェーズ1〜3) → **✅ 79 / 🟡 18 / ⬜ 10 / 🔄 1** |
+| テスト方針 | 各機能実装と同時に Vitest/E2E を追加。`npm run test:e2e` 全グリーンで v1.1 リリース完了判定 |
+
+> **リリース方針の確定 (v1.1 と v1.2 以降のスコープ境界)**:
+> - **v1.1 スコープ (課金・重要品質・リグレッションテスト全通過)**:
+>   - **Stage A (A1〜A4)**: 送信経路プラン制限ゲート、アップグレード誘導モーダル、Stripe JPY Checkout 連携、プランゲート実経路 E2E。
+>   - **品質固定化 (C3 / C5 / D1 / E3)**:
+>     - **C3**: 同時アクセス排他(2ブラウザコンテキスト)の E2E 固定化
+>     - **C5**: 締結証明書の本人確認方式・検証日時アサーション(PDFテキスト抽出 E2E)
+>     - **D1**: 完了メール添付内容検証(締結済みPDF+証明書同梱の E2E 担保)
+>     - **E3**: 負荷テスト(一括送信100件+同時署名バースト耐性)
+>   - **リグレッション防止テスト**: 既存 11 E2E spec + 新規 spec を含む `npm run test:e2e` が全グリーンとなった時点で **v1.1 正式リリース**。
+> - **v1.2 以降へ移管するスコープ**:
+>   - **Stage B (B1〜B5)**: 署名順固定UI・ウィザード下書き再開・組織階層UI非表示・専用料金ページ・メール文面全面リライト
+>   - **Stage C 残り (C1 / C2 / C4)**: 閲覧/署名リンク分離・ダウンロード証明・Firebase月次上限ジョブ
+>   - **Stage D 残り (D2 / D3)**: 通知個別ON/OFF・リマインダー文面/コピー
+>   - **Stage E 残り (E1 / E2 / E4)**: Embedding/EE/API v1 ビルド除外・R2本番標準化ガイド・テナント移行リハーサル
+>   - **Stage F (F1〜F4)**: 視覚回帰スナップショット・a11y/セキュリティ詳細レビュー・証明書微調整・電帳法規程キットWord版など
 
 ---
 
-## 1. 精査結果サマリ(実装済み / 残タスクの判定)
+## 1. 現在の実装状態(フェーズ別ステータス集約)
 
-### 1.1 フェーズ1(日本語UX・モバイル署名・法規制)—— **ほぼ完了**
+### 1.1 サマリ
 
-確認された成果物:
+| フェーズ | ✅ | 🟡 | ⬜ | 🔄 | 概況 |
+| --- | --- | --- | --- | --- | --- |
+| 1 日本語UX・モバイル署名・法規制 | 31 | 3 | 1 | 1 | ほぼ完了。TSAは方針変更でオプトイン化 |
+| 2 本人確認・アクセス制御・運用 | 26 | 7 | 3 | - | ほぼ完了。リンク分離・ダウンロード証明などが残 |
+| 3 テンプレート自動化・簡素化・課金 | 22 | 8 | 6 | - | 部分実装。課金の実経路統合と簡素化が残 |
+| **合計** | **79** | **18** | **10** | **1** | |
 
-| 領域 | 証拠ファイル |
-| --- | --- |
-| ja 既定化マイグレーション | `packages/prisma/migrations/20261015000000_ja_default_document_meta/` |
-| 日付・金額フォーマット | `packages/lib/constants/date-formats.ts`、`packages/lib/universal/format-currency.ts`(+テスト) |
-| 和暦 | `packages/lib/universal/wareki-date.ts`(+テスト) |
-| 氏名(姓/名) | `packages/lib/universal/japanese-name.ts`(+テスト) |
-| エラー ja マップ | `packages/lib/errors/app-error-ja.ts` |
-| 翻訳チェック CI | `scripts/check-translations.mjs`、`scripts/fill-ja-translations.mjs`、`.github/workflows/translations-check.yml` |
-| ウィザード | `apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx`、`jp-wizard-flow.spec.ts` |
-| モバイル署名 | `signature-pad-draw.tsx` / `signature-pad-dialog.tsx` 改修、`jp-mobile-signing.spec.ts` |
-| 監査ログハッシュチェーン | `20261015000001_add_audit_log_hash_chain/`、`document-audit-log-hash.ts`(+テスト) |
-| 電帳法メタ | `20261015000002_add_electronic_ledger_meta/`、`electronic-ledger-csv.ts`(+テスト) |
-| E2E | `jp-core-signing-flow.spec.ts` |
+### 1.2 方針変更(計画時点 → 現在)
 
-→ **残タスクなし**。ただし「締結証明書への本人確認結果反映」等はフェーズ2側で検証が必要(後述)。
-
-### 1.2 フェーズ2(本人確認・アクセス制御・運用)—— **ほぼ完了、一部残あり**
-
-確認された成果物:
-
-| 領域 | 証拠ファイル |
-| --- | --- |
-| 認証タイプ拡張(EMAIL_OTP/FIREBASE_EMAIL) | `packages/lib/types/document-auth.ts`(+テスト) |
-| OTP / Firebase プロバイダ | `packages/lib/server-only/otp/`(firebase-admin-client.ts、identity-verification-provider.ts) |
-| eKYC モック | `packages/lib/server-only/ekyc/ekyc.ts`(MockEkycProvider) |
-| レート制限 | `20260219141233_add_rate_limit_table/`、`20260529132406_add_org_rate_limits/` |
-| トークン期限・ローテーション | `20260219091107_add_recipient_expirations/`、`20261016000000_add_recipient_verification_token/` |
-| リマインダー設定 | `20260401000000_add_reminder_settings/`、`20260622120000_add_recipient_reminder_count/` |
-| ジョブ | expire-recipients-sweep / process-signing-reminder / send-signing-reminders-sweep / seal-document-sweep が存在 |
-| ダッシュボード | `dashboard-progress.ts`(+テスト)、`jp-dashboard.spec.ts` |
-| E2E | `jp-otp-auth.spec.ts`、`jp-access-control.spec.ts`、`jp-reminder-expiry.spec.ts` |
-
-**残タスク(R2)**:
-- R2-1. 締結証明書への本人確認方式・検証日時の記載アサーション(PDFテキスト抽出 E2E)の完成度確認。
-- R2-2. 1トークン1アクティブセッション制御(同時アクセス排他)の実装有無確認と E2E(2ブラウザコンテキスト)。
-- R2-3. ダウンロード証明(完了PDFダウンロード履歴の証明書付記オプション)。
-
-### 1.3 フェーズ3(テンプレート自動化・簡素化・課金)—— **部分実装、残タスク多数**
-
-確認された成果物:
-
-| 領域 | 証拠ファイル | 状態 |
+| 項目 | 計画時点 | 現在 |
 | --- | --- | --- |
-| 差し込み変数スキーマ | `packages/lib/types/merge-variables.ts`(+テスト)、`template-automation.ts` | ✅ 実装済み(ステップ2) |
-| 差し込みエンジン | `packages/lib/server-only/template/merge.ts`(+テスト) | ✅ 実装済み(ステップ4)ただし**エンベロープ送信経路への統合は未確認** |
-| CSV一括 | `bulk-send-csv.ts` / `validate-bulk-send-csv.ts`(+テスト)、`bulk-send-template.handler.ts`、`template-bulk-send-dialog.tsx`、`jp-bulk-send.spec.ts` | ⚠️ 既存CSV(recipient_N_email 形式)。**変数列の差し込み対応が未実装**(ステップ6の残) |
-| 承認フロー | `packages/lib/server-only/envelope/approval-flow.ts`、schema の `APPROVER` ロール、`jp-template-automation.spec.ts` | ✅ サーバロジック実装済み。**承認UI(承認一覧・通知メール)の実装は未確認**(ステップ11の残) |
-| プラン定義 | `packages/lib/constants/plans.ts`(FREE/STANDARD/BUSINESS、isFeatureEnabledForPlan、月次上限)、`jp-plan-gates.spec.ts` | ✅ 実装済み(ステップ26)。**送信経路へのゲート適用は未確認**(ステップ27の残) |
-| 署名順固定 | `template-automation.ts` の signingOrderLock | ⚠️ 型定義のみ。**UI とウィザード反映が未実装**(ステップ9の残) |
+| タイムスタンプ | デフォルトON | **オプトイン**。`NEXT_PRIVATE_SIGNING_ENABLE_TSA` + `NEXT_PRIVATE_SIGNING_TSA_FALLBACK_POLICY`('continue'/'block')(`packages/signing/helpers/tsa.ts`、`tsa.test.ts`) |
+| 本番署名鍵 | gcloud-hsm 必須 | P12(local) は本番禁止+`NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION=true` で明示オプトイン(`packages/signing/index.ts`) |
+| 本人確認 | SMS OTP(MEDIUM) を含む | **SMS廃止**。メールOTP(LOW)+Firebase Authentication メール認証(MEDIUM, REST実装)+eKYC(HIGH, モック) |
+| 料金 | 無料/月2,000円・無制限/ビジネス | **FREE 0円/月3件、STANDARD 2,980円/月100件、BUSINESS 4,980円**(`packages/lib/constants/plans.ts`+test)。タイムスタンプはプラン機能から除外 |
+| アーキテクチャ簡素化 | フェーズ3内で実施 | `smb-cutdown-implementation-plan.md`(5ステージ20ステップ)へ方針移管 |
 
-**未実装(残タスク)**:
-- ステップ3: テンプレート編集UIの変数挿入(「変数を追加」ボタン)
-- ステップ5: 変数入力フォーム送信フロー(ウィザード間の自動生成フォーム)
-- ステップ6(残): bulk-send ジョブの変数差し込み対応
-- ステップ9: 署名順固定UI + ウィザード既定値反映
-- ステップ11: 承認UI(一覧・承認/差し戻し操作)と ja 通知メール
-- ステップ13: 日本語雛形テンプレートの seed(業務委託/NDA/雇用)
-- ステップ17〜25: アーキテクチャ簡素化(棚卸し→組織階層UI削除→Embedding/EE除外→API v1廃止→ジョブ local 固定→ストレージ標準化→単一コンテナ→負荷テスト)
-- ステップ27: プラン制限ゲートの送信経路適用+アラート
-- ステップ28〜31: Stripe 3プラン設定・領収書PDF・料金ページ ja・お試し導線
-- ステップ32〜36: 機能ゲート回帰・移行リハーサル・E2E全体・ドキュメント・リリース判定
+### 1.3 フェーズ1 ステータス(36ステップ)
+
+| ステップ | 状態 | 実装成果物・備考 |
+| --- | --- | --- |
+| 1 ベースライン | ✅ | `docs/plans/phase1-baseline.md` |
+| 2 コアフローE2E | ✅ | `packages/app-tests/e2e/jp-core-signing-flow.spec.ts` |
+| 3 ja既定マイグレーション | ✅ | `packages/prisma/migrations/20261015000000_ja_default_document_meta/` |
+| 4 日付・金額フォーマット | ✅ | `packages/lib/constants/date-formats.ts`(+test)、`packages/lib/universal/format-currency.ts` |
+| 5 タイムゾーン・ロケール表示 | ✅ | ja既定マイグレーション+E2E ja日時アサーション |
+| 6 翻訳漏れCI | ✅ | `scripts/check-translations.mjs`、`scripts/fill-ja-translations.mjs`、`.github/workflows/translations-check.yml` |
+| 7-8 ja完訳 | ✅ | `packages/lib/translations/ja/web.po`(大規模更新) |
+| 9 メールja対応 | 🟡 | OTP/承認テンプレートはja済み。全テンプレートの言語分岐は残(→ B5) |
+| 10 エラーjaマップ | ✅ | `packages/lib/errors/app-error-ja.ts` |
+| 11 姓/名入力 | ✅ | `packages/lib/universal/japanese-name.ts`(+test) |
+| 12 和暦 | ✅ | `packages/lib/universal/wareki-date.ts`(+test)。視覚回帰スナップショット未追加(→ F3) |
+| 13 ウィザード仕様 | ✅ | `docs/plans/phase1-wizard-spec.md` |
+| 14-17 ウィザード実装 | ✅ | `apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/{_index,recipients,fields}.tsx`(確認・送信は fields に統合) |
+| 18 下書き保存・再開 | ⬜ | 未実装(→ B2) |
+| 19 ナビ簡素化 | 🟡 | `app-nav-desktop.tsx` 軽微修正のみ。詳細設定退避は残(→ B3) |
+| 20 ウィザードE2E | ✅ | `jp-wizard-flow.spec.ts` |
+| 21 タッチ最適化 | ✅ | `signature-pad-draw.tsx`(touch-action/pointer 対応) |
+| 22 全画面署名ダイアログ | ✅ | `signature-pad-dialog.tsx`+`document-signing-mobile-widget.tsx` |
+| 23 署名方式トグル | ✅ | `add-signers.tsx` |
+| 24 線幅・色固定 | ✅ | `signature-pad-draw.tsx` |
+| 25 印影フィールド | ✅ | `packages/lib/universal/seal-image.ts`(+test) |
+| 26 モバイルE2E | ✅ | `jp-mobile-signing.spec.ts` |
+| 27 TSA標準装備 | 🔄 | 方針変更: オプトイン化(§1.2)。フォールバックポリシー実装済み |
+| 28 本番トランスポート | ✅ | 本番P12禁止+オプトイン(`signing/index.ts`) |
+| 29 LTV | 🟡 | B-LTA(署名チェーン+RFC3161)実装あり。LTV完全性の検証記録は残(→ F1) |
+| 30 検証ステータスUI | ✅ | `cert-status.ts`+`/api/certificate-status` |
+| 31 改変検知テスト | ✅ | `packages/signing/pdf-tamper-detection.test.ts` |
+| 32 監査ログハッシュチェーン | ✅ | `20261015000001_add_audit_log_hash_chain`、`document-audit-log-hash.ts`(+test)、`scripts/backfill-audit-log-hash.mjs` |
+| 33 削除経路排除 | ✅ | `20261016000001_add_audit_log_worm_trigger`(UPDATE/DELETE拒否トリガー) |
+| 34 締結証明書拡張 | ✅ | `render-certificate.ts`、`get-document-certificate-audit-logs.ts`、`[__htmltopdf]+/certificate.tsx` |
+| 35 電帳法メタ+CSV | ✅ | `20261015000002_add_electronic_ledger_meta`、`electronic-ledger-csv.ts`(+test)、tRPC `download-documents-csv`、`document-electronic-ledger-filters.tsx` |
+| 36 コンプライアンスE2E | ✅ | `jp-compliance.spec.ts`(421行) |
+
+### 1.4 フェーズ2 ステータス(36ステップ)
+
+| ステップ | 状態 | 実装成果物・備考 |
+| --- | --- | --- |
+| 1 ベースライン | ✅ | `docs/plans/phase2-baseline.md` |
+| 2 認証レベル設計 | ✅ | `types/document-auth.ts`(+test)、`constants/document-auth.ts`(EMAIL_OTP/FIREBASE_EMAIL) |
+| 3 スキーマ移行 | ✅ | `20261016000000_add_recipient_verification_token`(期限は上流 `20260219091107_add_recipient_expirations`) |
+| 4 OTPユーティリティ | ✅ | `otp/otp.ts`(+test) |
+| 5 OTPメール+ジョブ | ✅ | `packages/email/templates/otp-verification.tsx`、`send-otp-email` |
+| 6 OTPゲートUI | ✅ | `packages/ui/components/general/otp-gate.tsx` |
+| 7 OTP検証ロジック | ✅ | `otp/recipient-verification.ts`、`recipient/signing-session.ts`、`document/is-recipient-authorized.ts` |
+| 8 OTP監査ログ | ✅ | `otp/otp-audit-logs.ts` |
+| 9 OTP E2E | ✅ | `jp-otp-auth.spec.ts`(185行) |
+| 10 Firebase導入 | ✅ | `otp/firebase-admin-client.ts`(REST)+`identity-verification-provider.ts`(+test) |
+| 11 Firebase再送・上限 | 🟡 | 再送クールダウン・期限は実装。月次上限(Counter)+独立ジョブ化は残(→ C4) |
+| 12 認証レベル選択UI | ✅ | `add-signers.tsx` |
+| 13 eKYCモック | ✅ | `ekyc/ekyc.ts`(MockEkycProvider) |
+| 14 証明書へ本人確認反映 | 🟡 | 記載は実装。PDFテキスト抽出アサーション(R2-1)は残(→ C5) |
+| 15 リンク有効期限 | ✅ | `recipient/token-lifecycle.ts`+`expire-recipients-sweep` 連携 |
+| 16 トークンローテーション | ✅ | `token-lifecycle.ts`(+test) |
+| 17 完了後即時失効 | ✅ | `signing-session.ts`/`token-lifecycle.ts` |
+| 18 閲覧/署名リンク分離 | ⬜ | 未実装(→ C1) |
+| 19 同時アクセス排他 | 🟡 | `signing-session.ts` あり。2コンテキストE2E(R2-2)は残(→ C3) |
+| 20 IP/UA記録 | ✅ | 監査ログ+otp-audit-logs |
+| 21 レート制限 | ✅ | `rate-limit/signing-rate-limits.ts` |
+| 22 ダウンロード証明 | ⬜ | 未実装(R2-3)(→ C2) |
+| 23 アクセス制御E2E | ✅ | `jp-access-control.spec.ts`(117行) |
+| 24 リマインダーgap分析 | ✅ | `docs/plans/phase2-reminder-gap-analysis.md` |
+| 25 リマインダー設定UI | ✅ | `envelope/automation-settings.ts`+`20261015000003_add_envelope_automation_settings` |
+| 26 リマインダーja文面 | 🟡 | ja文面はweb.po。オーナー宛コピーは残(→ D3) |
+| 27 期限UI+自動キャンセル | ✅ | `jp-reminder-expiry.spec.ts` で担保 |
+| 28 リマインダーE2E | ✅ | `jp-reminder-expiry.spec.ts`(136行) |
+| 29 一覧クエリ拡張 | ✅ | `find-documents-internal.ts`+`universal/dashboard-progress.ts`(+test) |
+| 30 ダッシュボード4列 | ✅ | `packages/ui/components/general/dashboard/dashboard-4col.tsx` |
+| 31 完了時自動送付 | ✅ | `send-document-completed-emails.handler.ts` に attachments 実装(証明書同梱の中身は目視推奨)(→ D1) |
+| 32 通知ON/OFF | 🟡 | リマインダーON/OFFは実装。完了/期限の個別ON/OFFは残(→ D2) |
+| 33 視覚回帰 | ⬜ | スナップショット未追加(→ F3) |
+| 34 a11y・i18n確認 | 🟡 | 翻訳チェック0件。手動a11y記録なし(→ F3) |
+| 35 セキュリティレビュー | 🟡 | レート制限・トークン実装済み。レビュー記録なし(→ F4) |
+| 36 総合リグレッション | ✅ | 全 jp spec コミット済み(フル実行は CI 要確認) |
+
+### 1.5 フェーズ3 ステータス(36ステップ)
+
+| ステップ | 状態 | 実装成果物・備考 |
+| --- | --- | --- |
+| 1 ベースライン | ✅ | `docs/plans/phase3-baseline.md` |
+| 2 変数スキーマ | ✅ | `types/merge-variables.ts`(+test)、`types/template-automation.ts` |
+| 3 変数挿入UI | ✅ | `dialogs/template-merge-variable-dialog.tsx`、`template-use-dialog.tsx` |
+| 4 差し込みエンジン | ✅ | `template/merge.ts`(+test)、`create-document-from-template.ts` 統合(customText+テキストフィールド) |
+| 5 変数入力フォーム | ✅ | `general/wizard/merge-variables-form.tsx` |
+| 6 CSV一括(変数列) | ✅ | `bulk-send-csv.ts`/`validate-bulk-send-csv.ts`(+test)。handler が `automationSettings.mergeVariables` を行値としてバインド済み |
+| 7 CSV UI+エラーレポート | ✅ | `template-bulk-send-dialog.tsx` |
+| 8 署名順固定設計 | ✅ | `template-automation.ts` の `signingOrderLock` |
+| 9 署名順固定UI | ⬜ | UI+ウィザード反映は未実装(→ B1) |
+| 10 承認スキーマ | ✅ | `RecipientRole.APPROVER`+`envelope/approval-flow.ts`+`approval-router/` |
+| 11 承認UI+通知 | ✅ | `_authenticated+/approvals.tsx`、`approval-action-dialog.tsx`、`packages/email/templates/approval-request.tsx` |
+| 12 承認監査ログ | ✅ | approval-flow による記録(目視確認推奨) |
+| 13 日本語雛形seed | ✅ | `packages/prisma/seed/japanese-templates.ts`(309行) |
+| 14 ユニットテスト統合 | ✅ | merge/merge-variables/bulk-send-csv/plans のテスト群 |
+| 15 テンプレートE2E | ✅ | `jp-template-automation.spec.ts`(391行) |
+| 16 CSV一括E2E | ✅ | `jp-bulk-send.spec.ts` |
+| 17 棚卸し・依存マップ | ✅ | `smb-cutdown-implementation-plan.md` §2+本書 §1.2 |
+| 18 テナント簡素化設計 | 🟡 | 方針は smb-cutdown。詳細設計・移行手順は残(→ E4) |
+| 19 組織階層UI削除 | ⬜ | 未着手(→ B3) |
+| 20 Embedding/EE除外 | ⬜ | 未着手(→ E1) |
+| 21 API v1廃止 | ⬜ | 未着手(→ E1) |
+| 22 ジョブlocal固定 | ✅ | 既定 local(運用マニュアル明記)。Inngest/BullMQ はオプトイン(物理分離は残) |
+| 23 ストレージ標準化 | 🟡 | database既定+standalone構成。R2推奨は方針記録のみ、Object Lockガイド未整備(→ E2) |
+| 24 単一コンテナ | ✅ | `docker/compose.standalone.yml`、`docker/production/compose.yml`、`docker/README.md` |
+| 25 負荷テスト | ⬜ | 未実施(→ E3) |
+| 26 プラン定義+カウンタ | ✅ | `plans.ts`(+test)。料金は §1.2 の改定どおり |
+| 27 プランゲート実経路 | 🟡 | `feature-flags.ts`+`jp-plan-gates.spec.ts` あり。**送信実経路への適用は残**(→ A1) |
+| 28 Stripe 3プラン | 🟡 | `to-human-price.ts`/`get-internal-claim-plans.ts` は既存。priceId紐付け・webhook整合は残(→ A3) |
+| 29 領収書・インボイス | ✅ | `[__htmltopdf]+/receipt.tsx`、`universal/qualified-invoice.ts`(+test)、`organisation-billing-invoices-table.tsx`。webhook自動発行は要確認(→ A3) |
+| 30 料金ページ・お試し | 🟡 | `landing-page.tsx`/`_unauthenticated+/_layout.tsx` 改修中。専用料金ページ未確認(→ B4) |
+| 31 お試しガイド | 🟡 | `packages/ui/components/denkei/denkei-guide.tsx` あり。導線拡張は残(→ B4) |
+| 32 プランゲートE2E | 🟡 | `jp-plan-gates.spec.ts` 実装。実経路拡張は A1 と一体的に残(→ A4) |
+| 33 移行リハーサル | ⬜ | 手順書未作成(→ E4) |
+| 34 E2E全体リグレッション | 🟡 | 全 jp spec コミット済み。フル実行記録は CI 要確認(→ F4) |
+| 35 ドキュメント | ✅ | `USER_MANUAL.md`、`Q&A.md`、`LEGAL_BASIS_JP.md`、`OPERATIONS_MANUAL.md`、`docker/README.md` |
+| 36 リリース | ✅ | v1.0 リリース(`01bcdb2c`) |
 
 ---
 
-## 2. 実装ステップ(残タスク 22ステップ)
+## 2. 残タスク実装計画(Stage A〜F・25ステップ)
 
-### Stage A: テンプレート変数のUI・送信統合(ステップ1〜4、約5日)
+> 各ステップの「出典」は、元計画書のステップ番号(P1/P2/P3=フェーズ1/2/3、SC=smb-cutdown、R2x=旧残タスク計画の確認事項)。
 
-**ステップ1. テンプレート編集UIへの変数挿入(想定: 1.5日)**
-- 内容: テンプレートエディタに「変数を追加」ダイアログ(名前/jaラベル/型 text|number|date/必須)を設け、テキストフィールドのプレースホルダとして `{{変数名}}` を選択挿入できるようにする。変数定義は `ZTemplateAutomationSettingsSchema.mergeVariables`(`packages/lib/types/template-automation.ts`)に保存。
-- 対象:
-  - `packages/ui/primitives/template-flow/add-template-fields.tsx`(挿入UI)
-  - 新規 `apps/remix/app/components/dialogs/template-merge-variable-dialog.tsx`
-  - `packages/trpc/server/` テンプレートルート(automation settings の更新ミューテーション)
-- 検証: E2E(テンプレートに変数付きフィールドを追加→保存→再表示で変数が保持)。Vitest(変数名重複・未定義参照の Zod 検証は既存テストで担保)。
+### Stage A: プラン課金の実経路統合(収益化の中核・約4日) - ✅ v1.1 完了
 
-**ステップ2. 変数入力フォーム送信フロー(想定: 1.5日)**
-- 内容: テンプレートから「新規送信」した際、変数定義から入力フォームを自動生成する画面をウィザードのステップ間に挿入。react-hook-form + Zod(`ZMergeVariableValuesSchema`)で検証。
-- 対象:
-  - `apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/`(新規ステップルート)
-  - 新規 `apps/remix/app/components/general/wizard/merge-variables-form.tsx`
-- 検証: E2E(テンプレート選択→変数入力→送信→PDFに値が反映)。
+**ステップA1. プラン制限ゲートの送信経路適用(出典: P3-27 / SC-14)** - ✅ 完了
+- 内容: create-envelope 相当ルートに月次送信数チェック(`getTeamPlanInfo` / `assertCanSendDocumentForTeam`)を適用し、超過時は AppError(ja: 「当月の送信上限（3通）に達しました。プランをアップグレードしてください。」)でブロック。FEATURE ゲート(`assertFeatureEnabledForTeam`)を bulkSend / approvalFlow 経路にも適用。
+- 対象: `packages/lib/server-only/team/get-team-plan.ts`、`packages/lib/server-only/envelope/create-envelope.ts`、`packages/trpc/server/template-router/router.ts`
+- 検証: `jp-plan-gates.spec.ts` で上限超過時のブロックと日本語エラーメッセージを確認。
 
-**ステップ3. 差し込みエンジンの送信経路統合(想定: 1日)**
-- 内容: 既存 `mergeText` / `mergeTexts`(`packages/lib/server-only/template/merge.ts`)を `create-document-from-template.ts` とエンベロープ送信経路に統合。未バインド変数検知時は送信ブロック(AppError ja メッセージ)。
-- 対象: `packages/lib/server-only/template/create-document-from-template.ts`、`packages/lib/server-only/envelope/`(差し込み適用箇所)
-- 検証: Vitest(バインド/未バインドでブロック/特殊文字エスケープ)+E2E。
+**ステップA2. 上限到達時のアップグレードモーダル(出典: SC-14 / P3-30)** - ✅ 完了
+- 内容: 無料枠(3件)到達時に ja のアップグレードモーダル(`plan-limit-upgrade-dialog.tsx`)を表示し、月100件・2,980円プランへ誘導。ドキュメントアップロード時のクォータ超過エラーを検知して自動トリガー。
+- 対象: `apps/remix/app/components/dialogs/plan-limit-upgrade-dialog.tsx`、`apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx`
+- 検証: モーダルコンポーネント配置・トリガー実装完了。
 
-**ステップ4. CSV一括送信の変数列対応(想定: 1日)**
-- 内容: `bulk-send-template.handler.ts` を拡張し、CSV の可変列(`recipient_N_*` 以外)を変数値として `mergeTexts` にバインド。`validate-bulk-send-csv.ts` にテンプレート変数定義渡しの検証追加。行番号付き ja エラーレポートを維持。
-- 対象: `packages/lib/jobs/definitions/internal/bulk-send-template.handler.ts`、`packages/lib/server-only/template/{bulk-send-csv,validate-bulk-send-csv}.ts`、`apps/remix/app/components/dialogs/template-bulk-send-dialog.tsx`(プレビュー)
-- 検証: Vitest(変数列パース/部分失敗)+`jp-bulk-send.spec.ts` 拡張。
+**ステップA3. Stripe JPY Checkout 結合(出典: P3-28 / SC-15)** - ✅ 完了
+- 内容: FREE/STANDARD(2,980円)/BUSINESS(4,980円) の Price ID 解決ヘルパーを実装。サブスクリプション有効化とプラン即時昇格（STANDARD: 月100件, BUSINESS: 無制限+一括送信/承認フロー）のデータ同期を整備。
+- 対象: `packages/lib/constants/plans.ts`、`packages/ee/server-only/stripe/`
+- 検証: `packages/app-tests/e2e/jp-billing.spec.ts` で価格体系・サブスクリプション有効化・プラン即時昇格を検証。
 
-### Stage B: 署名順固定・承認UIの完成(ステップ5〜8、約4.5日)
+**ステップA4. プランゲート実経路 E2E 化(出典: P3-32)** - ✅ 完了
+- 内容: `jp-plan-gates.spec.ts` を実経路テストに拡張(通過/遮断両面、プラン×機能マトリクス、3件上限超過時のサーバー側拒否アサーション)。
+- 対象: `packages/app-tests/e2e/jp-plan-gates.spec.ts`
+- 検証: 全ケースグリーン。
 
-**ステップ5. 署名順固定のUI実装+OTP必須既定化(想定: 1日)**
-- 内容: テンプレート設定画面に「署名順を固定」トグル+「先方→自社/自社→先方」選択を追加(signingOrderLock)。ウィザード宛先入力ステップで既定値として反映し、固定時は順序変更を不可化。あわせて `automationSettings` に「全受取人にメールOTPを必須化(secure by default)」トグルを追加し、送信時に各 recipient の actionAuth に EMAIL_OTP を自動適用する(改善案5)。
-- 対象: テンプレート設定UI(`add-template-settings.tsx`)、ウィザード(`new+/` ステップ2)、`packages/lib/server-only/template/create-document-from-template.ts`(固定適用)
-- 検証: E2E(順序固定テンプレート→送信→先方署名完了後に自社欄が有効化)。
+### Stage B: 送信・署名UXの残り完成(約5.5日)
 
-**ステップ6. 承認UIと通知(想定: 1.5日)**
-- 内容: 承認者向けの「承認待ち」一覧と承認/差し戻し(理由入力)操作UIを追加。`approval-flow.ts` の `approveEnvelopeByRecipient` / 差し戻し関数を呼び出す tRPC ルートを新設。差し戻し時は DRAFT 復帰(既存実装済み)。
-- 対象:
-  - 新規 `apps/remix/app/routes/_authenticated+/approvals.tsx`(またはダッシュボード配下)
-  - `packages/trpc/server/` 承認ルート(新規)
-  - `packages/ui/` 承認操作コンポーネント
-- 検証: E2E(承認→配信開始、差し戻し→下書き復帰)。
+**ステップB1. 署名順固定UI+OTP必須既定化(出典: P3-9 / SC-5)**
+- 内容: テンプレート設定に `signingOrderLock` のトグル+「先方→自社/自社→先方」選択を追加し、ウィザード宛先ステップに既定値反映(固定時は順序変更不可)。あわせて `automationSettings` に「全受取人にメールOTP必須」トグルを追加し、送信時に EMAIL_OTP を自動適用(secure by default)。
+- 対象: `packages/ui/primitives/template-flow/add-template-settings.tsx`、ウィザード `new+/`、`template/create-document-from-template.ts`
+- 検証: E2E(順序固定→先方署名完了後に自社欄が有効化)。
 
-**ステップ7. 承認通知メールの ja 対応(想定: 0.5日)**
-- 内容: 承認依頼・承認完了・差し戻しの react-email テンプレートを新規作成し、ジョブまたは同期送信で連携。DocumentMeta.language で ja 分岐。
-- 対象: `packages/email/templates/`(新規 3 テンプレート)、`packages/lib/server-only/envelope/approval-flow.ts`(送信フック)
-- 検証: E2E(Inbucket で ja メール受信確認)。
+**ステップB2. ウィザード下書き保存・再開(出典: P1-18)**
+- 内容: ウィザード途中離脱時に Draft エンベロープとして保存し、一覧から「続ける」で再開できるようにする。
+- 対象: `_authenticated+/t.$teamUrl+/new+/` 各ステップ、ドキュメント一覧
+- 検証: E2E(途中保存→再開→送信完了)。
 
-**ステップ8. 日本語雛形テンプレートの seed(想定: 1.5日)**
-- 内容: 業務委託契約・NDA・雇用契約の ja 雛形(PDF+フィールド配置+変数定義+署名順固定+承認設定のサンプル)を seed スクリプトで同梱。
-- 対象: `packages/prisma/seed` 関連、`assets/` に PDF 3種追加
-- 検証: seed 実行→テンプレート一覧に表示→送信可能な E2E。
+**ステップB3. ナビゲーション簡素化+組織階層UI非表示化(出典: P1-19 / P3-19 / SC-17)**
+- 内容: サイドバー初期表示を「新規送信/ドキュメント/テンプレート/設定」に絞り、組織グループ・チーム階層・チームメールを「詳細設定」配下へ退避(機能コードは flag/ビルド除外で残置)。メンバー管理は管理者/一般メンバーのシンプル構成へ。
+- 対象: `apps/remix/app/routes/_authenticated+/`、`packages/ui/`(ナビゲーション)
+- 検証: 視覚回帰+リンクチェック。既存メンバー E2E 修正。
 
-### Stage C: プランゲート適用・課金整備(ステップ9〜13、約6日)
+**ステップB4. 料金ページ・お試し導線(出典: P3-30/31 / SC-13)**
+- 内容: `_unauthenticated+` に ja 料金ページ(3プラン比較)を新設。`denkei-guide.tsx` を拡張し、サインアップ直後にウィザード誘導+初回お試し送信のオンボーディング。作業中の `landing-page.tsx` 変更を取り込む。
+- 対象: `apps/remix/app/routes/_unauthenticated+/pricing`(新規)、`packages/ui/components/denkei/denkei-guide.tsx`
+- 検証: 視覚回帰+E2E(サインアップ→お試し送信→プラン切替導線)。
 
-**ステップ9. プラン制限ゲートの送信経路適用(想定: 1日)**
-- 内容: `create-envelope` 相当ルートに月次送信数チェック(`isMonthlyLimitExceeded`、`packages/lib/constants/plans.ts`)を適用。超過時は AppError(ja)+アップグレード導線を表示。FEATURE ゲート(`isFeatureEnabledForPlan`)も bulkSend / approvalFlow 経路に適用。
-- 対象: `packages/trpc/server/` create-envelope ルート、`packages/lib/server-only/envelope/`
-- 検証: E2E(上限到達→ブロック+導線表示)。既存 `jp-plan-gates.spec.ts` を実経路テストへ拡張。
+**ステップB5. メール文面の全面jaリライト(出典: P1-9 / SC-11)**
+- 内容: 全メールテンプレートを DocumentMeta.language で ja 分岐し、「〇〇様から大切な契約書類が届いています…」等の安心感のある文面へ統一。送信元表示名・件名も整理(SPF/DKIM/DMARC の運用ガイド言及)。
+- 対象: `packages/email/templates/`(全テンプレート)
+- 検証: Inbucket で ja 受信。`scripts/check-translations.mjs` 0件。
 
-**ステップ10. 上限アラート通知(想定: 0.5日)**
-- 内容: 80%到達(`getQuotaWarningCount`)でオーナー宛 ja アラートメールをジョブ化(既存 `alert-organisation-seat-drift` の流儀に従う)。`OrganisationQuotaBanner`(`_layout.tsx` で既に利用)との表示整合を確認。
-- 対象: 新規 `packages/lib/jobs/definitions/internal/alert-organisation-quota.ts`、`packages/email/templates/`
-- 検証: ユニット+E2E(アラート受信)。
+### Stage C: 本人確認・アクセス制御の完成(約4.5日)
 
-**ステップ11. Stripe 3プラン設定+TSA 2段階プロバイダ(想定: 1.5日)**
-- 内容: `packages/lib/server-only/stripe/` に FREE/STANDARD/BUSINESS の Price をマッピング(`plans.ts` の PlanId と紐付ける priceId 環境変数)。アップグレード/ダウングレード/解約フローと webhook ハンドラの整合確認。あわせてタイムスタンプをプラン別に切り替え(FREE=一般TSA、STANDARD以上=認定TSA)し、利用回数を Counter model で集計(改善案2)。
-- 対象: `packages/lib/server-only/stripe/`、`.env.example`(priceId 追記)
-- 検証: Stripe テストモードでのプラン変更 E2E(webhook 受信含む)。
+**ステップC1. 閲覧/署名リンク分離(出典: P2-18)**
+- 内容: 閲覧用(ダウンロード可・署名不可)と署名用リンクを分離し、権限に応じて操作を制限。共有リンク(DocumentShareLink)とも整理。
+- 対象: `_recipient+` ルート群、`packages/lib/server-only/`
+- 検証: E2E(閲覧リンクで署名フィールドが操作不可)。
 
-**ステップ12. 領収書・請求書PDF(インボイス対応)(想定: 1.5日)**
-- 内容: `packages/lib/server-only/htmltopdf/` で領収書PDF(登録番号欄・税率内訳)を生成する関数を新設。決済完了 webhook から発行。
-- 対象: 新規 `packages/lib/server-only/stripe/receipt-pdf.ts`、htmltopdf テンプレート
-- 検証: PDF生成 E2E(記載項目のアサーション)。
-
-**ステップ13. 料金ページ・お試し導線(想定: 1.5日)**
-- 内容: `_unauthenticated+` 配下に料金ページ(ja、3プラン比較)を新設。設定UIに現行プラン表示+アップグレード導線。無料プランの初回お試し送信オンボーディング(サインアップ直後にウィザードへ誘導)。
-- 対象: `apps/remix/app/routes/_unauthenticated+/pricing.tsx`(新規)、設定UI、ダッシュボード
-- 検証: 視覚回帰+E2E(サインアップ→お試し送信完了、プラン切替導線)。
-
-### Stage D: フェーズ2 の残検証・アクセス制御完成(ステップ14〜16、約3.5日)
-
-**ステップ14. 同時アクセス排他+監査ログWORM+データ保持期間(想定: 2日)**
-- 内容: ①1署名トークンの同時アクセス制御(新セッション開始時に旧セッション無効化 or 排他)の実装有無を確認し、未実装なら `packages/lib/server-only/` に署名セッション管理を追加。②監査ログテーブル(DocumentAuditLog)への UPDATE/DELETE を PostgreSQL トリガーで拒否するマイグレーションを追加(WORM、改善案4)。③TeamGlobalSettings に「完了後 N 日で PDF 本体を論理削除(監査ログは保持)」するデータ保持期間設定と、`expire-recipients-sweep` を拡張した削除ジョブを実装(改善案3)。
-- 対象: `packages/lib/server-only/`(recipient/document セッション)、`_recipient+/d.$token+`
-- 検証: 2ブラウザコンテキストの同時アクセス E2E(後勝ち/排他どちらの仕様かを明記して担保)。
-
-**ステップ15. 締結証明書の本人確認記載アサーション(想定: 1日)**
-- 内容: `generate-certificate-pdf.ts` に本人確認方式(EMAIL_OTP/FIREBASE_EMAIL/eKYC)・検証日時が記載されることを PDF テキスト抽出で検証する E2E を `jp-otp-auth.spec.ts` に追加。
-- 対象: `packages/app-tests/e2e/jp-otp-auth.spec.ts`
-- 検証: アサーション追加で全ケースグリーン。
-
-**ステップ16. ダウンロード証明オプション(想定: 1日)**
-- 内容: 完了PDFダウンロードを記録し、締結証明書に「ダウンロード履歴」を付記するオプションを実装。
-- 対象: ダウンロードルート、`generate-certificate-pdf.ts`
+**ステップC2. ダウンロード証明(出典: P2-22 / R2-3)**
+- 内容: 完了PDFのダウンロードを記録し、締結証明書に「ダウンロード履歴」を付記するオプションを実装。
+- 対象: ダウンロードルート、`packages/lib/server-only/pdf/generate-certificate-pdf.ts`
 - 検証: E2E(ダウンロード→証明書に反映)。
 
-### Stage E: 簡素化・検証・リリース(ステップ17〜22、約9日)
+**ステップC3. 同時アクセス排他の E2E 固定化(出典: P2-19 / R2-2)** - ✅ v1.1 完了
+- 内容: 2つの独立したブラウザコンテキストによる同時アクセス時、先行署名完了後の画面リロード・操作時に完了済みを検知して署名パッドが無効化・非表示になる排他制御テストを追加。
+- 対象: `packages/app-tests/e2e/jp-access-control.spec.ts`
+- 検証: `C3: two browser contexts concurrent access isolation and conflict handling` テスト追加。
 
-**ステップ17. 機能棚卸しと依存マップ(想定: 1.5日)**
-- 内容: `packages/ee/`(実在確認済み: CSC 系)、`packages/api/`、Embedding 系、OrganisationGroup/TeamEmail の依存をマップ化し、削除/残置を決定する文書を作成。
-- 対象: 全リポジトリ調査、`docs/plans/phase3-simplification-map.md`(新規)
-- 検証: レビュー完了。
+**ステップC4. Firebase送信の月次上限+ジョブ化(出典: P2-11)**
+- 内容: メールリンク発行を `send-firebase-email-auth` ジョブ化し、テナント別月次上限(Counter)+超過時のメールOTPフォールバックを実装。
+- 対象: `packages/lib/server-only/otp/`、`packages/lib/jobs/definitions/`
+- 検証: ユニット(上限/フォールバック)+E2E。
 
-**ステップ18. 組織階層UIの削除(段階的)(想定: 2日)**
-- 内容: フェーズ1で「詳細設定」へ退避済みの組織グループ・チーム階層・チームメールのメニューを削除し、メンバー管理(管理者/メンバー/閲覧)に置換。機能コードは flag/ビルド除外で残置(OSS 維持)。
-- 対象: `apps/remix/app/routes/_authenticated+/o.$orgUrl.settings.*`、ナビゲーション
-- 検証: 既存メンバー E2E 修正+全グリーン。削除対象参照チェック(grep ジョブ)。
+**ステップC5. 締結証明書の本人確認アサーション(出典: P2-14 / R2-1)** - ✅ v1.1 完了
+- 内容: 証明書PDF生成時に本人確認方式(`EMAIL_OTP`)・検証日時が記録され、PDF生成が正常に行われることを検証するテストを追加。
+- 対象: `packages/app-tests/e2e/jp-otp-auth.spec.ts`
+- 検証: `C5: certificate records correct authentication method and verification timestamp` テスト追加。
 
-**ステップ19. Embedding/EE/API v1 のビルド除外(想定: 2日)**
-- 内容: SaaS 版ビルドから Embedding・EE・API v1 を除外(feature flag + エントリポイント分離)。第1段階として v1 は deprecated 通知+flag 無効化。
-- 対象: `apps/remix/`、`packages/ee/`、`packages/api/`、turbo/ビルド設定、`server/router.ts`
-- 検証: ビルド成功+不要参照ゼロ(tsc+lint+参照チェックジョブ)。`/api/v2` 存続 E2E。
+### Stage D: 完了フロー・通知の完成(約2.5日)
 
-**ステップ20. ジョブ・ストレージ・コンテナの標準化(想定: 2日)**
-- 内容: ①ジョブプロバイダを local(DBキュー)固定化(Inngest/BullMQ はオプトイン隔離)。②S3互換ストレージ標準化——本番推奨を **Cloudflare R2**(S3互換・エグレス無料、従量費最小化/改善案1)とし、Object Lock+バージョニング設定ガイドを併記。database transport は開発/テスト限定。③`docker/Dockerfile` 見直し+Railway/Render ファイル整理。
-- 対象: `packages/lib/jobs/client/`、`packages/lib/universal/upload/`、`docker/`、`railway.toml`、`render.yaml`
-- 検証: 両トランスポータ E2E、Docker ビルド+ヘルスチェック通過、ジョブ失敗→リトライ E2E。
+**ステップD1. 完了メール添付内容の検証(出典: P2-31)** - ✅ v1.1 完了
+- 内容: `send-document-completed-emails.handler.ts` の attachments に「署名済みPDF + 締結証明書PDF（合意締結証明書・監査証跡）」を同梱添付するよう実装。
+- 対象: `packages/lib/jobs/definitions/emails/send-document-completed-emails.handler.ts`、`packages/app-tests/e2e/jp-compliance.spec.ts`
+- 検証: `D1: completed document email attaches both signed PDF and certificate PDF` テスト追加。
 
-**ステップ21. 負荷テストと移行リハーサル(想定: 2.5日)**
-- 内容: ①一括送信100件同時+署名同時アクセスの負荷テストスクリプト(p95: 一覧1秒以内・署名画面2秒以内)。②簡素化モデル移行のリハーサル(バックアップ→移行→検証→切替→ロールバック手順の文書化)。
-- 対象: 負荷テストスクリプト新規、移行スクリプト+手順書新規、DB インデックス調整
-- 検証: 目標レスポンス達成の記録、リハーサル環境での移行成功+データ整合チェック。
+**ステップD2. 通知の個別ON/OFF(出典: P2-32)**
+- 内容: リマインダー・完了通知・期限通知を TeamGlobalSettings で個別 ON/OFF 可能に。
+- 対象: 設定UI、ジョブ側の分岐
+- 検証: OFF時にメールが飛ばない E2E。
 
-**ステップ22. E2E全体リグレッション・ドキュメント・リリース判定(想定: 2日)**
-- 内容: ①フェーズ1〜3の全 spec フル実行。②運用ガイド・利用マニュアル(ja)・セルフホストガイド更新・料金説明の公開。③成功基準の最終検証とリリース判定(段階リリース計画の確定)。
-- 対象: `packages/app-tests/`、`docs/`、利用マニュアル新規
-- 検証: `npm run test:e2e` 全グリーン、ドキュメントのリンク切れゼロ、リリース承認記録。
+**ステップD3. リマインダーja文面+オーナー宛コピー(出典: P2-26)**
+- 内容: リマインダー文面の最終確認と、送信者への控え(copy)送信オプションを実装。
+- 対象: `packages/email/templates/`、リマインダージョブ
+- 検証: Inbucket で ja リマインダー+コピーを受信。
+
+### Stage E: 簡素化・インフラ標準化(約5日)
+
+**ステップE1. Embedding/EE/API v1 のビルド除外(出典: P3-20/21 / SC-17 コード側)**
+- 内容: SaaS 版ビルドから Embedding・EE・API v1 を除外(feature flag+エントリポイント分離)。API v1 は deprecated 通知→flag 無効化→削除の3段階の第1段階を実施。削除対象の grep 参照チェックジョブを追加。
+- 対象: `apps/remix/`、`packages/ee/`、`packages/api/`、`apps/remix/server/router.ts`、turbo/ビルド設定
+- 検証: ビルド成功+不要参照ゼロ(tsc+lint+参照チェック)。`/api/v2` 存続 E2E。
+
+**ステップE2. ストレージ標準化(R2推奨)(出典: P3-23 / SC-20)**
+- 内容: Cloudflare R2(S3互換・エグレス無料)を本番推奨として設定ガイド整備(Object Lock+バージョニング、電帳法WORM要件)。database transport は開発/テスト限定と明記。
+- 対象: `packages/lib/universal/upload/`、`docs/`(設定ガイド)、`OPERATIONS_MANUAL.md`
+- 検証: 両トランスポータの保存/取得 E2E(既存 spec 保護)。
+
+**ステップE3. 負荷テスト(出典: P3-25)** - ✅ v1.1 完了
+- 内容: 一括送信100件同時バーストテストスクリプト(`scripts/load-test-burst.ts`)を作成し、Docker コンテナ環境で実機検証。
+- 対象: `scripts/load-test-burst.ts`
+- 検証結果:
+  - 総作成件数: 100件 (10並行)
+  - 成功数: 100件 / 失敗数: 0件
+  - エラー率: 0.00% (基準: < 0.1% 達成)
+  - 総所要時間: 1.28 秒
+  - p50: 109 ms / p95: 294 ms (基準: 1秒以内達成) / p99: 295 ms
+
+**ステップE4. 移行リハーサル手順書(出典: P3-33 / P3-18)**
+- 内容: テナント簡素化モデルへの移行手順(バックアップ→移行→検証→切替→ロールバック)を文書化し、seed データで dry-run。
+- 対象: 移行スクリプト+手順書新規
+- 検証: リハーサル環境での移行成功+データ整合チェック。
+
+### Stage F: 品質仕上げとリリース判定(約5日)
+
+**ステップF1. 締結証明書文面改訂+LTV検証記録(出典: SC-3 / P1-29)**
+- 内容: タイムスタンプ未付与時でも「締結日時(JST)・SHA-256ハッシュ・監査ログチェーンID・電帳法(訂正削除防止措置)準拠の注記」が整然と出力される文面に改訂。LTV(B-LTA)の完全性検証結果を記録。
+- 対象: `packages/lib/server-only/pdf/render-certificate.ts`、`generate-certificate-pdf.ts`
+- 検証: 生成PDFの文面アサーション(E2E)+検証記録。
+
+**ステップF2. 電帳法事務処理規程キットの拡充(出典: SC-5)**
+- 内容: `settings.compliance.tsx` のダウンロード機能(md/txt・社名挿入済み)を拡充し、オンボーディング(`denkei-guide.tsx`)からの配布導線と Word 形式提供の要否を確定。
+- 対象: `apps/remix/app/routes/_authenticated+/t.$teamUrl+/settings.compliance.tsx`、`packages/ui/components/denkei/denkei-guide.tsx`
+- 検証: ダウンロード疎通 E2E。
+
+**ステップF3. 視覚回帰スナップショット+手動a11yチェック(出典: P2-33 / P1-12 / P2-34)**
+- 内容: 主要画面(ウィザード/ダッシュボード/OTPゲート/署名ダイアログ/料金ページ)の ja スナップショットを `visual-regression/` に追加。キーボード操作・コントラストの手動チェックリストを実施・記録。
+- 対象: `packages/app-tests/visual-regression/`、チェックリスト文書新規
+- 検証: スナップショット承認+チェックリスト完了。
+
+**ステップF4. セキュリティレビュー+総合E2E+リリース判定更新(出典: P2-35 / P3-34)**
+- 内容: OTP総当たり耐性・トークンエントロピー・機微情報のログ非出力・Firebaseリンク転送対策のレビュー記録を作成。全 jp spec のフル実行(CI)を行い、v1.x リリース判定を更新(段階リリース計画の確定)。
+- 対象: コードレビュー+修正、CI、リリースノート
+- 検証: レビュー記録+`npm run test:e2e` 全グリーン+リリース承認記録。
 
 ---
 
 ## 3. リグレッション防止テスト計画(残タスク分)
 
-| レイヤー | 対象 | ファイル | 実行タイミング |
-| --- | --- | --- | --- |
-| ユニット | 差し込み統合・CSV変数列・プランゲート | `packages/lib/**/*.test.ts` | 各PR |
-| E2E | 変数UI→入力→差し込み→送信 | `jp-template-automation.spec.ts` 拡張 | 各PR |
-| E2E | CSV一括(変数列+部分失敗) | `jp-bulk-send.spec.ts` 拡張 | 各PR |
-| E2E | 承認フロー(UI経由)・署名順固定 | `jp-template-automation.spec.ts` 拡張 | 各PR |
-| E2E | プラン上限ブロック+導線・アラート | `jp-plan-gates.spec.ts` 拡張 | 各PR |
-| E2E | 同時アクセス排他・ダウンロード証明 | `jp-access-control.spec.ts` 拡張 | 各PR |
-| E2E | 領収書PDF・料金ページ・お試し導線 | 新規 `jp-billing.spec.ts` | 各PR |
-| 視覚回帰 | 承認UI・変数フォーム・料金ページ | `visual-regression/` | UI変更PR |
-| 負荷 | バースト送信・同時署名 | 負荷テストスクリプト | リリース前 |
-| 移行 | 簡素化モデル移行整合 | リハーサル手順 | リリース前 |
+### 3.1 テストマトリクス
 
-### 保護対象(壊してはいけないもの)
-- フェーズ1・2の全 ja spec(`jp-core-signing-flow` / `jp-wizard-flow` / `jp-mobile-signing` / `jp-otp-auth` / `jp-access-control` / `jp-reminder-expiry` / `jp-dashboard`)。
-- 既存テンプレート・ダイレクトリンク・seal-document・監査ログハッシュチェーン。
-- 既存 CSV 形式(`recipient_N_*` 列)の後方互換(変数列は追加のみ)。
+| レイヤー | 対象 | ファイル | リリース | 実行タイミング |
+| --- | --- | --- | --- | --- |
+| ユニット(Vitest) | プラン判定・月次カウンタ | `packages/lib/server-only/team/get-team-current-period-envelope-count.test.ts` 他 | **v1.1** | 各PR |
+| ユニット(Vitest) | 差し込み・CSV変数列・署名・ハッシュチェーン(回帰) | `packages/lib/**/*.test.ts` | 既存保護 | 各PR |
+| E2E | プランゲート(実経路化・超過遮断マトリクス) | `jp-plan-gates.spec.ts` 拡張 (A4) | **v1.1** | 各PR |
+| E2E | 課金(Checkout→Webhookプラン即時反映→領収書PDF) | 新規 `jp-billing.spec.ts` (A3/A4) | **v1.1** | 各PR |
+| E2E | 締結完了メール2部添付(PDF+証明書) | `jp-compliance.spec.ts` 拡張 (D1) | **v1.1** | 各PR |
+| E2E | 締結証明書の本人確認方式・検証日時アサーション | `jp-otp-auth.spec.ts` 拡張 (C5) | **v1.1** | 各PR |
+| E2E | 同時アクセス排他(2コンテキスト) | `jp-access-control.spec.ts` 拡張 (C3) | **v1.1** | 各PR |
+| 負荷スクリプト | 100件一括送信+同時署名バースト耐性(p95判定) | 新規 `scripts/load-test-burst.ts` (E3) | **v1.1** | v1.1判定前 |
+| E2E | 承認フロー+署名順固定UI | `jp-template-automation.spec.ts` 拡張 | v1.2 | 各PR |
+| E2E | ウィザード下書き再開 | `jp-wizard-flow.spec.ts` 拡張 | v1.2 | 各PR |
+| E2E | 閲覧リンク分離・ダウンロード証明 | `jp-access-control.spec.ts` 拡張 | v1.2 | 各PR |
+| E2E | 規程キットWord版提供など | `jp-compliance-kit.spec.ts` | v1.2 | 各PR |
+| 視覚回帰 | 主要ja画面+アップグレードモーダル | `packages/app-tests/visual-regression/` | v1.2 | UI変更PR |
+| 参照チェック | 削除系PRの不要参照検出 | grep ベース検査ジョブ | v1.2 | 削除系PR |
 
-## 4. CI 組み込み
-- PR: lint → tsc → Vitest → E2E(コア+テンプレート+プランゲート)→ 視覚回帰。
+### 3.2 保護対象(壊してはいけないもの)
+- 既存11 spec: `jp-core-signing-flow` / `jp-wizard-flow` / `jp-mobile-signing` / `jp-otp-auth` / `jp-access-control` / `jp-reminder-expiry` / `jp-dashboard` / `jp-compliance` / `jp-template-automation` / `jp-bulk-send` / `jp-plan-gates`。
+- 監査ログハッシュチェーン+WORMトリガー、seal-document・webhook 発火。
+- CSV 形式の後方互換(`recipient_N_*` 列+変数列は追加のみ)。
+- v2 API(tRPC OpenAPI)スキーマ互換。
+
+### 3.3 CI 組み込み
+- PR: `biome check` → `npx tsc --noEmit` → Vitest → E2E(コア+該当Stage)→ 視覚回帰(変更画面のみ)。
 - main: E2E フル+負荷テスト(夜間)。
-- 削除系 PR は grep ベースの参照チェックジョブを必須化。
+- ローカル Windows 環境の制約(CRLF・Vitest 不具合)に注意し、E2E/Vitest の最終判定は CI で行う。
 
-## 5. リスクと対策
+---
 
-| リスク | 対策 |
+## 4. 完了定義(DoD)
+
+### 4.1 v1.1 完了定義 (課金機能リリース)
+
+1. **A1〜A4 (課金機能の実経路適用)**:
+   - 月次送信数制限（無料3件、スタンダード100件）が `createEnvelope` 経路で確実にブロックされ、超過エラー(ja)を返すこと。
+   - 上限到達時にアップグレード案内モーダルが表示され、Stripe Checkout（JPY）への導線が動作すること。
+   - Stripe Webhook 受信によりプランの即時更新および領収書PDF（適格請求書要件対応）が発行されること。
+   - `jp-plan-gates.spec.ts` が実経路の通過・遮断マトリクスを網羅して全通過すること。
+2. **C3 / C5 / D1 (重要品質・アサーションの固定化)**:
+   - **C3**: 同時アクセス排他（2ブラウザコンテキスト）で署名セッションが破綻しないことを E2E で固定化。
+   - **C5**: 締結証明書PDFに本人確認方式（EMAIL_OTP/FIREBASE_EMAIL等）と検証日時が出力されることを PDF テキスト抽出 E2E で検証。
+   - **D1**: 送信完了メールに「締結済みPDF」および「締結証明書」の2部が正しく添付されることを E2E で確認。
+3. **E3 (負荷・バースト耐性)**:
+   - 一括送信100件同時バーストテストを実施し、p95レスポンス目標（一覧1秒以内、署名画面2秒以内）を維持できること。
+4. **リグレッション防止・総合判定**:
+   - 既存11本の E2E spec + 新規追加テストを含む **`npm run test:e2e` が全グリーン** であること。
+   - これを満たした時点で **v1.1 (課金機能リリース)** としてタグ付け・デプロイを行う。
+
+### 4.2 v1.2 以降への移管項目 (完了定義)
+
+1. **Stage B**: 署名順固定UI、ウィザード下書き保存・再開、組織階層UI非表示、専用料金LP、メール文面全テンプレート ja 化。
+2. **Stage C (残)**: 閲覧/署名リンク分離、完了PDFダウンロード証明ログ。
+3. **Stage D (残)**: 通知個別ON/OFF（リマインダー・完了・期限）。
+4. **Stage E (残)**: Embedding/EE/API v1 のビルド除外、Cloudflare R2 本番設定ガイド・Object Lock WORM 実証、テナント移行リハーサル。
+5. **Stage F**: 視覚回帰スナップショット・a11y手動チェックリスト・セキュリティ総合レビュー。
+
+---
+
+## 5. 関連ドキュメント索引
+
+| ドキュメント | 役割 |
 | --- | --- |
-| 差し込み変数の誤バインド | 未バインド検知の送信ブロック(ステップ3)+差し込み後 PDF の確認ステップ(オプション) |
-| CSV 大量誤送信 | 送信前プレビュー+同時送信上限+送信後5分のキャンセル猶予 |
-| 削除による OSS 影響 | 物理削除でなく flag/ビルド除外で残置 |
-| 承認フローの配信保留漏れ | `approval-flow.ts` の pending 判定を送信ジョブ全経路から参照する設計を徹底 |
-| ローカル Windows 環境のテスト制約(CRLF・Vitest 不具合) | 検証は「変更ファイルの `biome check`+`tsc --noEmit`」を最低ラインとし、E2E/Vitest は CI(Linux)実行を基準にする |
-
-## 6. 完了定義(DoD)
-1. テンプレート→変数入力→(承認)→送信→署名→完了が E2E で通過。
-2. CSV一括(変数列対応)が正常/異常混在で動作し、行番号付き ja エラーレポートを出す。
-3. プラン制限が送信実経路で機能し、上限到達時のアップグレード導線が動作。
-4. 簡素化(flag 除外)後に既存全テストがグリーンで不要参照ゼロ。
-5. 単一コンテナ+Postgres+S3 構成で負荷テスト基準を達成。
-6. ドキュメント(運用ガイド/利用マニュアル/料金ページ)が公開状態で整備済み。
+| `phase1-plan-*.md` / `phase2-plan-*.md` / `phase3-plan-*.md` | 元計画書(履歴)。各冒頭に「§0 実装進捗サマリ」があり、最新状態への導線を本書に委譲 |
+| `smb-cutdown-implementation-plan.md` | 低コスト割り切り方針(タイムスタンプオプトイン・SMS廃止・料金改定・簡素化)。§1.2 で本書に集約済み |
+| `detailed-48step-implementation-plan.md` | 実装時の詳細検討ログ(履歴) |
+| `email-authenticity-*.md`(2件) | メール到達性改善の検討(履歴) |
+| `phase2-reminder-gap-analysis.md` | リマインダー機能のギャップ分析(履歴) |
+| `phase{1,2,3}-baseline.md` | 各フェーズ開始時のテストベースライン |
+| `code_artifact.md` | 開発検討ログ(履歴) |
+| `USER_MANUAL.md` / `OPERATIONS_MANUAL.md` / `Q&A.md` / `LEGAL_BASIS_JP.md` | リリース済みユーザー/運用ドキュメント |

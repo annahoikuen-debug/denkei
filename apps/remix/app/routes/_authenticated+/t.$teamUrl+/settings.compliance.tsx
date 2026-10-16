@@ -220,7 +220,7 @@ export default function TeamSettingsCompliancePage() {
                     <CheckCircle2Icon className="h-4 w-4 text-emerald-600" />
                     <span className="font-medium text-sm">{item.title}</span>
                   </div>
-                  <Badge variant="outline" className="border-emerald-600/30 text-emerald-700 dark:text-emerald-400">
+                  <Badge variant="default" className="border-emerald-600/30 text-emerald-700 dark:text-emerald-400">
                     <Trans>充足</Trans>
                   </Badge>
                 </div>

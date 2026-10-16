@@ -7,6 +7,7 @@ import { createElement } from 'react';
 import { getI18nInstance } from '../../../client-only/providers/i18n-server';
 import { NEXT_PUBLIC_WEBAPP_URL } from '../../../constants/app';
 import { getEmailContext } from '../../../server-only/email/get-email-context';
+import { generateCertificatePdf } from '../../../server-only/pdf/generate-certificate-pdf';
 import { assertOrganisationRatesAndLimits } from '../../../server-only/rate-limit/assert-organisation-rates-and-limits';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../../types/document-audit-logs';
 import { extractDerivedDocumentEmailSettings } from '../../../types/document-email';
@@ -39,6 +40,7 @@ export const run = async ({ payload, io }: { payload: TSendDocumentCompletedEmai
       },
       documentMeta: true,
       recipients: true,
+      fields: true,
       user: {
         select: {
           id: true,
@@ -97,6 +99,41 @@ export const run = async ({ payload, io }: { payload: TSendDocumentCompletedEmai
       };
     }),
   );
+
+  // 締結証明書（合意締結証明書・監査証跡）をメール添付に同梱（フェーズ1/D1 要件）
+  try {
+    const certificatePdf = await generateCertificatePdf({
+      envelope,
+      recipients: envelope.recipients,
+      fields: envelope.fields ?? [],
+      language: envelope.documentMeta?.language ?? 'ja',
+      envelopeOwner: {
+        email: envelope.user.email,
+        name: envelope.user.name ?? '',
+      },
+      pageWidth: 595,
+      pageHeight: 842,
+    });
+
+    const certFileName =
+      envelope.documentMeta?.language === 'en'
+        ? `Certificate-${envelope.title}.pdf`
+        : `締結証明書-${envelope.title}.pdf`;
+
+    const certBuffer = await certificatePdf.save();
+
+    completedDocumentEmailAttachments.push({
+      filename: certFileName,
+      content: Buffer.from(certBuffer),
+      contentType: 'application/pdf',
+    });
+  } catch (err) {
+    io.logger.warn({
+      msg: 'Failed to generate certificate PDF for email attachment, proceeding with signed documents only',
+      envelopeId: envelope.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   const assetBaseUrl = NEXT_PUBLIC_WEBAPP_URL() || 'http://localhost:3000';
 

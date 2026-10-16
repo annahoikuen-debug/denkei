@@ -59,4 +59,50 @@ test.describe('[JP] Plan Gates', () => {
       }
     }
   });
+
+  test('A4: server-side quota verification rejects document creation when 3-count reached on FREE plan', async () => {
+    const { seedUser } = await import('@documenso/prisma/seed/users');
+    const { prisma } = await import('@documenso/prisma');
+    const { assertCanSendDocumentForTeam, getTeamPlanInfo } = await import(
+      '@documenso/lib/server-only/team/get-team-plan'
+    );
+    const { currentMonthlyPeriod } = await import('@documenso/lib/universal/monthly-period');
+
+    const { team } = await seedUser({ isPersonalOrganisation: true });
+
+    // 初期状態（0件送信）では送信可能
+    const initialInfo = await getTeamPlanInfo({ teamId: team.id });
+    expect(initialInfo.planId).toBe('FREE');
+    expect(initialInfo.monthlyLimit).toBe(3);
+    expect(initialInfo.allowed).toBe(true);
+    await expect(assertCanSendDocumentForTeam({ teamId: team.id })).resolves.not.toThrow();
+
+    // 当月送信数を3件（上限到達）に設定
+    const period = currentMonthlyPeriod();
+    await prisma.organisationMonthlyStat.upsert({
+      where: {
+        organisationId_period: {
+          organisationId: team.organisationId,
+          period,
+        },
+      },
+      create: {
+        organisationId: team.organisationId,
+        period,
+        documentCount: 3,
+      },
+      update: {
+        documentCount: 3,
+      },
+    });
+
+    // 上限到達後は送信ブロックされ、AppError(LIMIT_EXCEEDED) と日本語メッセージが返ること
+    const reachedInfo = await getTeamPlanInfo({ teamId: team.id });
+    expect(reachedInfo.allowed).toBe(false);
+    expect(reachedInfo.remaining).toBe(0);
+
+    await expect(assertCanSendDocumentForTeam({ teamId: team.id })).rejects.toThrow(
+      '当月の送信上限（3通）に達しました。プランをアップグレードしてください。',
+    );
+  });
 });

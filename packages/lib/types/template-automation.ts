@@ -72,4 +72,9 @@ export const validateTemplateAutomationSettings = (input: unknown) => {
   return ZTemplateAutomationSettingsSchema.safeParse(input);
 };
 
+export const parseTemplateAutomationSettings = (input: unknown): TTemplateAutomationSettings | undefined => {
+  const result = ZTemplateAutomationSettingsSchema.safeParse(input);
+  return result.success ? result.data : undefined;
+};
+
 export type { TMergeVariableList };

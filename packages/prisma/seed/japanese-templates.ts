@@ -19,8 +19,9 @@ import {
 /**
  * フェーズ3 ステップ13 / 第5部 ステップ25-26: 日本語雛形テンプレートの同梱
  *
- * 業務委託契約・秘密保持契約(NDA)・雇用契約の
- * 雛形(タイトル+テキストフィールド配置+変数定義+署名順固定)を seed する。
+ * 業務委託契約・秘密保持契約(NDA)・売買契約の
+ * 参考雛形(タイトル+テキストフィールド配置+変数定義+署名順固定)を seed する。
+ * 利用にあたっては法務レビューを前提とする。
  */
 
 const examplePdf = fs.readFileSync(path.join(__dirname, '../../../assets/example.pdf')).toString('base64');
@@ -54,7 +55,8 @@ export type JapaneseTemplateSeed = {
 export const JAPANESE_TEMPLATE_SEEDS: JapaneseTemplateSeed[] = [
   {
     title: '業務委託契約書(雛形)',
-    description: '業務委託契約の標準雛形。取引先名・委託内容・金額を差し込み変数で指定します。',
+    description:
+      '業務委託契約の参考雛形。取引先名・委託内容・金額を差し込み変数で指定します。利用にあたっては法務レビューをお願いします。',
     fields: [
       {
         type: FieldType.SIGNATURE,
@@ -108,7 +110,8 @@ export const JAPANESE_TEMPLATE_SEEDS: JapaneseTemplateSeed[] = [
   },
   {
     title: '秘密保持契約書(NDA・雛形)',
-    description: '秘密保持契約の標準雛形。取引先名と秘密保持期間を差し込み変数で指定します。',
+    description:
+      '秘密保持契約の参考雛形。取引先名と秘密保持期間を差し込み変数で指定します。利用にあたっては法務レビューをお願いします。',
     fields: [
       { type: FieldType.SIGNATURE, label: '甲署名', page: 1, positionX: 80, positionY: 680, width: 150, height: 50 },
       { type: FieldType.SIGNATURE, label: '乙署名', page: 1, positionX: 360, positionY: 680, width: 150, height: 50 },
@@ -144,13 +147,14 @@ export const JAPANESE_TEMPLATE_SEEDS: JapaneseTemplateSeed[] = [
     requireEmailOtp: false,
   },
   {
-    title: '雇用契約書(雛形)',
-    description: '雇用契約の標準雛形。従業員名・職種・給与を差し込み変数で指定します。',
+    title: '売買契約書(雛形)',
+    description:
+      '売買契約の参考雛形。取引先名・売買物件・金額を差し込み変数で指定します。利用にあたっては法務レビューをお願いします。',
     fields: [
-      { type: FieldType.SIGNATURE, label: '会社署名', page: 1, positionX: 80, positionY: 680, width: 150, height: 50 },
+      { type: FieldType.SIGNATURE, label: '売主署名', page: 1, positionX: 80, positionY: 680, width: 150, height: 50 },
       {
         type: FieldType.SIGNATURE,
-        label: '従業員署名',
+        label: '買主署名',
         page: 1,
         positionX: 360,
         positionY: 680,
@@ -160,8 +164,8 @@ export const JAPANESE_TEMPLATE_SEEDS: JapaneseTemplateSeed[] = [
       { type: FieldType.DATE, label: '締結日', page: 1, positionX: 80, positionY: 740, width: 120, height: 24 },
       {
         type: FieldType.TEXT,
-        label: '従業員: {{従業員名}}',
-        customText: '{{従業員名}}',
+        label: '取引先名: {{取引先名}}',
+        customText: '{{取引先名}}',
         page: 1,
         positionX: 80,
         positionY: 120,
@@ -170,33 +174,22 @@ export const JAPANESE_TEMPLATE_SEEDS: JapaneseTemplateSeed[] = [
       },
       {
         type: FieldType.TEXT,
-        label: '職種: {{職種}}',
-        customText: '{{職種}}',
+        label: '売買金額: {{金額}}',
+        customText: '{{金額}}',
         page: 1,
         positionX: 80,
         positionY: 160,
         width: 400,
         height: 24,
       },
-      {
-        type: FieldType.TEXT,
-        label: '月給: {{給与}}',
-        customText: '{{給与}}',
-        page: 1,
-        positionX: 80,
-        positionY: 200,
-        width: 400,
-        height: 24,
-      },
     ],
     mergeVariables: [
-      { name: '従業員名', type: 'text', required: true },
-      { name: '職種', type: 'text', required: true },
-      { name: '給与', type: 'currency', required: true, format: 'jpy' },
+      { name: '取引先名', type: 'text', required: true },
+      { name: '金額', type: 'currency', required: true, format: 'jpy' },
     ],
     signingOrderLock: {
       locked: true,
-      order: 'company-first',
+      order: 'counterparty-first',
     },
     requireEmailOtp: true,
   },

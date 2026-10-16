@@ -2,6 +2,7 @@ import { prisma } from '@documenso/prisma';
 import { EnvelopeType } from '@prisma/client';
 
 import { AppError, AppErrorCode } from '../../errors/app-error';
+import { parseTemplateAutomationSettings } from '../../types/template-automation';
 import type { EnvelopeIdOptions } from '../../utils/envelope';
 import { mapSecondaryIdToTemplateId } from '../../utils/envelope';
 import { getEnvelopeWhereInput } from '../envelope/get-envelope-by-id';
@@ -98,5 +99,6 @@ export const getTemplateById = async ({ id, userId, teamId }: GetTemplateByIdOpt
       id: envelopeItem.id,
       envelopeId: envelopeItem.envelopeId,
     })),
+    automationSettings: parseTemplateAutomationSettings(envelope.automationSettings),
   };
 };

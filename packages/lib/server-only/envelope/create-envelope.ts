@@ -42,6 +42,7 @@ import { assignOmittedRecipientSigningOrders } from '../recipient/assign-omitted
 import { assertCompatibleRecipientGrouping } from '../signature-level/assert-compatible-recipient-grouping';
 import { assertCompatibleRecipientRole } from '../signature-level/assert-compatible-recipient-role';
 import { resolveSignatureLevel } from '../signature-level/resolve-signature-level';
+import { assertCanSendDocumentForTeam, assertFeatureEnabledForTeam } from '../team/get-team-plan';
 import { getTeamSettings } from '../team/get-team-settings';
 import { assertUserNotDisabledById } from '../user/assert-user-not-disabled';
 import { triggerWebhook } from '../webhooks/trigger/trigger-webhook';
@@ -171,6 +172,18 @@ export const createEnvelope = async ({
   // Enforce the organisation document-creation limit before doing any work.
   // Only documents count towards the limit (templates are exempt).
   if (type === EnvelopeType.DOCUMENT) {
+    await assertCanSendDocumentForTeam({ teamId });
+
+    // フェーズ3 / Stage A: 承認フロー機能のプランゲート（BUSINESSプラン限定）
+    const hasApprover = (data.recipients ?? []).some((r) => r.role === RecipientRole.APPROVER);
+    if (hasApprover) {
+      await assertFeatureEnabledForTeam({
+        teamId,
+        feature: 'approvalFlow',
+        featureLabelJa: '送信前承認フロー機能',
+      });
+    }
+
     await assertOrganisationRatesAndLimits({
       organisationId: team.organisationId,
       organisationClaim: team.organisation.organisationClaim,
