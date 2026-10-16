@@ -1,9 +1,6 @@
-import { match } from 'ts-pattern';
-
 import { env } from '../../utils/env';
 import type { JobDefinition, TriggerJobOptions } from './_internal/job';
 import type { BaseJobProvider as JobClientProvider } from './base';
-import { BullMQJobProvider } from './bullmq';
 import { InngestJobProvider } from './inngest';
 import { LocalJobProvider } from './local';
 
@@ -11,10 +8,17 @@ export class JobClient<T extends ReadonlyArray<JobDefinition> = []> {
   private _provider: JobClientProvider;
 
   public constructor(definitions: T) {
-    this._provider = match(env('NEXT_PRIVATE_JOBS_PROVIDER'))
-      .with('inngest', () => InngestJobProvider.getInstance())
-      .with('bullmq', () => BullMQJobProvider.getInstance())
-      .otherwise(() => LocalJobProvider.getInstance());
+    const providerType = env('NEXT_PRIVATE_JOBS_PROVIDER');
+
+    if (providerType === 'inngest') {
+      this._provider = InngestJobProvider.getInstance();
+    } else if (providerType === 'bullmq') {
+      // Lazy load to avoid loading BullMQ dependencies when using local provider
+      const { BullMQJobProvider } = require('./bullmq');
+      this._provider = BullMQJobProvider.getInstance();
+    } else {
+      this._provider = LocalJobProvider.getInstance();
+    }
 
     definitions.forEach((definition) => {
       this._provider.defineJob(definition);

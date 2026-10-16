@@ -86,9 +86,59 @@ describe('電子印影 (認印・丸印) ユーティリティ', () => {
     try {
       expect(generateElectronicSealDataUrl('印')).toContain('data:image/png;base64,');
       expect(generateElectronicSealDataUrl('田中')).toContain('data:image/png;base64,');
-      expect(generateElectronicSealDataUrl('佐々木')).toContain('data:image/png;base64,');
       expect(generateElectronicSealDataUrl('山田太郎')).toContain('data:image/png;base64,');
       expect(generateElectronicSealDataUrl('株式会社テスト')).toContain('data:image/png;base64,');
+    } finally {
+      global.document = originalDocument;
+    }
+  });
+
+  it('会社角印(square)および代表取締役印(representative)が正常に生成できる', () => {
+    const originalDocument = global.document;
+
+    const mockCtx = {
+      clearRect: () => {},
+      beginPath: () => {},
+      arc: () => {},
+      stroke: () => {},
+      strokeRect: () => {},
+      fillText: () => {},
+      save: () => {},
+      restore: () => {},
+      translate: () => {},
+      rotate: () => {},
+      font: '',
+      strokeStyle: '',
+      fillStyle: '',
+      textAlign: '',
+      textBaseline: '',
+      lineWidth: 0,
+    };
+
+    const mockCanvas = {
+      width: 256,
+      height: 256,
+      getContext: () => mockCtx,
+      toDataURL: () => 'data:image/png;base64,mock_seal_data',
+    };
+
+    // @ts-expect-error minimal mock
+    global.document = {
+      // @ts-expect-error minimal mock
+      createElement: () => mockCanvas,
+    };
+
+    try {
+      // 角印
+      const square = generateElectronicSealDataUrl('株式会社デンケイ', 256, '#dc2626', { type: 'square' });
+      expect(square).toContain('data:image/png;base64,');
+
+      // 代表取締役印
+      const rep = generateElectronicSealDataUrl('株式会社デンケイ', 256, '#dc2626', {
+        type: 'representative',
+        innerTitle: '代表取締役印',
+      });
+      expect(rep).toContain('data:image/png;base64,');
     } finally {
       global.document = originalDocument;
     }

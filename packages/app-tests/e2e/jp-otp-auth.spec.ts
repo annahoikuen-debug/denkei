@@ -1,9 +1,11 @@
 import { hashOtp } from '@documenso/lib/server-only/otp/otp';
+import { generateCertificatePdf } from '@documenso/lib/server-only/pdf/generate-certificate-pdf';
+import { DocumentAuth } from '@documenso/lib/types/document-auth';
 import { prisma } from '@documenso/prisma';
 import { seedPendingDocumentWithFullFields } from '@documenso/prisma/seed/documents';
 import { seedUser } from '@documenso/prisma/seed/users';
 import { expect, test } from '@playwright/test';
-import { DocumentAuth, DocumentStatus, FieldType, RecipientRole } from '@prisma/client';
+import { DocumentStatus, FieldType, RecipientRole } from '@prisma/client';
 
 /**
  * フェーズ2 ステップ9: OTP 認証 E2E(統合)
@@ -225,9 +227,7 @@ test.describe('[JP] OTP Auth', () => {
     });
 
     // 締結証明書生成ロジックの直接検証
-    const { generateCertificatePdf } = await import('@documenso/lib/server-only/pdf/generate-certificate-pdf');
-
-    const certBuffer = await generateCertificatePdf({
+    const certPdf = await generateCertificatePdf({
       envelope: {
         ...document,
         authOptions: null,
@@ -251,12 +251,13 @@ test.describe('[JP] OTP Auth', () => {
       pageHeight: 842,
     });
 
-    expect(certBuffer).toBeDefined();
-    expect(certBuffer.length).toBeGreaterThan(1000);
+    const certBytes = await certPdf.save();
+    expect(certBytes).toBeDefined();
+    expect(certBytes.length).toBeGreaterThan(1000);
 
     // PDF 内のテキストまたはメタデータに認証方式が含まれることを確認
     const { PDF } = await import('@libpdf/core');
-    const pdfDoc = await PDF.load(new Uint8Array(certBuffer));
+    const pdfDoc = await PDF.load(certBytes);
     expect(pdfDoc.getPageCount()).toBeGreaterThanOrEqual(1);
 
     // recipient の認証方法が EMAIL_OTP として正しく DB および設定に保持されていること

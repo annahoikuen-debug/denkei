@@ -30,6 +30,12 @@ export type PlanFeatures = {
     templateSharing: boolean;
     /** CSV 一括送信 */
     bulkSend: boolean;
+    /** 電帳法コンプライアンス・キット（事務処理規程・チェックリスト・社内備付出力） */
+    complianceKit: boolean;
+    /** 会社角印・代表取締役丸印・カスタム透過印影（有料プラン限定） */
+    companySeal: boolean;
+    /** 自社ブランドメール設定（送信元・Reply-To・送信者名カスタマイズ、有料プラン限定） */
+    customEmailSettings: boolean;
   };
 };
 
@@ -45,6 +51,9 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
       approvalFlow: false,
       templateSharing: false,
       bulkSend: false,
+      complianceKit: false,
+      companySeal: false,
+      customEmailSettings: false,
     },
   },
   STANDARD: {
@@ -58,6 +67,9 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
       approvalFlow: false,
       templateSharing: true,
       bulkSend: false,
+      complianceKit: true,
+      companySeal: true,
+      customEmailSettings: true,
     },
   },
   BUSINESS: {
@@ -71,7 +83,44 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
       approvalFlow: true,
       templateSharing: true,
       bulkSend: true,
+      complianceKit: true,
+      companySeal: true,
+      customEmailSettings: true,
     },
+  },
+};
+
+/**
+ * 送信枠の都度買い（チケット課金）パッケージ定義
+ * 月額課金とは別に、スポットで送信数を追加購入可能。
+ */
+export type CreditPackageId = 'PACK_10' | 'PACK_50';
+
+export type CreditPackage = {
+  id: CreditPackageId;
+  name: string;
+  credits: number;
+  priceJpy: number;
+  pricePerDocumentJpy: number;
+  stripePriceEnvKey: string;
+};
+
+export const SEND_CREDIT_PACKAGES: Record<CreditPackageId, CreditPackage> = {
+  PACK_10: {
+    id: 'PACK_10',
+    name: '追加10件チケット',
+    credits: 10,
+    priceJpy: 1500,
+    pricePerDocumentJpy: 150,
+    stripePriceEnvKey: 'NEXT_PRIVATE_STRIPE_PRICE_ID_CREDIT_10',
+  },
+  PACK_50: {
+    id: 'PACK_50',
+    name: '追加50件チケット',
+    credits: 50,
+    priceJpy: 5000,
+    pricePerDocumentJpy: 100,
+    stripePriceEnvKey: 'NEXT_PRIVATE_STRIPE_PRICE_ID_CREDIT_50',
   },
 };
 
@@ -89,27 +138,41 @@ export const isFeatureEnabledForPlan = ({
 };
 
 /**
- * 送信可能か(月次上限チェック)。
+ * 送信可能か(月次上限および追加購入クレジットの合算チェック)。
  */
 export const canSendDocument = ({
   plan,
   currentMonthlyCount,
+  extraCredits = 0,
 }: {
   plan: PlanId;
   currentMonthlyCount: number;
-}): { allowed: boolean; limit: number | null; remaining: number | null } => {
-  const limit = PLANS[plan].monthlyDocumentLimit;
+  extraCredits?: number;
+}): {
+  allowed: boolean;
+  limit: number | null;
+  remaining: number | null;
+  extraCredits: number;
+} => {
+  const baseLimit = PLANS[plan].monthlyDocumentLimit;
 
-  if (limit === null) {
-    return { allowed: true, limit: null, remaining: null };
+  if (baseLimit === null) {
+    return {
+      allowed: true,
+      limit: null,
+      remaining: null,
+      extraCredits,
+    };
   }
 
-  const remaining = Math.max(limit - currentMonthlyCount, 0);
+  const effectiveLimit = baseLimit + extraCredits;
+  const remaining = Math.max(effectiveLimit - currentMonthlyCount, 0);
 
   return {
-    allowed: currentMonthlyCount < limit,
-    limit,
+    allowed: currentMonthlyCount < effectiveLimit,
+    limit: effectiveLimit,
     remaining,
+    extraCredits,
   };
 };
 
@@ -137,6 +200,24 @@ export const getStripePriceIdForPlan = (plan: PlanId): string | undefined => {
 };
 
 /**
+ * 送信チケット（追加クレジット）の Stripe Price ID 環境変数を取得する。
+ */
+export const getStripePriceIdForCreditPackage = (packageId: CreditPackageId): string | undefined => {
+  if (typeof process === 'undefined' || !process.env) {
+    return undefined;
+  }
+
+  switch (packageId) {
+    case 'PACK_10':
+      return process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_CREDIT_10;
+    case 'PACK_50':
+      return process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_CREDIT_50;
+    default:
+      return undefined;
+  }
+};
+
+/**
  * Stripe Price ID からプラン ID を逆引きする。
  */
 export const getPlanIdFromStripePriceId = (priceId: string): PlanId => {
@@ -156,6 +237,40 @@ export const getPlanIdFromStripePriceId = (priceId: string): PlanId => {
   }
   if (upper.includes('STANDARD')) {
     return 'STANDARD';
+  }
+
+  return 'FREE';
+};
+
+/**
+ * 組織情報（サブスクリプションおよびクレーム）からプラン ID を解決する共通関数。
+ * クライアント・サーバー双方で同じロジックを用いてプランを判定する。
+ */
+export const resolvePlanIdFromOrganisation = (
+  org?: {
+    subscription?: { planId?: string | null } | null;
+    organisationClaim?: { documentQuota?: number | null } | null;
+  } | null,
+): PlanId => {
+  if (!org) {
+    return 'FREE';
+  }
+
+  const planIdStr = org.subscription?.planId?.toUpperCase() || '';
+  if (planIdStr.includes('BUSINESS')) {
+    return 'BUSINESS';
+  }
+  if (planIdStr.includes('STANDARD')) {
+    return 'STANDARD';
+  }
+
+  if (org.organisationClaim !== undefined && org.organisationClaim !== null) {
+    if (org.organisationClaim.documentQuota === null) {
+      return 'BUSINESS';
+    }
+    if (org.organisationClaim.documentQuota !== undefined && org.organisationClaim.documentQuota >= 100) {
+      return 'STANDARD';
+    }
   }
 
   return 'FREE';

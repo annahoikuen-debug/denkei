@@ -16,11 +16,11 @@ import { SubscriptionStatus } from '@prisma/client';
 test.describe('[JP] Billing & Stripe Integration', () => {
   test('resolves correct Stripe Price ID for plans', () => {
     // STANDARD プランの価格・機能定義
-    expect(PLANS.STANDARD.priceMonthlyJpy).toBe(2980);
+    expect(PLANS.STANDARD.monthlyPriceJpy).toBe(2980);
     expect(PLANS.STANDARD.monthlyDocumentLimit).toBe(100);
 
     // BUSINESS プランの価格・機能定義
-    expect(PLANS.BUSINESS.priceMonthlyJpy).toBe(4980);
+    expect(PLANS.BUSINESS.monthlyPriceJpy).toBe(4980);
     expect(PLANS.BUSINESS.monthlyDocumentLimit).toBeNull(); // 無制限
   });
 

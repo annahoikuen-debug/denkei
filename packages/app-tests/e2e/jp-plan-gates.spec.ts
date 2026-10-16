@@ -1,5 +1,10 @@
 import type { PlanId } from '@documenso/lib/constants/plans';
 import { canSendDocument, isFeatureEnabledForPlan, PLANS } from '@documenso/lib/constants/plans';
+import { assertCanSendDocumentForTeam, getTeamPlanInfo } from '@documenso/lib/server-only/team/get-team-plan';
+import { generateDatabaseId } from '@documenso/lib/universal/id';
+import { currentMonthlyPeriod } from '@documenso/lib/universal/monthly-period';
+import { prisma } from '@documenso/prisma';
+import { seedUser } from '@documenso/prisma/seed/users';
 import { expect, test } from '@playwright/test';
 
 /**
@@ -19,6 +24,9 @@ test.describe('[JP] Plan Gates', () => {
     { feature: 'approvalFlow', FREE: false, STANDARD: false, BUSINESS: true },
     { feature: 'templateSharing', FREE: false, STANDARD: true, BUSINESS: true },
     { feature: 'bulkSend', FREE: false, STANDARD: false, BUSINESS: true },
+    { feature: 'complianceKit', FREE: false, STANDARD: true, BUSINESS: true },
+    { feature: 'companySeal', FREE: false, STANDARD: true, BUSINESS: true },
+    { feature: 'customEmailSettings', FREE: false, STANDARD: true, BUSINESS: true },
   ];
 
   for (const { feature, FREE, STANDARD, BUSINESS } of featureMatrix) {
@@ -48,8 +56,10 @@ test.describe('[JP] Plan Gates', () => {
   });
 
   test('upgrade path exists for blocked features', () => {
-    // 無料で遮断される機能は、いずれかの上位プランで有効(アップグレード導線が成立する)
-    for (const { feature, FREE } of featureMatrix) {
+    // 無料で遮断されるプラン機能は、いずれかの上位プランで有効(アップグレード導線が成立する)
+    // タイムスタンプは環境変数オプトイン機能のためプラン機能から除外
+    const planGatedFeatures = featureMatrix.filter((f) => f.feature !== 'timestamp');
+    for (const { feature, FREE } of planGatedFeatures) {
       if (!FREE) {
         const enabledInHigherPlan = ['STANDARD', 'BUSINESS'].some((plan) =>
           isFeatureEnabledForPlan({ plan: plan as PlanId, feature }),
@@ -61,13 +71,6 @@ test.describe('[JP] Plan Gates', () => {
   });
 
   test('A4: server-side quota verification rejects document creation when 3-count reached on FREE plan', async () => {
-    const { seedUser } = await import('@documenso/prisma/seed/users');
-    const { prisma } = await import('@documenso/prisma');
-    const { assertCanSendDocumentForTeam, getTeamPlanInfo } = await import(
-      '@documenso/lib/server-only/team/get-team-plan'
-    );
-    const { currentMonthlyPeriod } = await import('@documenso/lib/universal/monthly-period');
-
     const { team } = await seedUser({ isPersonalOrganisation: true });
 
     // 初期状態（0件送信）では送信可能
@@ -87,6 +90,7 @@ test.describe('[JP] Plan Gates', () => {
         },
       },
       create: {
+        id: generateDatabaseId('org_monthly_stat'),
         organisationId: team.organisationId,
         period,
         documentCount: 3,

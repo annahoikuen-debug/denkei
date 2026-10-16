@@ -1,8 +1,5 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { createBullBoard } from '@bull-board/api';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
-import { HonoAdapter } from '@bull-board/hono';
 import { prisma } from '@documenso/prisma';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { sha256 } from '@noble/hashes/sha2';
@@ -195,6 +192,9 @@ export class BullMQJobProvider extends BaseJobProvider {
   private createBoardApp(): Hono {
     const _require = createRequire(import.meta.url);
     const uiPackagePath = path.dirname(_require.resolve('@bull-board/ui/package.json'));
+    const { createBullBoard } = _require('@bull-board/api');
+    const { BullMQAdapter } = _require('@bull-board/api/bullMQAdapter');
+    const { HonoAdapter } = _require('@bull-board/hono');
 
     const serverAdapter = new HonoAdapter(serveStatic);
 

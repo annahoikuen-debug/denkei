@@ -1,8 +1,8 @@
 import { splitJapaneseName } from '@documenso/lib/universal/japanese-name';
-import { generateElectronicSealDataUrl } from '@documenso/lib/universal/seal-image';
+import { generateElectronicSealDataUrl, type SealType } from '@documenso/lib/universal/seal-image';
 import { Button } from '@documenso/ui/primitives/button';
 import { Trans } from '@lingui/react/macro';
-import { CheckIcon, SparklesIcon, TypeIcon } from 'lucide-react';
+import { Building2Icon, CheckIcon, LockIcon, ShieldCheckIcon, SparklesIcon, TypeIcon, UserIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '../../lib/utils';
@@ -12,6 +12,10 @@ export type SignaturePadTypeProps = {
   value?: string;
   defaultValue?: string;
   onChange: (_value: string) => void;
+  /** 会社角印・代表印（有料プラン限定）の利用権限。既定は true */
+  canUseCompanySeal?: boolean;
+  /** 有料プランへのアップグレード誘導コールバック */
+  onUpgradeRequested?: () => void;
 };
 
 const JAPANESE_CHAR_REGEX = /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uffef\u4e00-\u9faf]/;
@@ -22,11 +26,19 @@ const SEAL_COLORS = [
   { id: 'navy', name: '藍色', hex: '#1e3a8a' },
 ] as const;
 
-export const SignaturePadType = ({ className, value, defaultValue = '', onChange }: SignaturePadTypeProps) => {
+export const SignaturePadType = ({
+  className,
+  value,
+  defaultValue = '',
+  onChange,
+  canUseCompanySeal = true,
+  onUpgradeRequested,
+}: SignaturePadTypeProps) => {
   const isJapaneseName = JAPANESE_CHAR_REGEX.test(defaultValue);
   const initialSurname = defaultValue ? splitJapaneseName(defaultValue).sei || defaultValue.trim().slice(0, 4) : '田中';
 
   const [mode, setMode] = useState<'seal' | 'text'>(isJapaneseName ? 'seal' : 'text');
+  const [sealType, setSealType] = useState<SealType>('circle');
   const [sealName, setSealName] = useState(initialSurname);
   const [sealColor, setSealColor] = useState<string>('#dc2626');
   const [sealPreviewUrl, setSealPreviewUrl] = useState<string>('');
@@ -34,28 +46,28 @@ export const SignaturePadType = ({ className, value, defaultValue = '', onChange
 
   const $isInitialized = useRef(false);
 
-  // Update seal data URL whenever sealName or sealColor changes
+  // Update seal data URL whenever sealName, sealColor or sealType changes
   useEffect(() => {
     if (mode === 'seal') {
-      const dataUrl = generateElectronicSealDataUrl(sealName || '印', 256, sealColor);
+      const dataUrl = generateElectronicSealDataUrl(sealName || '印', 256, sealColor, { type: sealType });
       setSealPreviewUrl(dataUrl);
       onChange(dataUrl);
     }
-  }, [mode, sealName, sealColor, onChange]);
+  }, [mode, sealName, sealColor, sealType, onChange]);
 
   // Initial setup
   useEffect(() => {
     if (!$isInitialized.current) {
       $isInitialized.current = true;
       if (mode === 'seal') {
-        const dataUrl = generateElectronicSealDataUrl(sealName || '印', 256, sealColor);
+        const dataUrl = generateElectronicSealDataUrl(sealName || '印', 256, sealColor, { type: sealType });
         setSealPreviewUrl(dataUrl);
         onChange(dataUrl);
       } else if (defaultValue) {
         onChange(defaultValue);
       }
     }
-  }, [mode, sealName, sealColor, defaultValue, onChange]);
+  }, [mode, sealName, sealColor, sealType, defaultValue, onChange]);
 
   const handleModeChange = (newMode: 'seal' | 'text') => {
     setMode(newMode);
@@ -102,6 +114,59 @@ export const SignaturePadType = ({ className, value, defaultValue = '', onChange
       {/* Mode Content */}
       {mode === 'seal' ? (
         <div className="flex flex-1 flex-col items-center justify-center space-y-3">
+          {/* 印影タイプ選択 (認印 / 会社角印 / 代表取締役印) */}
+          <div className="flex items-center gap-1.5 rounded-lg bg-muted/60 p-1 text-xs">
+            <button
+              type="button"
+              className={cn('flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition-colors', {
+                'bg-background text-foreground shadow-sm': sealType === 'circle',
+                'text-muted-foreground hover:text-foreground': sealType !== 'circle',
+              })}
+              onClick={() => setSealType('circle')}
+            >
+              <UserIcon className="h-3.5 w-3.5" />
+              <span>認印</span>
+            </button>
+
+            <button
+              type="button"
+              className={cn('flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition-colors', {
+                'bg-background text-foreground shadow-sm': sealType === 'square',
+                'text-muted-foreground hover:text-foreground': sealType !== 'square',
+              })}
+              onClick={() => {
+                if (!canUseCompanySeal) {
+                  onUpgradeRequested?.();
+                  return;
+                }
+                setSealType('square');
+              }}
+            >
+              <Building2Icon className="h-3.5 w-3.5" />
+              <span>会社角印</span>
+              {!canUseCompanySeal && <LockIcon className="h-3 w-3 text-amber-500" />}
+            </button>
+
+            <button
+              type="button"
+              className={cn('flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition-colors', {
+                'bg-background text-foreground shadow-sm': sealType === 'representative',
+                'text-muted-foreground hover:text-foreground': sealType !== 'representative',
+              })}
+              onClick={() => {
+                if (!canUseCompanySeal) {
+                  onUpgradeRequested?.();
+                  return;
+                }
+                setSealType('representative');
+              }}
+            >
+              <ShieldCheckIcon className="h-3.5 w-3.5" />
+              <span>代表取締役印</span>
+              {!canUseCompanySeal && <LockIcon className="h-3 w-3 text-amber-500" />}
+            </button>
+          </div>
+
           {/* Real-time Seal Preview Canvas / Image */}
           <div className="relative flex h-28 w-28 items-center justify-center rounded-xl border border-border/80 bg-background/80 p-2 shadow-inner">
             {sealPreviewUrl ? (
@@ -121,10 +186,16 @@ export const SignaturePadType = ({ className, value, defaultValue = '', onChange
               <input
                 data-testid="signature-pad-type-input"
                 type="text"
-                maxLength={6}
+                maxLength={sealType === 'circle' ? 6 : 16}
                 value={sealName}
                 onChange={(e) => setSealName(e.target.value.trim())}
-                placeholder="苗字を入力 (例: 田中)"
+                placeholder={
+                  sealType === 'circle'
+                    ? '苗字を入力 (例: 田中)'
+                    : sealType === 'square'
+                      ? '会社名を入力 (例: 株式会社デンケイ)'
+                      : '会社名を入力 (例: 株式会社デンケイ)'
+                }
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-center font-semibold text-foreground text-sm tracking-wide shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 autoComplete="off"
                 autoCorrect="off"

@@ -1,5 +1,12 @@
 import { prisma } from '@documenso/prisma';
-import { canSendDocument, isFeatureEnabledForPlan, PLANS, type PlanFeatures, type PlanId } from '../../constants/plans';
+import {
+  canSendDocument,
+  isFeatureEnabledForPlan,
+  PLANS,
+  type PlanFeatures,
+  type PlanId,
+  resolvePlanIdFromOrganisation,
+} from '../../constants/plans';
 import { AppError, AppErrorCode } from '../../errors/app-error';
 import { currentMonthlyPeriod } from '../../universal/monthly-period';
 
@@ -10,6 +17,7 @@ export type TeamPlanInfo = {
   monthlyLimit: number | null;
   remaining: number | null;
   allowed: boolean;
+  extraCredits: number;
 };
 
 /**
@@ -36,26 +44,14 @@ export const getTeamPlanInfo = async ({ teamId }: { teamId: number }): Promise<T
   }
 
   const { organisation } = team;
-  let planId: PlanId = 'FREE';
+  // 1. Subscription / Claim から判定
+  const planId: PlanId = resolvePlanIdFromOrganisation(organisation);
 
-  // 1. Subscription から判定
-  const planIdStr = organisation.subscription?.planId?.toUpperCase() || '';
-  if (planIdStr.includes('BUSINESS')) {
-    planId = 'BUSINESS';
-  } else if (planIdStr.includes('STANDARD')) {
-    planId = 'STANDARD';
-  } else if (
-    organisation.organisationClaim?.documentQuota !== null &&
-    organisation.organisationClaim?.documentQuota !== undefined
-  ) {
-    if (organisation.organisationClaim.documentQuota >= 100) {
-      planId = 'STANDARD';
-    } else if (organisation.organisationClaim.documentQuota === null) {
-      planId = 'BUSINESS';
-    }
-  }
+  // 2. 追加チケットクレジット（Claim flags または Claim から取得）
+  const flags = (organisation.organisationClaim?.flags as Record<string, unknown> | null) || {};
+  const extraCredits = typeof flags.extraSendCredits === 'number' ? flags.extraSendCredits : 0;
 
-  // 2. 当月送信数を OrganisationMonthlyStat から取得
+  // 3. 当月送信数を OrganisationMonthlyStat から取得
   const period = currentMonthlyPeriod();
   const stat = await prisma.organisationMonthlyStat.findUnique({
     where: {
@@ -68,7 +64,7 @@ export const getTeamPlanInfo = async ({ teamId }: { teamId: number }): Promise<T
   });
 
   const currentMonthlyCount = stat?.documentCount ?? 0;
-  const sendCheck = canSendDocument({ plan: planId, currentMonthlyCount });
+  const sendCheck = canSendDocument({ plan: planId, currentMonthlyCount, extraCredits });
 
   return {
     planId,
@@ -77,6 +73,7 @@ export const getTeamPlanInfo = async ({ teamId }: { teamId: number }): Promise<T
     monthlyLimit: sendCheck.limit,
     remaining: sendCheck.remaining,
     allowed: sendCheck.allowed,
+    extraCredits,
   };
 };
 
@@ -87,9 +84,10 @@ export const assertCanSendDocumentForTeam = async ({ teamId }: { teamId: number 
   const info = await getTeamPlanInfo({ teamId });
 
   if (!info.allowed) {
+    const userMessage = `当月の送信上限（${info.monthlyLimit}通）に達しました。プランをアップグレードしてください。`;
     throw new AppError(AppErrorCode.LIMIT_EXCEEDED, {
-      message: `Monthly document limit exceeded for ${info.planId} plan (${info.currentMonthlyCount}/${info.monthlyLimit}).`,
-      userMessage: `当月の送信上限（${info.monthlyLimit}通）に達しました。プランをアップグレードしてください。`,
+      message: userMessage,
+      userMessage,
     });
   }
 };
@@ -109,9 +107,10 @@ export const assertFeatureEnabledForTeam = async ({
   const info = await getTeamPlanInfo({ teamId });
 
   if (!isFeatureEnabledForPlan({ plan: info.planId, feature })) {
+    const userMessage = `${featureLabelJa}は現在のプラン（${info.plan.label}）ではご利用いただけません。プランのアップグレードをご検討ください。`;
     throw new AppError(AppErrorCode.FORBIDDEN, {
-      message: `Feature '${feature}' is not available on the ${info.planId} plan.`,
-      userMessage: `${featureLabelJa}は現在のプラン（${info.plan.label}）ではご利用いただけません。プランのアップグレードをご検討ください。`,
+      message: userMessage,
+      userMessage,
     });
   }
 };
