@@ -21,7 +21,6 @@ import {
   ShieldCheckIcon,
   SparklesIcon,
   UploadCloudIcon,
-  UsersIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
@@ -123,9 +122,6 @@ export default function WizardStepUploadPage({ params }: Route.ComponentProps) {
     }
     if (title.includes('秘密保持') || title.includes('NDA')) {
       return <ShieldCheckIcon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />;
-    }
-    if (title.includes('雇用')) {
-      return <UsersIcon className="h-5 w-5 text-purple-600 dark:text-purple-400" />;
     }
     return <FileTextIcon className="h-5 w-5 text-muted-foreground" />;
   };

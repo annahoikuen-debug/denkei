@@ -864,7 +864,7 @@ export const templateRouter = router({
   /**
    * @private
    *
-   * チームに標準の日本語3大雛形(業務委託・秘密保持・雇用契約)を追加する。
+   * チームに標準の日本語3大雛形(売買・業務委託・秘密保持(NDA))を追加する。
    */
   seedJapaneseTemplates: authenticatedProcedure.output(ZSuccessResponseSchema).mutation(async ({ ctx }) => {
     const { seedJapaneseTemplates } = await import('@documenso/prisma/seed/japanese-templates');

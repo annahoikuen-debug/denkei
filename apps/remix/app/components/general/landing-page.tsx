@@ -876,7 +876,7 @@ export function LandingPage() {
               日本の3大定型契約書を初期搭載
             </p>
             <p className="mt-3 font-medium text-base text-muted-foreground sm:text-lg">
-              PDFの準備は不要。相手名と金額を入れるだけで即日送信できます。
+              法務レビュー前提の参考雛形。差し込み変数を入力して契約書を作成・送信できます。
             </p>
           </div>
 
@@ -900,7 +900,7 @@ export function LandingPage() {
               </div>
               <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
                 知的財産権の帰属、納品検査、支払期日、再委託、秘密保持、損害賠償上限条項を完全網羅。
-                差し込み変数（委託料・業務内容・期日）を入力するだけで即時PDF生成。
+                差し込み変数（委託料・業務内容・期日）を入力して契約書PDFを生成します。
               </AccordionContent>
             </AccordionItem>
 
@@ -932,8 +932,8 @@ export function LandingPage() {
                     3
                   </div>
                   <div>
-                    <h3 className="font-black text-foreground text-xl sm:text-2xl">雇用契約書 / 労働条件通知書</h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm">正社員・パート採用時の労基法義務付け文書</p>
+                    <h3 className="font-black text-foreground text-xl sm:text-2xl">売買契約書</h3>
+                    <p className="text-muted-foreground text-xs sm:text-sm">取引先名と金額を差し込む参考書式</p>
                   </div>
                 </div>
                 <AccordionTrigger className="font-bold text-emerald-600 text-sm hover:no-underline">
@@ -941,8 +941,8 @@ export function LandingPage() {
                 </AccordionTrigger>
               </div>
               <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
-                就業場所、業務内容、所定労働時間、休日休暇、賃金計算、退職に関する事項を兼ね備えた合一書面。
-                電磁的交付に関する労働基準法規則に適合。
+                売買物件の引渡し、売買代金の支払い時期・方法、所有権移転、契約不適合責任などを記載した参考書式。
+                利用にあたっては法務部門等のレビューをお願いします。
               </AccordionContent>
             </AccordionItem>
           </Accordion>
