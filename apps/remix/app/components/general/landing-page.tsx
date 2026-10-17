@@ -1,4 +1,4 @@
-﻿import type { ContractTemplateKey } from '@documenso/lib/universal/contract-templates-meta';
+import type { ContractTemplateKey } from '@documenso/lib/universal/contract-templates-meta';
 import { buildCounterpartyPrintHtml } from '@documenso/lib/universal/counterparty-guide';
 import { generateElectronicSealDataUrl } from '@documenso/lib/universal/seal-image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@documenso/ui/primitives/accordion';
@@ -124,7 +124,7 @@ export function LandingPage() {
                   電子契約
                 </span>
               </div>
-              <span className="font-medium text-muted-foreground text-xs">中小企業特化・月額2,980円（100件）</span>
+              <span className="font-medium text-muted-foreground text-xs">中小企業特化・月額2,980円（100件定額）</span>
             </div>
           </Link>
 
@@ -184,7 +184,7 @@ export function LandingPage() {
           {/* キャッチバッジ */}
           <div className="mb-6 inline-flex items-center gap-x-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 font-bold text-red-700 text-sm shadow-sm sm:text-base dark:text-red-400">
             <Sparkles className="h-4 w-4" />
-            <span>タイムスタンプ不要・国税庁公認の事務処理規程つき</span>
+            <span>外部タイムスタンプ不要・国税庁公認の事務処理規程つき</span>
           </div>
 
           {/* 超大型メインコピー */}
@@ -205,6 +205,9 @@ export function LandingPage() {
             </span>
             <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 shadow-sm">
               <Check className="h-5 w-5 flex-shrink-0 text-primary" /> 相手方はスマホ10秒押印
+            </span>
+            <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 shadow-sm">
+              <Check className="h-5 w-5 flex-shrink-0 text-emerald-600" /> 電帳法 事務処理規程キット同梱
             </span>
           </div>
 
@@ -243,9 +246,10 @@ export function LandingPage() {
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-red-500/30"
                 />
                 <div className="text-xs sm:text-sm">
+                  <div className="mb-0.5 font-black text-red-600">デンケイ</div>
                   <p className="font-bold text-foreground leading-snug">
                     「紙とハンコの面倒、ぜんぶ拙者にお任せあれ！
-                    相手方はスマホ10秒で押印。高額タイムスタンプ不要で電帳法も鉄壁ガードでござる！」
+                    相手方はスマホ10秒で押印。外部タイムスタンプ不要で電帳法も鉄壁ガードでござる！」
                   </p>
                 </div>
               </div>
@@ -254,13 +258,13 @@ export function LandingPage() {
               <div className="relative overflow-hidden rounded-2xl border border-border bg-neutral-900/10 shadow-inner">
                 <img
                   src="/images/denkei-mascot.webp"
-                  alt="デンケイ公式マスコット デンケイ"
+                  alt="デンケイ"
                   className="h-auto w-full object-cover transition-transform duration-500 group-hover:scale-102"
                 />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 text-white sm:p-5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <div className="font-bold text-[11px] text-red-400 tracking-wider">DENKEI OFFICIAL GUARDIAN</div>
+                      <div className="font-bold text-[11px] text-red-400 tracking-wider">DENKEI GUARDIAN</div>
                       <div className="font-black text-lg sm:text-xl">デンケイの「七つ道具」</div>
                     </div>
                     <span className="rounded-full bg-red-600 px-3 py-1 font-black text-xs shadow-md">
@@ -277,6 +281,9 @@ export function LandingPage() {
                 </span>
                 <span className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-blue-600">
                   📜 国税庁公認の事務処理規程つき
+                </span>
+                <span className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1 text-red-600">
+                  🛡️ WORM監査ログ＆ハッシュ改ざん防止
                 </span>
               </div>
             </div>
@@ -637,6 +644,15 @@ export function LandingPage() {
                         <td className="border border-border p-3 text-muted-foreground">合計 約 33,000円 / 月</td>
                         <td className="border border-border bg-red-500/5 p-3 font-bold text-red-600">
                           定額 2,980円（約91%コスト削減）
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="border border-border p-3 font-bold">外部タイムスタンプ</td>
+                        <td className="border border-border p-3 text-muted-foreground">
+                          月額費用または従量に内包・別途課金
+                        </td>
+                        <td className="border border-border bg-red-500/5 p-3 font-bold text-emerald-600">
+                          不要（国税庁事務処理規程で完全適合）
                         </td>
                       </tr>
                       <tr>
@@ -1049,6 +1065,9 @@ export function LandingPage() {
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-600" /> メールOTP二要素認証
                   </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Check className="h-4 w-4 text-muted-foreground" /> 相手方はアプリ・会員登録不要
+                  </div>
                 </div>
 
                 <Link to="/signup" className="mt-8 block">
@@ -1070,7 +1089,7 @@ export function LandingPage() {
 
               <CardContent className="flex flex-1 flex-col p-0">
                 <span className="font-bold text-red-600 text-xs">STANDARD</span>
-                <h3 className="mt-1 font-black text-2xl text-foreground">スタンダード</h3>
+                <h3 className="mt-1 font-black text-2xl text-foreground">中小応援スタンダード</h3>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="font-black text-5xl text-red-600">¥{standardPrice}</span>
                   <span className="font-bold text-muted-foreground text-xs">（税込）/ 月</span>
@@ -1086,6 +1105,12 @@ export function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 電帳法 事務処理規程キット
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 会社角印・代表取締役丸印
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 自社ブランドメール設定
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 3大定型契約雛形＆差し込み
@@ -1123,14 +1148,20 @@ export function LandingPage() {
                 </div>
 
                 <div className="mt-6 flex-1 space-y-2 font-bold text-sm">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-foreground">
                     <Check className="h-4 w-4 text-emerald-600" /> 送信件数 無制限（使い放題）
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> 送信前 承認フロー機能
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-600" /> CSV一括送信（数十社へ一斉締結）
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-600" /> 複数チームメンバー管理
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" /> スタンダードの全機能
                   </div>
                 </div>
 
@@ -1160,7 +1191,7 @@ export function LandingPage() {
           <Accordion type="single" collapsible className="space-y-4">
             <AccordionItem value="faq-1" className="rounded-2xl border-2 border-border/80 bg-card px-6">
               <AccordionTrigger className="py-5 text-left font-black text-lg hover:no-underline sm:text-xl">
-                Q. タイムスタンプなしで電帳法に違反しませんか？
+                Q. 外部タイムスタンプなしで電帳法に違反しませんか？
               </AccordionTrigger>
               <AccordionContent className="pb-5 text-base text-muted-foreground leading-relaxed">
                 違反しません。国税庁が定める「電子取引関係
@@ -1214,7 +1245,7 @@ export function LandingPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="border-red-500/40 font-bold text-red-600 text-xs hover:bg-red-500/10 hover:text-red-700"
+                    className="border-red-500/40 font-bold text-red-600 text-xs hover:bg-red-50/10 hover:text-red-700 dark:hover:bg-red-500/10"
                     onClick={() => {
                       const printHtml = buildCounterpartyPrintHtml({
                         companyName: '貴社名',
@@ -1293,9 +1324,7 @@ export function LandingPage() {
           <div className="flex items-center gap-2 font-bold text-foreground">
             <img src="/images/denkei-mascot-circle.webp" alt="デンケイ" className="h-6 w-6 rounded-full" />
             <span>デンケイ</span>
-            <span className="font-normal text-muted-foreground">
-              | 中小企業特化型 電子契約サービス（公式キャラクター：デンケイ）
-            </span>
+            <span className="font-normal text-muted-foreground">| 中小企業特化型 電子契約サービス</span>
           </div>
           <div>© 2026 デンケイ (Denkei). 電子帳簿保存法第3条・第4条準拠 / インボイス制度対応</div>
         </div>

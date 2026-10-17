@@ -44,7 +44,7 @@ export const evaluateCompliance = (answers: DiagnosticAnswers): DiagnosticResult
       badgeText: '電帳法 100% 適合',
       badgeVariant: 'default',
       recommendation:
-        '貴社は事務処理規程を備え付けており、国税庁要件をクリアしています。デンケイを導入すれば、月額2,980円でタイムスタンプ代を永久ゼロにしつつ、監査ログ付きでさらに強固に保全できます。',
+        '貴社は事務処理規程を備え付けており、国税庁要件をクリアしています。デンケイを導入すれば、月額2,980円で追加のタイムスタンプ費用なしで、監査ログ付きでさらに強固に保全できます。',
       legalBasis: {
         law: '電子計算機を使用して作成する国税関係帳簿書類の保存方法等の法律施行規則',
         article: '第4条第1項第4号（事務処理規程の備付け）',

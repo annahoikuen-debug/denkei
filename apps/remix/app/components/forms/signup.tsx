@@ -231,7 +231,7 @@ export const SignUpForm = ({
             className="h-11 w-11 flex-shrink-0 rounded-full border border-red-500/30"
           />
           <div>
-            <div className="font-black text-red-600 text-xs">公式守護武者・デンケイ</div>
+            <div className="font-black text-red-600 text-xs">デンケイ</div>
             <div className="font-bold text-foreground text-sm">
               「まずは月3件まで0円！ 拙者が貴社の契約を鉄壁ガードするでござる！」
             </div>
@@ -244,8 +244,8 @@ export const SignUpForm = ({
 
         <div className="relative z-10 flex justify-around border-border border-t pt-4 font-bold text-muted-foreground text-xs">
           <span>✓ クレジットカード不要</span>
-          <span>✓ タイムスタンプ代 0円</span>
           <span>✓ 電帳法 事務処理規程つき</span>
+          <span>✓ 相手方はスマホ10秒押印</span>
         </div>
       </div>
 

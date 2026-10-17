@@ -71,7 +71,7 @@ export const TemplateDocumentCompleted = ({
         <Section className="mt-6 mb-2 rounded-lg border border-red-500/40 border-dashed bg-red-50/30 p-3.5 text-center">
           <Text className="m-0 font-bold text-red-700 text-xs">貴社でも電子契約を導入しませんか？</Text>
           <Text className="mt-1 mb-2 text-[11px] text-muted-foreground leading-snug">
-            デンケイなら月3件まで完全無料。有料プランも100件定額・月額2,980円でタイムスタンプ費用0円。
+            デンケイなら月3件まで完全無料。有料プランも100件定額・月額2,980円。
           </Text>
           <Button
             className="inline-block rounded-md bg-red-600 px-3.5 py-1.5 font-bold text-white text-xs no-underline"

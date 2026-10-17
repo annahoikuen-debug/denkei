@@ -124,7 +124,7 @@ export const ComplianceDiagnosticCard: React.FC = () => {
                 onClick={() => handleSelectTimestamp('none')}
                 className="flex flex-col items-center justify-center rounded-2xl border-2 border-border bg-card p-4 text-center transition-all hover:border-red-600 hover:bg-red-50/20 active:scale-98"
               >
-                <span className="font-black text-foreground text-sm">利用していない（0円）</span>
+                <span className="font-black text-foreground text-sm">利用していない</span>
                 <span className="mt-1 text-[11px] text-muted-foreground">余計な費用は払いたくない</span>
               </button>
 

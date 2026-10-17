@@ -1,4 +1,5 @@
 import type { TSiteSettingsBannerSchema } from '@documenso/lib/server-only/site-settings/schemas/banner';
+import { sanitizeBannerContent } from '@documenso/lib/universal/sanitize-banner-content';
 
 export type AppBannerProps = {
   banner: TSiteSettingsBannerSchema;
@@ -9,6 +10,8 @@ export const AppBanner = ({ banner }: AppBannerProps) => {
     return null;
   }
 
+  const sanitizedContent = sanitizeBannerContent(banner.data.content);
+
   return (
     <div className="mb-2" style={{ background: banner.data.bgColor }}>
       <div
@@ -16,7 +19,7 @@ export const AppBanner = ({ banner }: AppBannerProps) => {
         style={{ color: banner.data.textColor }}
       >
         <div className="flex items-center">
-          <span dangerouslySetInnerHTML={{ __html: banner.data.content }} />
+          <span dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
         </div>
       </div>
     </div>
