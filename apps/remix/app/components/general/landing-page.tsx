@@ -1,4 +1,4 @@
-import type { ContractTemplateKey } from '@documenso/lib/universal/contract-templates-meta';
+﻿import type { ContractTemplateKey } from '@documenso/lib/universal/contract-templates-meta';
 import { buildCounterpartyPrintHtml } from '@documenso/lib/universal/counterparty-guide';
 import { generateElectronicSealDataUrl } from '@documenso/lib/universal/seal-image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@documenso/ui/primitives/accordion';
@@ -204,9 +204,6 @@ export function LandingPage() {
               <Check className="h-5 w-5 flex-shrink-0 text-red-600" /> 月額 2,980円（100件定額）
             </span>
             <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 shadow-sm">
-              <Check className="h-5 w-5 flex-shrink-0 text-emerald-600" /> タイムスタンプ費用 0円
-            </span>
-            <span className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 shadow-sm">
               <Check className="h-5 w-5 flex-shrink-0 text-primary" /> 相手方はスマホ10秒押印
             </span>
           </div>
@@ -230,7 +227,7 @@ export function LandingPage() {
 
           {/* ===== ヒーロー内 インタラクティブ・ショーケース（マスコット ＆ 認印体験） ===== */}
           <div className="mt-14 grid w-full grid-cols-1 items-stretch gap-8 text-left lg:grid-cols-12">
-            {/* 左側：公式守護武者「デンケイ」カード */}
+            {/* 左側：デンケイ カード */}
             <div
               id="mascot"
               className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border-2 border-red-500/30 bg-card p-6 shadow-2xl sm:p-8 lg:col-span-7"
@@ -246,9 +243,6 @@ export function LandingPage() {
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-red-500/30"
                 />
                 <div className="text-xs sm:text-sm">
-                  <div className="mb-0.5 flex items-center gap-1.5 font-black text-red-600">
-                    <span>公式守護武者・デンケイ</span>
-                  </div>
                   <p className="font-bold text-foreground leading-snug">
                     「紙とハンコの面倒、ぜんぶ拙者にお任せあれ！
                     相手方はスマホ10秒で押印。高額タイムスタンプ不要で電帳法も鉄壁ガードでござる！」
@@ -278,9 +272,6 @@ export function LandingPage() {
 
               {/* デンケイの守護タグ */}
               <div className="mt-4 flex flex-wrap gap-2 font-bold text-xs">
-                <span className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1 text-red-600">
-                  🛡️ タイムスタンプ費用 0円
-                </span>
                 <span className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-600">
                   ⚡ 相手方はアプリ不要・10秒押印
                 </span>
@@ -358,7 +349,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ===== 公式守護武者・デンケイの「七つ道具」セクション（見出し特大 ＋ 詳細アコーディオン） ===== */}
+      {/* ===== デンケイの「七つ道具」セクション（見出し特大 ＋ 詳細アコーディオン） ===== */}
       <section id="features" className="border-border/60 border-t py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
@@ -367,7 +358,7 @@ export function LandingPage() {
               <span>7 DIGITAL TOOLS OF DENKEI</span>
             </div>
             <h2 className="font-black text-3xl text-foreground tracking-tight sm:text-5xl">
-              公式守護武者・デンケイの「七つ道具」で、
+              デンケイの「七つ道具」で、
               <br />
               中小企業の契約・電帳法を鉄壁ガード
             </h2>
@@ -649,13 +640,6 @@ export function LandingPage() {
                         </td>
                       </tr>
                       <tr>
-                        <td className="border border-border p-3 font-bold">タイムスタンプ費</td>
-                        <td className="border border-border p-3 text-muted-foreground">月額費用または従量に内包</td>
-                        <td className="border border-border bg-red-500/5 p-3 font-bold text-emerald-600">
-                          0円（国税庁事務処理規程で完全適合）
-                        </td>
-                      </tr>
-                      <tr>
                         <td className="border border-border p-3 font-bold">契約の縛り</td>
                         <td className="border border-border p-3 text-muted-foreground">
                           年契約・途中解約違約金あり多数
@@ -832,7 +816,7 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* 公式守護武者・デンケイのアドバイス吹き出し */}
+            {/* デンケイのアドバイス吹き出し */}
             <div className="relative flex items-start gap-4 rounded-2xl border-2 border-red-500/30 bg-background/90 p-5 shadow-lg">
               <img
                 src="/images/denkei-mascot-circle.webp"
@@ -840,7 +824,7 @@ export function LandingPage() {
                 className="h-12 w-12 flex-shrink-0 rounded-full border border-red-500/30"
               />
               <div className="flex-1">
-                <div className="mb-1 font-black text-red-600 text-xs">公式守護武者・デンケイの診断結果</div>
+                <div className="mb-1 font-black text-red-600 text-xs">デンケイの診断結果</div>
                 <p className="font-bold text-foreground text-sm leading-snug sm:text-base">「{denkeiComment}」</p>
               </div>
             </div>
