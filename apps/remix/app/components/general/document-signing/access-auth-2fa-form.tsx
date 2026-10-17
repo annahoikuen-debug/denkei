@@ -224,6 +224,24 @@ export const AccessAuth2FAForm = ({ onSubmit, token, error }: AccessAuth2FAFormP
             )}
           </div>
 
+          {error && (
+            <div className="space-y-2 rounded-xl border border-red-500/30 bg-red-50/50 p-3 text-red-700 text-xs leading-relaxed dark:bg-red-950/30 dark:text-red-300">
+              <div className="flex items-center gap-1.5 font-bold">
+                <span>⚠️ {error}</span>
+              </div>
+              <div className="space-y-1 rounded-lg bg-background/80 p-2 text-[11px] text-foreground">
+                <p className="font-semibold text-primary">💡 解決のヒント:</p>
+                <p>
+                  ・複数回「コード再送」を押した場合、<strong>最新のメールに届いたコードのみ</strong>
+                  が有効です（以前のコードは無効化されます）。
+                </p>
+                <p>
+                  ・メールが届かない場合は、迷惑メールフォルダをご確認いただくか、下の「コードを再送する」をお試しください。
+                </p>
+              </div>
+            </div>
+          )}
+
           <Form {...form}>
             <form id="access-auth-2fa-form" className="space-y-4" onSubmit={form.handleSubmit(onFormSubmit)}>
               <fieldset disabled={isRequesting2FAEmail || form.formState.isSubmitting}>

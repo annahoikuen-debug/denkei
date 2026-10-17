@@ -17,8 +17,12 @@ export type PlanFeatures = {
   label: string;
   /** 月額(円・税抜)。FREE は 0 */
   monthlyPriceJpy: number;
+  /** 年額(円・税抜・一括)。実質2ヶ月分無料 */
+  annualPriceJpy: number;
   /** 月次送信件数上限。null は無制限 */
   monthlyDocumentLimit: number | null;
+  /** 年払い時の年間送信件数一括枠 */
+  annualDocumentLimit: number | null;
   features: {
     /** Firebase メール認証(MEDIUM 本人確認) */
     firebaseEmailAuth: boolean;
@@ -44,7 +48,9 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
     id: 'FREE',
     label: '無料',
     monthlyPriceJpy: 0,
+    annualPriceJpy: 0,
     monthlyDocumentLimit: 3,
+    annualDocumentLimit: 36,
     features: {
       firebaseEmailAuth: false,
       timestamp: false,
@@ -60,7 +66,9 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
     id: 'STANDARD',
     label: '中小応援スタンダード',
     monthlyPriceJpy: 2980,
+    annualPriceJpy: 29760, // 2,480円/月相当（実質2ヶ月無料）
     monthlyDocumentLimit: 100,
+    annualDocumentLimit: 1200,
     features: {
       firebaseEmailAuth: true,
       timestamp: false,
@@ -76,7 +84,9 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
     id: 'BUSINESS',
     label: 'ビジネス',
     monthlyPriceJpy: 4980,
+    annualPriceJpy: 49800, // 4,150円/月相当（実質2ヶ月無料）
     monthlyDocumentLimit: null,
+    annualDocumentLimit: null,
     features: {
       firebaseEmailAuth: true,
       timestamp: false,
@@ -184,9 +194,22 @@ export const canSendDocument = ({
  * Stripe Price ID 環境変数のマッピング。
  * 本番・ステージング環境の Stripe ダッシュボードで設定した Price ID と紐付ける。
  */
-export const getStripePriceIdForPlan = (plan: PlanId): string | undefined => {
+export type BillingInterval = 'month' | 'year';
+
+export const getStripePriceIdForPlan = (plan: PlanId, interval: BillingInterval = 'month'): string | undefined => {
   if (typeof process === 'undefined' || !process.env) {
     return undefined;
+  }
+
+  if (interval === 'year') {
+    switch (plan) {
+      case 'STANDARD':
+        return process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD_ANNUAL;
+      case 'BUSINESS':
+        return process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS_ANNUAL;
+      default:
+        return undefined;
+    }
   }
 
   switch (plan) {
@@ -222,10 +245,16 @@ export const getStripePriceIdForCreditPackage = (packageId: CreditPackageId): st
  */
 export const getPlanIdFromStripePriceId = (priceId: string): PlanId => {
   if (typeof process !== 'undefined' && process.env) {
-    if (priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD) {
+    if (
+      priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD ||
+      priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD_ANNUAL
+    ) {
       return 'STANDARD';
     }
-    if (priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS) {
+    if (
+      priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS ||
+      priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS_ANNUAL
+    ) {
       return 'BUSINESS';
     }
   }
@@ -249,7 +278,7 @@ export const getPlanIdFromStripePriceId = (priceId: string): PlanId => {
 export const resolvePlanIdFromOrganisation = (
   org?: {
     subscription?: { planId?: string | null } | null;
-    organisationClaim?: { documentQuota?: number | null } | null;
+    organisationClaim?: { documentQuota?: number | null } | null | unknown;
   } | null,
 ): PlanId => {
   if (!org) {
@@ -264,11 +293,12 @@ export const resolvePlanIdFromOrganisation = (
     return 'STANDARD';
   }
 
-  if (org.organisationClaim !== undefined && org.organisationClaim !== null) {
-    if (org.organisationClaim.documentQuota === null) {
+  if (org.organisationClaim && typeof org.organisationClaim === 'object') {
+    const claim = org.organisationClaim as { documentQuota?: number | null };
+    if (claim.documentQuota === null) {
       return 'BUSINESS';
     }
-    if (org.organisationClaim.documentQuota !== undefined && org.organisationClaim.documentQuota >= 100) {
+    if (claim.documentQuota !== undefined && claim.documentQuota >= 100) {
       return 'STANDARD';
     }
   }

@@ -19,6 +19,13 @@ describe('プラン定義(フェーズ3 ステップ26)', () => {
     expect(PLANS.BUSINESS.monthlyDocumentLimit).toBeNull();
   });
 
+  it('年額プラン設定: スタンダードは年29,760円(月換算2,480円・年1,200件枠)', () => {
+    expect(PLANS.STANDARD.annualPriceJpy).toBe(29760);
+    expect(PLANS.STANDARD.annualDocumentLimit).toBe(1200);
+    expect(PLANS.BUSINESS.annualPriceJpy).toBe(49800);
+    expect(PLANS.BUSINESS.annualDocumentLimit).toBeNull();
+  });
+
   it('機能マトリクス: 承認フロー・CSV一括は BUSINESS のみ', () => {
     expect(PLANS.FREE.features.approvalFlow).toBe(false);
     expect(PLANS.STANDARD.features.approvalFlow).toBe(false);

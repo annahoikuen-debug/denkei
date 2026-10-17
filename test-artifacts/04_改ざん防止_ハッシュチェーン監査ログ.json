@@ -1,0 +1,65 @@
+[
+  {
+    "id": "log_step_1",
+    "createdAt": "2026-10-17T02:16:26.738Z",
+    "type": "DOCUMENT_CREATED",
+    "data": {
+      "title": "売買契約書"
+    },
+    "prevHash": "",
+    "hash": "168197b58ae4240a1111c13b091d3ab732119c0b405bf7823b494e85aabceae7"
+  },
+  {
+    "id": "log_step_2",
+    "createdAt": "2026-10-17T02:16:27.739Z",
+    "type": "EMAIL_SENT",
+    "data": {
+      "to": "signer@example.com"
+    },
+    "prevHash": "168197b58ae4240a1111c13b091d3ab732119c0b405bf7823b494e85aabceae7",
+    "hash": "76a8566e219b0832d52f1924514122db9af7ebd440c57526c0f71a6da1f2f450"
+  },
+  {
+    "id": "log_step_3",
+    "createdAt": "2026-10-17T02:16:28.739Z",
+    "type": "DOCUMENT_OPENED",
+    "data": {
+      "ip": "203.0.113.195",
+      "ua": "Mobile Safari"
+    },
+    "prevHash": "76a8566e219b0832d52f1924514122db9af7ebd440c57526c0f71a6da1f2f450",
+    "hash": "b854df9fd37e1cc4d6cc1bb467e31389ab3b202038abf0b6a50f6b699228fb22"
+  },
+  {
+    "id": "log_step_4",
+    "createdAt": "2026-10-17T02:16:29.739Z",
+    "type": "OTP_VERIFIED",
+    "data": {
+      "method": "EMAIL_OTP",
+      "codeHash": "verified"
+    },
+    "prevHash": "b854df9fd37e1cc4d6cc1bb467e31389ab3b202038abf0b6a50f6b699228fb22",
+    "hash": "f8155f72b3753cbcabcffa0af9590665655a6a667da3428685bb6aca18a7b980"
+  },
+  {
+    "id": "log_step_5",
+    "createdAt": "2026-10-17T02:16:30.739Z",
+    "type": "DOCUMENT_SIGNED",
+    "data": {
+      "signer": "佐藤",
+      "sealType": "circle"
+    },
+    "prevHash": "f8155f72b3753cbcabcffa0af9590665655a6a667da3428685bb6aca18a7b980",
+    "hash": "bc9c30fec1afa0adb8dc9b46f8a47915ac2e6a1a2b36deffea230e96d8fd7144"
+  },
+  {
+    "id": "log_step_6",
+    "createdAt": "2026-10-17T02:16:31.739Z",
+    "type": "DOCUMENT_COMPLETED",
+    "data": {
+      "sealed": true
+    },
+    "prevHash": "bc9c30fec1afa0adb8dc9b46f8a47915ac2e6a1a2b36deffea230e96d8fd7144",
+    "hash": "c5aecf536528a375f5014d2fbbc5b290f62a9596b0e43c34e8e3ff9ef7aecff3"
+  }
+]

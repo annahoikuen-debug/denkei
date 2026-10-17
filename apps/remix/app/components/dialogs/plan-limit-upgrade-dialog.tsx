@@ -78,7 +78,7 @@ export function PlanLimitUpgradeDialog({
         <div className="space-y-2 rounded-xl border border-border/80 bg-muted/40 p-3.5">
           <div className="flex items-center justify-between">
             <span className="font-bold text-foreground text-xs">月額を払わずに今月だけ送りたい場合</span>
-            <Badge variant="outline" className="font-semibold text-[10px] text-muted-foreground">
+            <Badge variant="neutral" className="font-semibold text-[10px] text-muted-foreground">
               都度買い・有効期限1年
             </Badge>
           </div>

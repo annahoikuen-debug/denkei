@@ -1,4 +1,4 @@
-# デンケイ 運用者・デプロイヤー向けマニュアル (v1.1)
+# デンケイ 運用者・デプロイヤー向けマニュアル (v1.2)
 
 このマニュアルは、デンケイ（Denkei）を自社サーバーやクラウドにデプロイ・運用する管理者・運用者向けです。Docker によるセルフホスティング、環境変数設定、監視・バックアップ、アップグレード手順、課金運用を解説します。
 
@@ -23,6 +23,8 @@
 13. [モニタリング・ヘルスチェック](#13-モニタリングヘルスチェック)
 14. [トラブルシューティング](#14-トラブルシューティング)
 15. [セキュリティ運用チェックリスト](#15-セキュリティ運用チェックリスト)
+16. [個人開発・手離れ運用ワークフロー](#16-個人開発手離れ運用ワークフロー)
+17. [年間運用予定表（年間スケジュール）](#17-年間運用予定表年間スケジュール)
 
 ---
 
@@ -307,12 +309,14 @@ docker compose -f docker/production/compose.yml up -d
 | `NEXT_PUBLIC_FEATURE_BILLING_ENABLED` | 課金機能有効化 | - |
 | `NEXT_PRIVATE_STRIPE_API_KEY` | Stripe APIキー | - |
 | `NEXT_PRIVATE_STRIPE_WEBHOOK_SECRET` | Stripe Webhookシークレット | - |
-| `NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD` | STANDARDプランのStripe Price ID | - |
-| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS` | BUSINESSプランのStripe Price ID | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD` | STANDARDプラン（月額2,980円）のStripe Price ID | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD_ANNUAL` | STANDARDプラン（年額29,760円・一括実質2ヶ月無料）のStripe Price ID | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS` | BUSINESSプラン（月額4,980円）のStripe Price ID | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS_ANNUAL` | BUSINESSプラン（年額49,800円・一括実質2ヶ月無料）のStripe Price ID | - |
 
 Stripe ダッシュボードで以下を設定してください：
 
-1. 製品とプラン価格を作成（STANDARD: 2,980円/月、BUSINESS: 4,980円/月、JPY）
+1. 製品とプラン価格を作成（STANDARD月額: 2,980円/月、STANDARD年額: 29,760円/年、BUSINESS月額: 4,980円/月、BUSINESS年額: 49,800円/年、JPY）
 2. Price ID を `.env` の対応変数に設定
 3. Webhook エンドポイントを `https://<ホスト>/api/webhooks/stripe` に設定し、イベント `customer.subscription.updated`, `invoice.paid` などを購読
 
@@ -702,7 +706,111 @@ docker compose -f docker/compose.standalone.yml logs app | grep -i error
 - [ ] Stripe Webhook シークレットを適切に設定済み（課金有効時）
 - [ ] Stripe Price ID を `.env` に設定済み（課金有効時）
 
+
+
+## 16. 個人開発・手離れ運用ワークフロー
+
+個人・少人数でサービスを維持するためには、**「通常時は何もしない（Zero Ops）」** を原則とし、**「障害や異常時のみ通知が飛んできて対処する（Exception-based Ops）」** 体制を構築することが不可欠です。
+
+### 16.1 運用負荷軽減の3大原則
+
+1. **異常系のみ通知（Push型通知）**:
+   - 日常的に管理画面を見に行く必要をなくす。
+   - Sentry / BetterStack / Cloudflare からの障害アラート、Stripe の支払い失敗・チャージバック通知、Resend のバウンス通知のみを Discord / Slack / LINE に集約。
+2. **自動化されたフェイルセーフ**:
+   - Docker コンテナの `restart: unless-stopped` による自動復帰。
+   - バックアップの cron 自動実行（R2 / S3 へのアップロード＋古い世代の自動ローテーション）。
+3. **作業の「5分化・ワンライナー化」**:
+   - 調査や復旧に必要なコマンドをスクリプト化または本マニュアルに明記し、思考コストをゼロにする。
+
 ---
+
+### 16.2 タイムスパン別 運用ルーティン
+
+| 頻度 | 目安所要時間 | 作業内容 | 自動化／効率化手法 |
+|------|-------------|---------|------------------|
+| **常時 / 日次** | **0分** | サーバー稼働・死活監視、DBバックアップ | BetterStack / UptimeRobot による外形監視、cron による自動バックアップ |
+| **週次** | **5分** | 異常通知の確認、主要メトリクスのサマリー確認 | Discord / Slack 通知の流し見（通知がなければスルー） |
+| **月次** | **15分** | Stripe 売上・入金確認、無料枠クォータ残量、セキュリティ更新 | クラウド請求額・クォータダッシュボード確認、`npm audit` / `apt update` |
+| **四半期** | **30分** | バックアップリストア試験（1回）、依存ライブラリ更新 | ローカル環境での `pg_restore` 動作確認、マイナーアップデート |
+| **年次** | **1〜2時間** | 年間予定表に基づく定期保守、法改正対応、決算・税務集計 | 次節「年間運用予定表」に準拠 |
+
+---
+
+### 16.3 日常の緊急時ワークフロー（トラブルシューティング・フロー）
+
+```mermaid
+flowchart TD
+    Alert([アラート通知受信<br>Discord / Sentry / メール]) --> CheckType{アラート種別}
+
+    CheckType -->|死活監視エラー| Down[サーバー疎通確認]
+    Down --> PingFail{ping / HTTP 応答あり?}
+    PingFail -->|応答なし| VPSReboot[VPSダッシュボードから再起動]
+    PingFail -->|502 Bad Gateway| DockerRestart[sshログイン → docker compose restart]
+    VPSReboot --> CheckRecover[サービス復旧確認]
+    DockerRestart --> CheckRecover
+
+    CheckType -->|Stripe 決済失敗| StripeFail[Stripe顧客イベント確認]
+    StripeFail --> AutoRetry[Stripeによる自動再請求待機<br>※未払いプラン自動停止]
+
+    CheckType -->|メール未達 / バウンス| MailFail[Resend / SES ログ確認]
+    MailFail --> BadAddress[受信者アドレスの入力ミスまたはスパム判定を調査]
+
+    CheckType -->|DB容量警告| DiskFull[ディスク使用量確認<br>df -h / ストレージクォータ]
+    DiskFull --> CleanLogs[古いログや一時ファイルの整理]
+```
+
+#### クイック障害診断コマンド集
+```bash
+# 1. サーバーリソースと稼働コンテナの確認
+docker compose ps
+docker stats --no-stream
+
+# 2. 直近のエラーログ確認（末尾100行）
+docker compose logs -n 100 --tail=100 web db
+
+# 3. ディスク容量・メモリ空き状況
+df -h
+free -m
+
+# 4. コンテナの一括再起動（最速の応急復旧）
+docker compose restart
+```
+
+---
+
+## 17. 年間運用予定表（年間スケジュール）
+
+個人開発者が「いつ・何をすればよいか」を迷わず、計画的に手離れ運用するための年間カレンダーです。
+
+| 時期 | テーマ | 主な作業・タスク | 目的・手離れのためのTips |
+|------|--------|----------------|--------------------------|
+| **1月** | **年度初め点検 & 前年バックアップ長期保管** | ・前年の電帳法対応書類・DBバックアップのアーカイブ（長期保存ストレージ Glacier / Coldline 移動など）<br>・新年の稼働確認 | 電帳法7年保存要件を満たしつつ、通常運用のストレージ容量を節約 |
+| **2月** | **確定申告・売上集計** | ・Stripe / 銀行口座の売上明細出力<br>・サーバー費・ドメイン費等の経費集計 | Stripe レポート機能でワンクリックエクスポート |
+| **3月〜4月** | **新年度・繁忙期対応** | ・契約書締結の増加（入社・業務委託契約ラッシュ）に伴う負荷・API上限の監視<br>・Resend / Cloudflare のクォータ上限アラート再確認 | 一時的に送信枠が逼迫する場合は有料枠への一時スケールアップを検討 |
+| **5月** | **ゴールデンウィーク前 予防保守** | ・OS / Docker ホストのセキュリティパッチ適用 (`apt update && apt upgrade`)<br>・再起動テスト | 長期休暇中に障害が発生しないよう、事前にリフレッシュ |
+| **6月** | **中間セキュリティ監査 & 鍵・証明書点検** | ・P12署名証明書、SSL証明書、APIキー（Stripe / Google / Resend）の有効期限確認<br>・管理者パスワードのローテーション | 突然の証明書失効によるサービス停止を未然に防止 |
+| **7月〜8月** | **夏期安定稼働期** | ・静穏期。基本ルーティン（週次・月次の低負荷チェック）のみ | 通常運用を維持（機能改善やマーケティングに集中） |
+| **9月** | **法改正・制度チェック** | ・デジタル庁・国税庁の電子署名・インボイス・電帳法・マイナンバー等の法改正情報確認<br>・規約・プライバシーポリシーの見直し | 10月施行の法令に備え、必要に応じて文言や機能の改定を準備 |
+| **10月** | **メジャーアップデート検証** | ・Node.js LTS、PostgreSQL、Remix / Next.js のメジャー・マイナーバージョン更新検討<br>・ステージング / ローカル環境での動作テスト | 年末の繁忙期に入る前に主要基盤の技術的負債を解消 |
+| **11月** | **年末年始前のリストア訓練** | ・DBバックアップからの実データ復元テスト（別コンテナまたはローカルで実施）<br>・障害復旧手順（DR）の確認 | 「いざという時にバックアップが壊れていた」事態を完全回避（年1回推奨） |
+| **12月** | **年末年始の事前確認 & 休業周知** | ・年末年始の無人稼働に向けたサーバー死活監視の再確認<br>・サポート休業期間のユーザー向け周知（必要時）<br>・年間売上・利用ユーザー数推移の振り返り | 年末年始は通知が来た時だけスマホから対応できる状態を確保 |
+
+---
+
+### 17.1 手離れ運用のための自動チェックリスト（年間通知カレンダー設定）
+
+Googleカレンダーやタスク管理アプリ（Todoist, Notion等）に以下の**年次リマインダー**を1度登録しておくだけで、抜け漏れなく手離れ運用が継続できます。
+
+- [ ] **毎月1日**: クラウド利用料 & Stripe 残高チェック（所要10分）
+- [ ] **毎年5月20日**: 連休明け OS & Docker パッチ適用（所要30分）
+- [ ] **毎年6月15日**: 各種APIキー & 署名証明書の有効期限点検（所要20分）
+- [ ] **毎年9月10日**: 電子署名・電帳法等の法令改正動向チェック（所要30分）
+- [ ] **毎年11月15日**: 年1回のDBリストア復旧テスト（所要30分）
+- [ ] **毎年12月20日**: 年末年始の無人運用設定・アラート疎通確認（所要15分）
+
+---
+
 
 ## 関連ドキュメント
 
@@ -717,6 +825,8 @@ docker compose -f docker/compose.standalone.yml logs app | grep -i error
 | `docker/README.md` | Docker セットアップ詳細 |
 | `docs/plans/remaining-tasks-implementation-plan.md` | 実装進捗マスタープラン |
 | `docs/plans/saas-launch-architecture-guide.md` | 0円・極小コストSaaS公開＆運用設計ガイド |
+| `docs/plans/smb-growth-hands-off-implementation-plan.md` | 顧客満足・手離れ・販売促進 36ステップ詳細実装計画書 |
+
 
 ---
 

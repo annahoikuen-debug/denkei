@@ -84,7 +84,7 @@ export default function TeamEmailSettingsGeneral() {
         <div>
           {hasCustomEmailAccess ? (
             <Badge
-              variant="outline"
+              variant="default"
               className="border-emerald-600/40 bg-emerald-500/10 px-3 py-1 font-bold text-emerald-700 dark:text-emerald-400"
             >
               <ShieldCheckIcon className="mr-1.5 h-4 w-4 text-emerald-600" />
@@ -92,7 +92,7 @@ export default function TeamEmailSettingsGeneral() {
             </Badge>
           ) : (
             <Badge
-              variant="outline"
+              variant="warning"
               className="border-amber-600/40 bg-amber-500/10 px-3 py-1 font-bold text-amber-700 dark:text-amber-400"
             >
               <LockIcon className="mr-1.5 h-3.5 w-3.5 text-amber-600" />

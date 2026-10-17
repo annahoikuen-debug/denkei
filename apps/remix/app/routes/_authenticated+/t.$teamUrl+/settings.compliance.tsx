@@ -6,6 +6,11 @@ import {
   buildElectronicLedgerRegulationDocument,
   NTA_COMPLIANCE_CHECKLIST,
 } from '@documenso/lib/universal/compliance-kit';
+import {
+  buildCounterpartyEmailTemplate,
+  buildCounterpartyNoticeText,
+  buildCounterpartyPrintHtml,
+} from '@documenso/lib/universal/counterparty-guide';
 import { Badge } from '@documenso/ui/primitives/badge';
 import { Button } from '@documenso/ui/primitives/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@documenso/ui/primitives/card';
@@ -161,7 +166,7 @@ export default function TeamSettingsCompliancePage() {
         <div>
           {hasComplianceAccess ? (
             <Badge
-              variant="outline"
+              variant="default"
               className="border-emerald-600/40 bg-emerald-500/10 px-3 py-1 font-bold text-emerald-700 dark:text-emerald-400"
             >
               <ShieldCheckIcon className="mr-1.5 h-4 w-4 text-emerald-600" />
@@ -169,7 +174,7 @@ export default function TeamSettingsCompliancePage() {
             </Badge>
           ) : (
             <Badge
-              variant="outline"
+              variant="warning"
               className="border-amber-600/40 bg-amber-500/10 px-3 py-1 font-bold text-amber-700 dark:text-amber-400"
             >
               <LockIcon className="mr-1.5 h-3.5 w-3.5 text-amber-600" />
@@ -428,6 +433,114 @@ export default function TeamSettingsCompliancePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 取引先（相手方）向け「電子契約移行のお願い」配布キット */}
+      <Card className="border-border/80 shadow-sm">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <FileTextIcon className="h-5 w-5 text-primary" />
+              <CardTitle>
+                <Trans>取引先（相手方）向け「電子契約移行のお願い」配布キット</Trans>
+              </CardTitle>
+            </div>
+            <Badge variant="neutral" className="border-primary/40 bg-primary/5 text-primary text-xs">
+              <Trans>無料提供・全プラン利用可</Trans>
+            </Badge>
+          </div>
+          <CardDescription>
+            <Trans>
+              取引先に電子契約への移行をスムーズに快諾してもらうための「A4書面文面」および「メールコピペ用テンプレート」です。
+              費用負担ゼロ、アプリ不要、10秒スマホ押印のメリットが網羅されており、相手方からの問い合わせを事前に防ぎます。
+            </Trans>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="default"
+              className="bg-red-600 font-medium text-white text-xs shadow-sm hover:bg-red-700"
+              onClick={() => {
+                const printHtml = buildCounterpartyPrintHtml({
+                  companyName: companyName || team.name,
+                  representativeName,
+                  serviceName: 'デンケイ（Denkei）',
+                });
+                const printWin = window.open('', '_blank');
+                if (printWin) {
+                  printWin.document.write(printHtml);
+                  printWin.document.close();
+                  printWin.focus();
+                } else {
+                  toast({
+                    title: 'ポップアップがブロックされました',
+                    description: 'ブラウザの設定でポップアップを許可して再度お試しください。',
+                    variant: 'destructive',
+                  });
+                }
+              }}
+            >
+              <PrinterIcon className="mr-1.5 h-3.5 w-3.5" />
+              <Trans>取引先向け案内書をA4印刷 / PDF保存</Trans>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="font-medium text-xs"
+              onClick={() => {
+                const noticeText = buildCounterpartyNoticeText({
+                  companyName,
+                  serviceName: 'デンケイ（Denkei）',
+                });
+                const blob = new Blob([noticeText], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `取引先向けご案内_${companyName || '当社'}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast({
+                  title: 'ダウンロード完了',
+                  description: '取引先向けのご案内テキストファイルを保存しました。',
+                });
+              }}
+            >
+              <DownloadIcon className="mr-1.5 h-3.5 w-3.5" />
+              <Trans>取引先向け案内書面テキストをダウンロード</Trans>
+            </Button>
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="font-medium text-xs"
+              onClick={async () => {
+                const emailTpl = buildCounterpartyEmailTemplate({
+                  companyName,
+                  serviceName: 'デンケイ',
+                });
+                await navigator.clipboard.writeText(`${emailTpl.subject}\n\n${emailTpl.body}`);
+                toast({
+                  title: 'コピー完了',
+                  description: '取引先への案内メール文面をクリップボードにコピーしました。',
+                });
+              }}
+            >
+              <CopyIcon className="mr-1.5 h-3.5 w-3.5" />
+              <Trans>案内メール文面をコピペ</Trans>
+            </Button>
+          </div>
+
+          <div className="rounded-lg bg-muted/60 p-3 text-muted-foreground text-xs leading-relaxed">
+            <p className="font-semibold text-foreground">💡 手離れ運用のワンポイント:</p>
+            <p className="mt-1">
+              初めて電子契約を送る取引先には、送信前にこの案内文面をメール送付しておくか、契約書送信メールの備考欄に添えることで、
+              「これ何？」「怪しくない？」「どうすればいい？」といった問い合わせを9割以上未然に防止できます。
+            </p>
           </div>
         </CardContent>
       </Card>

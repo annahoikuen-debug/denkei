@@ -26,6 +26,7 @@ import { EnvelopesBulkMoveDialog } from '~/components/dialogs/envelopes-bulk-mov
 import { DocumentSearch } from '~/components/general/document/document-search';
 import { EnvelopeDropZoneWrapper } from '~/components/general/envelope/envelope-drop-zone-wrapper';
 import { FolderGrid } from '~/components/general/folder/folder-grid';
+import { OnboardingProgressBanner } from '~/components/general/onboarding-progress-banner';
 import { DocumentElectronicLedgerFilters } from '~/components/tables/document-electronic-ledger-filters';
 import { DocumentsTable } from '~/components/tables/documents-table';
 import { DocumentsTableEmptyState } from '~/components/tables/documents-table-empty-state';
@@ -227,6 +228,11 @@ export default function DocumentsPage() {
   return (
     <EnvelopeDropZoneWrapper type={EnvelopeType.DOCUMENT}>
       <div className="mx-auto w-full max-w-screen-xl px-4 md:px-8">
+        {/* 初回セルフオンボーディング進捗バー */}
+        <div className="mt-6">
+          <OnboardingProgressBanner teamUrl={team.url} hasSentDocuments={stats[ExtendedDocumentStatus.ALL] > 0} />
+        </div>
+
         <FolderGrid type={FolderType.DOCUMENT} parentId={folderId ?? null} />
 
         <div className="mt-8 flex flex-row items-center">

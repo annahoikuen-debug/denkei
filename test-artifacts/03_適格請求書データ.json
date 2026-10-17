@@ -1,0 +1,24 @@
+{
+  "invoiceNumber": "INV-202610-0089",
+  "issuedAt": "2026-10-17",
+  "registrationNumber": "T1234567890123",
+  "registrationNumberValid": true,
+  "issuer": {
+    "name": "デンケイ運営事務局",
+    "address": "東京都千代田区1-1-1"
+  },
+  "items": [
+    {
+      "plan": "中小応援スタンダードプラン (月100件定額)",
+      "grossAmount": 2980,
+      "netAmount": 2709,
+      "consumptionTax10Percent": 271
+    },
+    {
+      "plan": "中小応援ビジネスプラン (月300件定額)",
+      "grossAmount": 4980,
+      "netAmount": 4527,
+      "consumptionTax10Percent": 453
+    }
+  ]
+}

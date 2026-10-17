@@ -41,6 +41,24 @@ describe('適格請求書(インボイス制度) ユーティリティ', () => {
       expect(breakdown.netAmountJpy).toBe(4527);
       expect(breakdown.netAmountJpy + breakdown.taxAmountJpy).toBe(4980);
     });
+
+    it('年払い一括 Standardプラン ¥29,760 の端数処理が正しい (実質2ヶ月無料)', () => {
+      const breakdown = calculateConsumptionTax(29760);
+
+      expect(breakdown.grossAmountJpy).toBe(29760);
+      expect(breakdown.taxAmountJpy).toBe(2705);
+      expect(breakdown.netAmountJpy).toBe(27055);
+      expect(breakdown.netAmountJpy + breakdown.taxAmountJpy).toBe(29760);
+    });
+
+    it('年払い一括 Businessプラン ¥49,800 の端数処理が正しい', () => {
+      const breakdown = calculateConsumptionTax(49800);
+
+      expect(breakdown.grossAmountJpy).toBe(49800);
+      expect(breakdown.taxAmountJpy).toBe(4527);
+      expect(breakdown.netAmountJpy).toBe(45273);
+      expect(breakdown.netAmountJpy + breakdown.taxAmountJpy).toBe(49800);
+    });
   });
 
   describe('適格請求書HTML生成', () => {
@@ -62,6 +80,28 @@ describe('適格請求書(インボイス制度) ユーティリティ', () => {
       expect(html).toContain('¥271');
       expect(html).toContain('¥2,709');
       expect(html).toContain('消費税法第57条の4準拠');
+    });
+
+    it('年払い一括用の適格請求書兼領収書HTMLが正しく出力される', async () => {
+      const { generateAnnualQualifiedInvoiceHtml } = await import('./qualified-invoice');
+
+      const html = generateAnnualQualifiedInvoiceHtml({
+        invoiceId: 'INV-ANNUAL-2026-001',
+        issueDate: '2026-10-17',
+        annualPeriod: '2026年10月〜2027年9月',
+        customerName: '株式会社テスト商事',
+        planId: 'STANDARD',
+        isReceipt: true,
+      });
+
+      expect(html).toContain('適格請求書 兼 領収書');
+      expect(html).toContain('INV-ANNUAL-2026-001');
+      expect(html).toContain('株式会社テスト商事');
+      expect(html).toContain('¥29,760');
+      expect(html).toContain('¥2,705');
+      expect(html).toContain('¥27,055');
+      expect(html).toContain('実質2ヶ月無料');
+      expect(html).toContain('年間1,200件枠');
     });
   });
 });

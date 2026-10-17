@@ -1,3 +1,5 @@
+import type { ContractTemplateKey } from '@documenso/lib/universal/contract-templates-meta';
+import { buildCounterpartyPrintHtml } from '@documenso/lib/universal/counterparty-guide';
 import { generateElectronicSealDataUrl } from '@documenso/lib/universal/seal-image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@documenso/ui/primitives/accordion';
 import { Badge } from '@documenso/ui/primitives/badge';
@@ -12,6 +14,7 @@ import {
   FileCheck2,
   FileText,
   Lock,
+  Printer,
   Receipt,
   Scale,
   ShieldCheck,
@@ -20,15 +23,32 @@ import {
   Stamp,
   TrendingDown,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
+import { ComplianceDiagnosticCard } from './compliance-diagnostic-card';
+import { ContractTemplatePreviewModal } from './contract-template-preview-modal';
+import { LandingDemoViewer } from './landing-demo-viewer';
 
 export function LandingPage() {
+  const [searchParams] = useSearchParams();
+  const refSource = searchParams.get('ref');
+
   const [sealName, setSealName] = useState('佐藤');
   const [sealColor, setSealColor] = useState<'vermilion' | 'black' | 'navy'>('vermilion');
   const [isAnnual, setIsAnnual] = useState(false);
   const [monthlyContracts, setMonthlyContracts] = useState<number>(30);
   const [includeRegisteredMail, setIncludeRegisteredMail] = useState<boolean>(false);
+  const [previewTemplateKey, setPreviewTemplateKey] = useState<ContractTemplateKey | null>(null);
+
+  useEffect(() => {
+    if (refSource) {
+      try {
+        sessionStorage.setItem('denkei_signup_ref', refSource);
+      } catch {
+        // ignore
+      }
+    }
+  }, [refSource]);
 
   const sealColorHex = sealColor === 'black' ? '#1f2937' : sealColor === 'navy' ? '#1e3a8a' : '#dc2626';
 
@@ -115,8 +135,11 @@ export function LandingPage() {
             <a href="#features" className="transition-colors hover:text-foreground">
               七つ道具
             </a>
-            <a href="#simulator" className="font-bold transition-colors hover:text-red-600">
-              コスト診断
+            <a href="#compliance-check" className="font-bold transition-colors hover:text-red-600">
+              電帳法診断
+            </a>
+            <a href="#simulator" className="transition-colors hover:text-foreground">
+              コスト試算
             </a>
             <a href="#templates" className="transition-colors hover:text-foreground">
               契約雛形
@@ -150,6 +173,14 @@ export function LandingPage() {
       {/* ===== ヒーローセクション（超大型見出し・低認知負荷） ===== */}
       <section className="relative overflow-hidden bg-gradient-to-b from-red-500/5 via-amber-500/5 to-transparent pt-12 pb-16 md:pt-20 md:pb-24">
         <div className="mx-auto flex max-w-6xl flex-col items-center px-4 text-center sm:px-6 lg:px-8">
+          {/* 締結完了メール経由の特別バナー */}
+          {refSource === 'completed_email' && (
+            <div className="fade-in mb-6 inline-flex animate-in items-center gap-2 rounded-full border-2 border-emerald-500/40 bg-emerald-500/10 px-5 py-2 font-black text-emerald-800 text-sm shadow dark:text-emerald-300">
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <span>締結完了お疲れ様でした！貴社も月3件まで0円で電子契約をはじめられます</span>
+            </div>
+          )}
+
           {/* キャッチバッジ */}
           <div className="mb-6 inline-flex items-center gap-x-2 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-1.5 font-bold text-red-700 text-sm shadow-sm sm:text-base dark:text-red-400">
             <Sparkles className="h-4 w-4" />
@@ -259,102 +290,69 @@ export function LandingPage() {
               </div>
             </div>
 
-            {/* 右側：【10秒体験】電子認印を押してみる */}
+            {/* 右側：【1分間 リアル署名デモ】スマホ10秒押印を体験 */}
             <div className="flex flex-col justify-between rounded-3xl border-2 border-border bg-card p-6 shadow-xl sm:p-8 lg:col-span-5">
               <div>
                 <div className="flex items-center justify-between border-border/80 border-b pb-4">
                   <div className="flex items-center gap-2">
                     <span className="flex h-3 w-3 animate-ping rounded-full bg-red-500" />
-                    <span className="font-extrabold text-foreground text-lg">【10秒体験】電子認印を押してみる</span>
+                    <span className="font-extrabold text-foreground text-lg">【1分間体験】リアル署名デモ</span>
                   </div>
-                  <Badge className="bg-red-600 font-bold text-white text-xs">無料体験</Badge>
+                  <Badge className="bg-red-600 font-bold text-white text-xs">登録不要・即体験</Badge>
                 </div>
 
-                <div className="mt-5 space-y-4">
+                {/* 名字入力 ＆ リアル契約書ビューア */}
+                <div className="mt-4 space-y-4">
                   <div>
-                    <label htmlFor="seal-input" className="mb-1.5 block font-bold text-muted-foreground text-xs">
-                      あなたの苗字を入力（1〜4文字）
-                    </label>
-                    <input
-                      id="seal-input"
-                      type="text"
-                      maxLength={5}
-                      value={sealName}
-                      onChange={(e) => setSealName(e.target.value)}
-                      placeholder="例: 佐藤"
-                      className="flex h-12 w-full rounded-xl border-2 border-input bg-background px-4 py-2 font-black text-xl shadow-inner focus:border-red-600 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <span className="mb-1.5 block font-bold text-muted-foreground text-xs">印影カラーを選択</span>
+                    <div className="mb-1 flex items-center justify-between">
+                      <label htmlFor="seal-input" className="block font-bold text-muted-foreground text-xs">
+                        あなたの苗字を入力して押印枠をタップ
+                      </label>
+                      <span className="font-semibold text-[11px] text-red-600">スマホ対応</span>
+                    </div>
                     <div className="flex gap-2">
+                      <input
+                        id="seal-input"
+                        type="text"
+                        maxLength={5}
+                        value={sealName}
+                        onChange={(e) => setSealName(e.target.value)}
+                        placeholder="例: 佐藤"
+                        className="flex h-10 flex-1 rounded-xl border-2 border-input bg-background px-3 font-black text-base shadow-inner focus:border-red-600 focus:outline-none"
+                      />
                       <button
                         type="button"
-                        onClick={() => setSealColor('vermilion')}
-                        className={`flex-1 rounded-lg border-2 px-3 py-1.5 font-bold text-xs transition-all ${
-                          sealColor === 'vermilion'
-                            ? 'border-red-600 bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300'
-                            : 'border-border bg-muted/40 text-muted-foreground'
-                        }`}
+                        onClick={() =>
+                          setSealColor(
+                            sealColor === 'vermilion' ? 'black' : sealColor === 'black' ? 'navy' : 'vermilion',
+                          )
+                        }
+                        className="rounded-xl border border-border bg-muted/30 px-3 font-bold text-muted-foreground text-xs hover:bg-muted"
                       >
-                        伝統の朱肉
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSealColor('black')}
-                        className={`flex-1 rounded-lg border-2 px-3 py-1.5 font-bold text-xs transition-all ${
-                          sealColor === 'black'
-                            ? 'border-neutral-800 bg-neutral-100 text-neutral-900 dark:border-neutral-200 dark:bg-neutral-800 dark:text-white'
-                            : 'border-border bg-muted/40 text-muted-foreground'
-                        }`}
-                      >
-                        格式の黒
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSealColor('navy')}
-                        className={`flex-1 rounded-lg border-2 px-3 py-1.5 font-bold text-xs transition-all ${
-                          sealColor === 'navy'
-                            ? 'border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
-                            : 'border-border bg-muted/40 text-muted-foreground'
-                        }`}
-                      >
-                        信頼の藍
+                        {sealColor === 'vermilion' ? '🔴 朱肉' : sealColor === 'black' ? '⚫ 格式黒' : '🔵 藍色'}
                       </button>
                     </div>
                   </div>
 
-                  {/* 印影プレビュー */}
-                  <div className="flex items-center gap-5 rounded-2xl border border-border bg-neutral-100 p-4 dark:bg-neutral-900">
-                    <img
-                      src={sealDataUrl}
-                      alt={`${sealName}の電子印影`}
-                      className="h-20 w-20 flex-shrink-0 select-none drop-shadow-md"
-                    />
-                    <div className="space-y-1 font-medium text-muted-foreground text-xs">
-                      <div className="font-black text-base text-foreground">公式電子認印プレビュー</div>
-                      <div>相手方はスマホを開いて</div>
-                      <div className="font-extrabold text-red-600 text-sm">この印影を10秒で押印完了</div>
-                    </div>
-                  </div>
-
-                  {/* デンケイのリアクション */}
-                  <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 font-bold text-red-700 text-xs dark:text-red-400">
-                    <Sparkles className="h-4 w-4 flex-shrink-0 text-red-600" />
-                    <span>
-                      お見事！【{sealName.trim() || '貴社'}】殿の認印が整いました。このまま即日契約書に押印可能です。
-                    </span>
+                  {/* リアル署名デモ スマホフレーム */}
+                  <div className="pt-1">
+                    <LandingDemoViewer sealName={sealName} sealColor={sealColor} sealDataUrl={sealDataUrl} />
                   </div>
                 </div>
               </div>
 
               {/* 名前を引き継いで無料体験へ */}
-              <Link to={`/signup?name=${encodeURIComponent(sealName.trim() || '佐藤')}`} className="mt-6 block">
-                <Button className="h-12 w-full bg-red-600 font-extrabold text-base text-white shadow-md hover:bg-red-700">
-                  この認印で無料体験をはじめる
-                </Button>
-              </Link>
+              <div className="mt-5 space-y-2">
+                <Link to={`/signup?name=${encodeURIComponent(sealName.trim() || '佐藤')}`} className="block">
+                  <Button className="h-12 w-full bg-red-600 font-extrabold text-base text-white shadow-md hover:bg-red-700">
+                    この認印で本番の契約書を送る（無料）
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <p className="text-center text-[11px] text-muted-foreground">
+                  ※ 会員登録後、今日作成した認印がそのまま使えます
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -675,6 +673,28 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* ===== 【30秒診断】電帳法・税務署対応 適合チェック診断 ===== */}
+      <section id="compliance-check" className="border-border/60 border-t bg-muted/20 py-16 sm:py-24">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 text-center">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3.5 py-1 font-black text-red-600 text-xs">
+              <ShieldCheck className="h-4 w-4" />
+              <span>30-SECOND COMPLIANCE DIAGNOSTIC</span>
+            </div>
+            <h2 className="font-black text-3xl text-foreground tracking-tight sm:text-5xl">
+              タイムスタンプ不要で本当に適法？
+              <br />
+              30秒でわかる税務署対応 適合チェック
+            </h2>
+            <p className="mt-3 font-medium text-base text-muted-foreground sm:text-lg">
+              国税庁公認の「事務処理規程」の法的位置づけと、貴社の適法状態を3問で診断します。
+            </p>
+          </div>
+
+          <ComplianceDiagnosticCard />
+        </div>
+      </section>
+
       {/* ===== 【1分診断】年間コスト削減シミュレーター ===== */}
       <section
         id="simulator"
@@ -894,9 +914,20 @@ export function LandingPage() {
                     </p>
                   </div>
                 </div>
-                <AccordionTrigger className="font-bold text-red-600 text-sm hover:no-underline">
-                  条文詳細
-                </AccordionTrigger>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-red-500/30 font-bold text-red-600 text-xs hover:bg-red-500/10"
+                    onClick={() => setPreviewTemplateKey('service')}
+                  >
+                    試し読み・入力
+                  </Button>
+                  <AccordionTrigger className="font-bold text-red-600 text-sm hover:no-underline">
+                    条文詳細
+                  </AccordionTrigger>
+                </div>
               </div>
               <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
                 知的財産権の帰属、納品検査、支払期日、再委託、秘密保持、損害賠償上限条項を完全網羅。
@@ -915,9 +946,20 @@ export function LandingPage() {
                     <p className="text-muted-foreground text-xs sm:text-sm">商談前・新規提携検討時の必須契約</p>
                   </div>
                 </div>
-                <AccordionTrigger className="font-bold text-amber-600 text-sm hover:no-underline">
-                  条文詳細
-                </AccordionTrigger>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-amber-500/30 font-bold text-amber-600 text-xs hover:bg-amber-500/10"
+                    onClick={() => setPreviewTemplateKey('nda')}
+                  >
+                    試し読み・入力
+                  </Button>
+                  <AccordionTrigger className="font-bold text-amber-600 text-sm hover:no-underline">
+                    条文詳細
+                  </AccordionTrigger>
+                </div>
               </div>
               <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
                 双務開示（双方が秘密情報を開示し合う）に対応。秘密情報の定義、目的外利用の禁止、
@@ -936,9 +978,20 @@ export function LandingPage() {
                     <p className="text-muted-foreground text-xs sm:text-sm">取引先名と金額を差し込む参考書式</p>
                   </div>
                 </div>
-                <AccordionTrigger className="font-bold text-emerald-600 text-sm hover:no-underline">
-                  条文詳細
-                </AccordionTrigger>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-emerald-500/30 font-bold text-emerald-600 text-xs hover:bg-emerald-500/10"
+                    onClick={() => setPreviewTemplateKey('sales')}
+                  >
+                    試し読み・入力
+                  </Button>
+                  <AccordionTrigger className="font-bold text-emerald-600 text-sm hover:no-underline">
+                    条文詳細
+                  </AccordionTrigger>
+                </div>
               </div>
               <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
                 売買物件の引渡し、売買代金の支払い時期・方法、所有権移転、契約不適合責任などを記載した参考書式。
@@ -946,6 +999,13 @@ export function LandingPage() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+
+          {/* ひな形モーダル */}
+          <ContractTemplatePreviewModal
+            templateKey={previewTemplateKey}
+            open={!!previewTemplateKey}
+            onOpenChange={(open) => !open && setPreviewTemplateKey(null)}
+          />
         </div>
       </section>
 
@@ -1031,11 +1091,14 @@ export function LandingPage() {
                   <span className="font-black text-5xl text-red-600">¥{standardPrice}</span>
                   <span className="font-bold text-muted-foreground text-xs">（税込）/ 月</span>
                 </div>
-                <div className="mt-1 text-muted-foreground text-xs">月100件まで定額込み</div>
+                <div className="mt-1 font-semibold text-red-600 text-xs">
+                  {isAnnual ? '年額一括 ¥29,760（実質2ヶ月無料・年間1,200件枠）' : '月100件まで定額込み（月額2,980円）'}
+                </div>
 
                 <div className="mt-6 flex-1 space-y-2.5 font-bold text-sm">
                   <div className="flex items-center gap-2 text-red-600">
-                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" /> 月100件まで送信可能
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" />{' '}
+                    {isAnnual ? '年間1,200件一括枠（繰越利用可）' : '月100件まで送信可能'}
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 電帳法 事務処理規程キット
@@ -1044,7 +1107,7 @@ export function LandingPage() {
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 3大定型契約雛形＆差し込み
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> インボイス適格請求書（T番号）
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 年間適格請求書（1クリックT番号PDF）
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 改ざん防止WORM監査ログ
@@ -1071,7 +1134,9 @@ export function LandingPage() {
                   <span className="font-black text-5xl text-foreground">¥{businessPrice}</span>
                   <span className="font-bold text-muted-foreground text-xs">（税込）/ 月</span>
                 </div>
-                <div className="mt-1 text-muted-foreground text-xs">大量送信・チーム運用</div>
+                <div className="mt-1 font-semibold text-foreground/80 text-xs">
+                  {isAnnual ? '年額一括 ¥49,800（実質2ヶ月無料・無制限）' : '大量送信・チーム運用'}
+                </div>
 
                 <div className="mt-6 flex-1 space-y-2 font-bold text-sm">
                   <div className="flex items-center gap-2">
@@ -1144,6 +1209,63 @@ export function LandingPage() {
               </AccordionTrigger>
               <AccordionContent className="pb-5 text-base text-muted-foreground leading-relaxed">
                 対応しています。管理画面から登録番号（T+13桁）および10%消費税額が記載された適格請求書をいつでも出力・印刷いただけます。
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-5" className="rounded-2xl border-2 border-border/80 bg-card px-6">
+              <AccordionTrigger className="py-5 text-left font-black text-lg hover:no-underline sm:text-xl">
+                Q. 取引先（相手方）にどう説明すればスムーズに承諾してもらえますか？
+              </AccordionTrigger>
+              <AccordionContent className="space-y-3 pb-5 text-base text-muted-foreground leading-relaxed">
+                <p>
+                  デンケイでは、取引先へのご案内にそのまま使える「取引先向け案内書面（A4・1枚）」および「コピペ用メール文面」を無料提供しています。
+                </p>
+                <div className="rounded-xl bg-muted p-3.5 font-mono text-foreground text-xs">
+                  <div>✓ 相手方の費用負担は完全無料（0円）である旨を明記</div>
+                  <div>✓ アプリや会員登録不要、スマホで届いたメールから10秒押印できる旨を明記</div>
+                  <div>✓ 電子署名法および電帳法に100%適合し法的効力がある旨を解説</div>
+                </div>
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-red-500/40 font-bold text-red-600 text-xs hover:bg-red-500/10 hover:text-red-700"
+                    onClick={() => {
+                      const printHtml = buildCounterpartyPrintHtml({
+                        companyName: '貴社名',
+                        serviceName: 'デンケイ（Denkei）',
+                      });
+                      const printWin = window.open('', '_blank');
+                      if (printWin) {
+                        printWin.document.write(printHtml);
+                        printWin.document.close();
+                        printWin.focus();
+                      }
+                    }}
+                  >
+                    <Printer className="mr-1.5 h-3.5 w-3.5" />
+                    取引先向け案内書サンプル（A4・1枚）をプレビュー・印刷
+                  </Button>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="faq-6" className="rounded-2xl border-2 border-border/80 bg-card px-6">
+              <AccordionTrigger className="py-5 text-left font-black text-amber-600 text-lg hover:no-underline sm:text-xl">
+                Q. 【トラブル解決】メールが届かない・スマホで押印枠がタップできない場合は？
+              </AccordionTrigger>
+              <AccordionContent className="space-y-3 pb-5 text-base text-muted-foreground leading-relaxed">
+                <p>
+                  <strong>メールが届かない場合:</strong>{' '}
+                  迷惑メールフォルダ・プロモーションフォルダをご確認ください。キャリアメール（docomo, au,
+                  SoftBank等）をお使いの場合は、PCメール受信拒否設定を解除するか、Gmail等のWebメールへの再送をお試しください。
+                </p>
+                <p>
+                  <strong>スマホで押印枠が反応しない場合:</strong>{' '}
+                  LINE等のSNSアプリ内ブラウザではなく、スマートフォンの標準ブラウザ（iPhoneなら Safari、Androidなら
+                  Google Chrome）でURLを開いてください。
+                </p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

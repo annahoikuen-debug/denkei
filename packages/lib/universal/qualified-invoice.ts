@@ -65,6 +65,43 @@ export const DEFAULT_ISSUER = {
   address: '東京都千代田区霞が関1-1-1',
 };
 
+export type AnnualQualifiedInvoiceProps = {
+  invoiceId: string;
+  issueDate: string; // YYYY-MM-DD
+  annualPeriod: string; // 例: 2026年10月〜2027年9月
+  customerName: string;
+  planId?: 'STANDARD' | 'BUSINESS';
+  amountJpy?: number;
+  isReceipt?: boolean; // trueなら「適格請求書 兼 領収書」
+};
+
+/**
+ * 年払い一括（実質2ヶ月無料）の適格請求書兼領収書HTMLを生成する
+ */
+export const generateAnnualQualifiedInvoiceHtml = ({
+  invoiceId,
+  issueDate,
+  annualPeriod,
+  customerName,
+  planId = 'STANDARD',
+  amountJpy = planId === 'BUSINESS' ? 49800 : 29760,
+  isReceipt = true,
+}: AnnualQualifiedInvoiceProps): string => {
+  const planLabel = planId === 'BUSINESS' ? 'ビジネスプラン' : 'スタンダードプラン';
+  const planQuota = planId === 'BUSINESS' ? '無制限' : '年間1,200件枠';
+  const docTitle = isReceipt ? '適格請求書 兼 領収書' : '適 格 請 求 書';
+  const itemName = `デンケイ ${planLabel} 年一括利用料 (${planQuota}・実質2ヶ月無料)`;
+
+  return generateQualifiedInvoiceHtml({
+    invoiceId,
+    issueDate,
+    billingPeriod: `年間契約期間: ${annualPeriod}`,
+    customerName,
+    itemName,
+    amountJpy,
+  }).replace('適 格 請 求 書', docTitle);
+};
+
 /**
  * 適格請求書(インボイス)のHTMLを生成する
  */

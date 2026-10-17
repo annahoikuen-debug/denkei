@@ -244,7 +244,11 @@ export const OrganisationBillingInvoicesTable = ({
                     </thead>
                     <tbody>
                       <tr className="border-b">
-                        <td className="p-2.5 font-medium">デンケイ スタンダード月額利用料 (100件/月)</td>
+                        <td className="p-2.5 font-medium">
+                          {gross >= 29000
+                            ? 'デンケイ スタンダード年一括利用料 (年間1,200件枠・実質2ヶ月無料)'
+                            : 'デンケイ スタンダード月額利用料 (100件/月)'}
+                        </td>
                         <td className="p-2.5 text-center">10%</td>
                         <td className="p-2.5 text-right">¥{tax.netAmountJpy.toLocaleString()}</td>
                         <td className="p-2.5 text-right">¥{tax.taxAmountJpy.toLocaleString()}</td>

@@ -8,6 +8,7 @@ import { DropdownMenuItem, DropdownMenuSeparator } from '@documenso/ui/primitive
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { Link } from 'react-router';
+import { RecipientHelpDialog } from '~/components/dialogs/recipient-help-dialog';
 
 export type PublicLegalLinksProps = {
   className?: string;
@@ -29,6 +30,7 @@ export const PublicLegalLinks = ({ className }: PublicLegalLinksProps) => {
         className,
       )}
     >
+      <RecipientHelpDialog />
       {links.map((link) => (
         <Link
           key={link.href}

@@ -60,15 +60,21 @@
 | 姓・名分離入力 | `packages/lib/universal/japanese-name.ts` | `joinJapaneseName()` / `splitJapaneseName()` |
 | 円金額フォーマット | `packages/lib/universal/format-currency.ts` | `formatJpy()` / `formatJpyWithTaxIncluded()` |
 | 電子印影（丸印・認印） | `packages/lib/universal/seal-image.ts` | `generateElectronicSealDataUrl()` でHanko風画像生成 |
-| 適格請求書（インボイス） | `packages/lib/universal/qualified-invoice.ts` | 10%消費税計算・HTML請求書生成・T番号検証 |
+| 適格請求書（インボイス） | `packages/lib/universal/qualified-invoice.ts` | 10%消費税計算・HTML請求書生成・T番号検証・年払い適格領収書 |
 | 電帳法コンプライアンスキット | `packages/lib/universal/compliance-kit.ts` | 事務処理規程テンプレート生成・NTAチェックリスト |
-| プラン定義・制限ゲート | `packages/lib/constants/plans.ts` | FREE/STANDARD/BUSINESS 3プラン・月次カウンタ |
+| 電帳法適合3問診断 | `packages/lib/universal/compliance-diagnostics.ts` | 国税庁告示根拠条文の即時判定カードコンポーネント |
+| 取引先安心配布キット | `packages/lib/universal/counterparty-guide.ts` | 相手方向けA4印刷対応・メール案内文・法的根拠キット |
+| 3大契約書ひな形プレビュー | `packages/lib/universal/contract-templates-meta.ts` | NDA・業務委託・売買の条項プレビュー＆即時差し込み |
+| オンボーディングチェックリスト | `packages/lib/universal/onboarding-checklist.ts` | 4ステップ進行バナーと初期導入支援ウィジェット |
+| 自立型3秒セルフヘルプ | `packages/lib/universal/self-help-guide.ts` | 署名受領者向け3大トラブル（OTP・Safari・通知）即時解決 |
+| 年払い一括＆適格請求書 | `packages/lib/server-only/pdf/generate-annual-invoice-pdf.ts` | 年29,760円（実質2ヶ月無料・1,200件枠）と1クリックPDF |
+| プラン定義・制限ゲート | `packages/lib/constants/plans.ts` | FREE/STANDARD/BUSINESS 3プラン・月次/年次枠管理 |
 | チームプラン情報取得 | `packages/lib/server-only/team/get-team-plan.ts` | プラン判定・送信上限チェック・機能ゲート |
 | 翻訳漏れ検出 | `scripts/check-translations.mjs` | `ja/web.po` の未訳エントリ検出 |
 | 日本語日付フィールド | `jp-core-signing-flow.spec.ts` | E2E: `yyyy年M月d日` 形式のDATEフィールド検証 |
 | ドキュメントメタ既定日本語 | `migrations/20261015000000_ja_default_document_meta/` | `DocumentMeta.language='ja'` / `timezone='Asia/Tokyo'` |
 | 負荷テスト | `scripts/load-test-burst.ts` | 100件バースト耐性テスト（エラー率0.00%、p95 294ms） |
-| ランディングページ | `apps/remix/app/components/general/landing-page.tsx` | 七つ道具・コスト診断シミュレーター・契約雛形・料金プラン |
+| ランディングページ | `apps/remix/app/components/general/landing-page.tsx` | スマホ認印デモ・電帳法診断・契約書試し読み・年払いトグル |
 | 組織請求書テーブル | `apps/remix/app/components/tables/organisation-billing-invoices-table.tsx` | Stripe 適格請求書（インボイス）表示・ダウンロード |
 
 ## 技術スタック
