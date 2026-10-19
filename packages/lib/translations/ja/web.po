@@ -8865,6 +8865,11 @@ msgstr "主要なアクションの色。"
 msgid "Primary Foreground"
 msgstr "プライマリ前景色"
 
+#: apps/remix/app/components/forms/signup.tsx
+#: apps/remix/app/components/general/public-legal-links.tsx
+msgid "Privacy Policy"
+msgstr "プライバシーポリシー"
+
 #: apps/remix/app/components/general/template/template-type.tsx
 #: apps/remix/app/components/tables/templates-table.tsx
 #: packages/ui/components/template/template-type-select.tsx
@@ -11111,6 +11116,11 @@ msgstr "システムテーマ"
 #: apps/remix/app/components/dialogs/admin-swap-subscription-dialog.tsx
 msgid "Target Organisation"
 msgstr "対象の組織"
+
+#: apps/remix/app/components/forms/signup.tsx
+#: apps/remix/app/components/general/public-legal-links.tsx
+msgid "Terms of Service"
+msgstr "利用規約"
 
 #: apps/remix/app/components/general/unified-settings-sidebar-mobile.tsx
 #: apps/remix/app/components/general/unified-settings-sidebar-mobile.tsx
@@ -15333,28 +15343,8 @@ msgid "Electronic Ledger Compliance"
 msgstr "電帳法・事務処理規程"
 
 #: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
-msgid "契約書選択・アップロード"
-msgstr "契約書選択・アップロード"
-
-#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
-msgid "定型契約書の標準雛形"
-msgstr "定型契約書の標準雛形"
-
-#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
-msgid "標準雛形を追加しました"
-msgstr "標準雛形を追加しました"
-
-#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
-msgid "業務委託・秘密保持・雇用の3大雛形が追加されました。"
-msgstr "業務委託・秘密保持・雇用の3大雛形が追加されました。"
-
-#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
 msgid "追加に失敗しました"
 msgstr "追加に失敗しました"
-
-#: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
-msgid "雛形の作成中にエラーが発生しました。"
-msgstr "雛形の作成中にエラーが発生しました。"
 
 #: apps/remix/app/routes/_authenticated+/t.$teamUrl+/new+/_index.tsx
 msgid "PDFをアップロードしました"

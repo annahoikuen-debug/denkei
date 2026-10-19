@@ -1,4 +1,6 @@
+import { useCurrentOrganisation } from '@documenso/lib/client-only/providers/organisation';
 import { useSession } from '@documenso/lib/client-only/providers/session';
+import { isFeatureEnabledForPlan, resolvePlanIdFromOrganisation } from '@documenso/lib/constants/plans';
 import { ZNameSchema } from '@documenso/lib/types/name';
 import { trpc } from '@documenso/trpc/react';
 import { cn } from '@documenso/ui/lib/utils';
@@ -12,8 +14,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+
+import { PlanLimitUpgradeDialog } from '~/components/dialogs/plan-limit-upgrade-dialog';
 
 export const ZProfileFormSchema = z.object({
   name: ZNameSchema,
@@ -35,6 +40,14 @@ export const ProfileForm = ({ className }: ProfileFormProps) => {
   const { _ } = useLingui();
   const { toast } = useToast();
   const { user, refreshSession } = useSession();
+  const organisation = useCurrentOrganisation();
+
+  // 会社角印・代表取締役印は有料プラン（STANDARD以上）限定
+  const canUseCompanySeal = isFeatureEnabledForPlan({
+    plan: resolvePlanIdFromOrganisation(organisation),
+    feature: 'companySeal',
+  });
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
   const form = useForm<TProfileFormSchema>({
     values: {
@@ -62,7 +75,7 @@ export const ProfileForm = ({ className }: ProfileFormProps) => {
         description: _(msg`Your profile has been updated successfully.`),
         duration: 5000,
       });
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: _(msg`An unknown error occurred`),
         description: _(
@@ -114,6 +127,8 @@ export const ProfileForm = ({ className }: ProfileFormProps) => {
                     fullName={user.name ?? ''}
                     value={value}
                     onChange={(v) => onChange(v ?? '')}
+                    canUseCompanySeal={canUseCompanySeal}
+                    onUpgradeRequested={() => setUpgradeDialogOpen(true)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -126,6 +141,8 @@ export const ProfileForm = ({ className }: ProfileFormProps) => {
           <Trans>Update profile</Trans>
         </Button>
       </form>
+
+      <PlanLimitUpgradeDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen} />
     </Form>
   );
 };

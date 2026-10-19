@@ -1,4 +1,3 @@
-import type { ContractTemplateKey } from '@documenso/lib/universal/contract-templates-meta';
 import { buildCounterpartyPrintHtml } from '@documenso/lib/universal/counterparty-guide';
 import { generateElectronicSealDataUrl } from '@documenso/lib/universal/seal-image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@documenso/ui/primitives/accordion';
@@ -11,8 +10,10 @@ import {
   Check,
   CheckCircle2,
   Clock,
-  FileCheck2,
   FileText,
+  HardHat,
+  HeartHandshake,
+  Laptop,
   Lock,
   Printer,
   Receipt,
@@ -23,10 +24,9 @@ import {
   Stamp,
   TrendingDown,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ComplianceDiagnosticCard } from './compliance-diagnostic-card';
-import { ContractTemplatePreviewModal } from './contract-template-preview-modal';
 import { LandingDemoViewer } from './landing-demo-viewer';
 
 export function LandingPage() {
@@ -38,17 +38,6 @@ export function LandingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [monthlyContracts, setMonthlyContracts] = useState<number>(30);
   const [includeRegisteredMail, setIncludeRegisteredMail] = useState<boolean>(false);
-  const [previewTemplateKey, setPreviewTemplateKey] = useState<ContractTemplateKey | null>(null);
-
-  useEffect(() => {
-    if (refSource) {
-      try {
-        sessionStorage.setItem('denkei_signup_ref', refSource);
-      } catch {
-        // ignore
-      }
-    }
-  }, [refSource]);
 
   const sealColorHex = sealColor === 'black' ? '#1f2937' : sealColor === 'navy' ? '#1e3a8a' : '#dc2626';
 
@@ -133,7 +122,7 @@ export function LandingPage() {
               デンケイ
             </a>
             <a href="#features" className="transition-colors hover:text-foreground">
-              七つ道具
+              六つ道具
             </a>
             <a href="#compliance-check" className="font-bold transition-colors hover:text-red-600">
               電帳法診断
@@ -141,8 +130,8 @@ export function LandingPage() {
             <a href="#simulator" className="transition-colors hover:text-foreground">
               コスト試算
             </a>
-            <a href="#templates" className="transition-colors hover:text-foreground">
-              契約雛形
+            <a href="#use-cases" className="transition-colors hover:text-foreground">
+              活用事例
             </a>
             <a href="#pricing" className="transition-colors hover:text-foreground">
               料金プラン
@@ -265,7 +254,7 @@ export function LandingPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <div className="font-bold text-[11px] text-red-400 tracking-wider">DENKEI GUARDIAN</div>
-                      <div className="font-black text-lg sm:text-xl">デンケイの「七つ道具」</div>
+                      <div className="font-black text-lg sm:text-xl">デンケイの「六つ道具」</div>
                     </div>
                     <span className="rounded-full bg-red-600 px-3 py-1 font-black text-xs shadow-md">
                       電帳法・鉄壁防御
@@ -348,7 +337,7 @@ export function LandingPage() {
                   </Button>
                 </Link>
                 <p className="text-center text-[11px] text-muted-foreground">
-                  ※ 会員登録後、今日作成した認印がそのまま使えます
+                  ※ 会員登録後、入力した名字で本番の認印をすぐに作成できます
                 </p>
               </div>
             </div>
@@ -356,16 +345,16 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ===== デンケイの「七つ道具」セクション（見出し特大 ＋ 詳細アコーディオン） ===== */}
+      {/* ===== デンケイの「六つ道具」セクション（見出し特大 ＋ 詳細アコーディオン） ===== */}
       <section id="features" className="border-border/60 border-t py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3.5 py-1 font-black text-red-600 text-xs">
               <ShieldCheck className="h-4 w-4" />
-              <span>7 DIGITAL TOOLS OF DENKEI</span>
+              <span>6 DIGITAL TOOLS OF DENKEI</span>
             </div>
             <h2 className="font-black text-3xl text-foreground tracking-tight sm:text-5xl">
-              デンケイの「七つ道具」で、
+              デンケイの「六つ道具」で、
               <br />
               中小企業の契約・電帳法を鉄壁ガード
             </h2>
@@ -441,7 +430,7 @@ export function LandingPage() {
                   デンケイは管理画面から貴社名入りの規程をワンクリックでダウンロードして備え付けることができます。
                 </p>
                 <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
-                  <div>✓ 貴社名入り国税庁公認規程PDFを1クリック自動生成</div>
+                  <div>✓ 貴社名入り国税庁公認規程を1クリックで出力（A4印刷/PDF保存）</div>
                   <div>✓ 取引年月日・取引先・取引金額による電帳法CSV一括検索出力</div>
                   <div>✓ 税理士や税務署への説明資料がこれ1枚で即座に完結</div>
                 </div>
@@ -475,13 +464,13 @@ export function LandingPage() {
                 <p className="font-bold text-base">管理者でも書き換え不可能なブロックチェーン同等の堅牢性</p>
                 <p className="text-muted-foreground leading-relaxed">
                   データベース層にWORM（Write Once Read
-                  Many）トリガーを実装。一度完了した契約文書のステータス変更や物理削除はシステムが拒否します。
+                  Many）トリガーを実装し、監査ログの改変・物理削除をシステムが拒否します。
                   さらに、直前の操作履歴と連鎖するSHA-256ハッシュチェーンにより、いかなる不正な改ざんも即座に検知されます。
                 </p>
                 <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
                   <div>✓ PostgreSQL WORM物理削除不可トリガー常時稼働</div>
                   <div>✓ 操作ごとに直前ハッシュと連鎖するSHA-256改ざん防止台帳</div>
-                  <div>✓ PDF内部署名検証ルーチンによるファイル破損・改ざん検知</div>
+                  <div>✓ PAdES電子署名付きPDF生成（Acrobat等の閲覧ソフトで署名有効性を確認可能）</div>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -526,40 +515,6 @@ export function LandingPage() {
             {/* 道具5 */}
             <AccordionItem
               value="tool-5"
-              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-purple-600 sm:p-7"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-600 sm:h-14 sm:w-14">
-                  <FileCheck2 className="h-7 w-7" />
-                </div>
-                <div className="flex-1">
-                  <span className="font-bold text-purple-600 text-xs uppercase tracking-wider">第五の道具</span>
-                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">日本の3大定型契約書ひな形</h3>
-                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
-                    売買・業務委託・秘密保持(NDA)を標準搭載。法務レビュー前提の参考雛形です。
-                  </p>
-                  <AccordionTrigger className="mt-2 pt-2 font-bold text-purple-600 text-sm hover:no-underline sm:text-base">
-                    搭載テンプレートと差し込み機能を見る
-                  </AccordionTrigger>
-                </div>
-              </div>
-
-              <AccordionContent className="mt-4 space-y-3 border-border border-t pt-5 text-foreground text-sm">
-                <p className="font-bold text-base">差し込み変数付きテンプレートから契約書を作成・送信</p>
-                <p className="text-muted-foreground leading-relaxed">
-                  日本の商取引で頻発する3大契約書の参考書式をプリセット。取引先名や金額などの差し込み変数を入力して契約書PDFを生成し、署名依頼を送信します。利用にあたっては法務部門等のレビューをお願いします。
-                </p>
-                <div className="space-y-1 rounded-xl bg-muted p-3.5 font-mono text-xs">
-                  <div>✓ 売買契約書（取引先名・売買金額などの差し込み対応）</div>
-                  <div>✓ 業務委託基本契約書（知的財産・納品検収・損害賠償上限完備）</div>
-                  <div>✓ 秘密保持契約書（NDA・双務開示対応標準書式）</div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* 道具6 */}
-            <AccordionItem
-              value="tool-6"
               className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-cyan-600 sm:p-7"
             >
               <div className="flex items-start gap-4">
@@ -567,7 +522,7 @@ export function LandingPage() {
                   <FileText className="h-7 w-7" />
                 </div>
                 <div className="flex-1">
-                  <span className="font-bold text-cyan-600 text-xs uppercase tracking-wider">第六の道具</span>
+                  <span className="font-bold text-cyan-600 text-xs uppercase tracking-wider">第五の道具</span>
                   <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
                     インボイス適格請求書（T番号対応）
                   </h3>
@@ -594,9 +549,9 @@ export function LandingPage() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* 道具7 */}
+            {/* 道具6 */}
             <AccordionItem
-              value="tool-7"
+              value="tool-6"
               className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-red-600 sm:p-7"
             >
               <div className="flex items-start gap-4">
@@ -604,7 +559,7 @@ export function LandingPage() {
                   <Receipt className="h-7 w-7" />
                 </div>
                 <div className="flex-1">
-                  <span className="font-bold text-red-600 text-xs uppercase tracking-wider">第七の道具</span>
+                  <span className="font-bold text-red-600 text-xs uppercase tracking-wider">第六の道具</span>
                   <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
                     従量課金の恐怖ゼロ・月額2,980円定額（100件）
                   </h3>
@@ -887,125 +842,266 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ===== 初期搭載テンプレート（見出し大 ＋ アコーディオン） ===== */}
-      <section id="templates" className="border-border/60 border-t bg-muted/20 py-16 sm:py-24">
+      {/* ===== 業種別 業務改善活用事例（見出し大 ＋ 詳細アコーディオン） ===== */}
+      <section id="use-cases" className="border-border/60 border-t bg-muted/20 py-16 sm:py-24">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <h2 className="font-bold text-red-600 text-xs uppercase tracking-widest">TEMPLATES</h2>
-            <p className="mt-2 font-black text-3xl text-foreground tracking-tight sm:text-5xl">
-              日本の3大定型契約書を初期搭載
-            </p>
-            <p className="mt-3 font-medium text-base text-muted-foreground sm:text-lg">
-              法務レビュー前提の参考雛形。差し込み変数を入力して契約書を作成・送信できます。
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3.5 py-1 font-black text-red-600 text-xs">
+              <Sparkles className="h-4 w-4" />
+              <span>BUSINESS IMPROVEMENT CASES</span>
+            </div>
+            <h2 className="font-black text-3xl text-foreground tracking-tight sm:text-5xl">
+              どんな業務が改善する？
+              <br />
+              業種別 業務改善の活用事例
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl font-medium text-base text-muted-foreground sm:text-lg">
+              紙・印紙・郵送に追われる「契約まわりの事務」がどう変わるのか。
+              具体的な課題と導入後のフロー、削減効果を各業界の事例で解説します。
             </p>
           </div>
 
           <Accordion type="single" collapsible className="space-y-4">
-            <AccordionItem value="tmpl-1" className="rounded-2xl border-2 border-border/80 bg-card p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 font-bold text-red-600">
-                    1
-                  </div>
-                  <div>
-                    <h3 className="font-black text-foreground text-xl sm:text-2xl">業務委託基本契約書</h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm">
-                      フリーランス・外注先とのトラブルを防ぐ標準契約
-                    </p>
-                  </div>
+            {/* 事例1: 介護・障害福祉 */}
+            <AccordionItem
+              value="case-welfare"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-emerald-600 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 sm:h-14 sm:w-14">
+                  <HeartHandshake className="h-7 w-7" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-red-500/30 font-bold text-red-600 text-xs hover:bg-red-500/10"
-                    onClick={() => setPreviewTemplateKey('service')}
-                  >
-                    試し読み・入力
-                  </Button>
-                  <AccordionTrigger className="font-bold text-red-600 text-sm hover:no-underline">
-                    条文詳細
+                <div className="flex-1">
+                  <span className="font-bold text-emerald-600 text-xs uppercase tracking-wider">
+                    事例 1｜介護・障害福祉事業所
+                  </span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
+                    遠方のご家族との入居・利用契約を、
+                    <br className="sm:hidden" />
+                    「押印待ち」ゼロで当日締結
+                  </h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    特養・グループホーム・障害福祉事業所の契約書を郵送なしの電子締結に。入居日程が前倒しになり、監査対応も格段に楽に。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-emerald-600 text-sm hover:no-underline sm:text-base">
+                    課題・導入後のフロー・削減効果の詳細を見る
                   </AccordionTrigger>
                 </div>
               </div>
-              <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
-                知的財産権の帰属、納品検査、支払期日、再委託、秘密保持、損害賠償上限条項を完全網羅。
-                差し込み変数（委託料・業務内容・期日）を入力して契約書PDFを生成します。
+
+              <AccordionContent className="mt-4 space-y-5 border-border border-t pt-5 text-foreground text-sm">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-muted/30 p-4">
+                    <div className="font-bold text-muted-foreground text-xs uppercase tracking-wider">
+                      Before｜紙と郵送に追われる現場
+                    </div>
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground leading-relaxed">
+                      <li>
+                        ・入居契約・サービス提供契約・重要事項説明書を遠方のご家族に郵送 → 押印 → 返送の往復で2〜3週間
+                      </li>
+                      <li>・押印待ちの間に入居日がずれ、ベッドが空いたままの機会損失が発生</li>
+                      <li>・福祉用具事業者・医療機関・自治体との委託契約・協定書も紙で、事務室の保存棚がパンク</li>
+                      <li>・指導監査・実地指導のたびに、過去の契約書を保管庫から探し出す作業が発生</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+                    <div className="font-bold text-emerald-600 text-xs uppercase tracking-wider">
+                      After｜デンケイ導入後のフロー
+                    </div>
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground leading-relaxed">
+                      <li>・ご家族にURL付きメールを送信。会員登録不要でスマホ10秒、朱肉丸印の電子認印を押印</li>
+                      <li>・郵送往復がなくなり、最短当日〜2日で締結完了。入居日程が前倒しに</li>
+                      <li>・契約書はWORM監査ログ付きで電子保存。取引年月日・相手方・金額のCSV検索で指導監査に即提示</li>
+                      <li>・メールOTP二要素認証でなりすましを二重ブロック。高齢のご家族でも安心の本人確認</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-emerald-500/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">年間コスト削減</div>
+                    <div className="mt-1 font-black text-2xl text-emerald-600">約8.5万円</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">製本・印刷・郵送 代</div>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">年間作業時間削減</div>
+                    <div className="mt-1 font-black text-2xl text-emerald-600">約24時間</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">押印・製本・封入作業がゼロに</div>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">締結リードタイム</div>
+                    <div className="mt-1 font-black text-2xl text-emerald-600">最短当日</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">従来は2〜3週間</div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground">
+                  ※
+                  月10件の契約・協定書を電子化した場合の試算例（紙1通あたり約710円・事務時間約12分）。実印・印鑑証明書が求められる契約を除く、サービス提供契約・協定書・同意書などの締結を想定しています。
+                </p>
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="tmpl-2" className="rounded-2xl border-2 border-border/80 bg-card p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 font-bold text-amber-600">
-                    2
-                  </div>
-                  <div>
-                    <h3 className="font-black text-foreground text-xl sm:text-2xl">秘密保持契約書 (NDA)</h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm">商談前・新規提携検討時の必須契約</p>
-                  </div>
+            {/* 事例2: 建設・設備業 */}
+            <AccordionItem
+              value="case-construction"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-amber-600 sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 sm:h-14 sm:w-14">
+                  <HardHat className="h-7 w-7" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-amber-500/30 font-bold text-amber-600 text-xs hover:bg-amber-500/10"
-                    onClick={() => setPreviewTemplateKey('nda')}
-                  >
-                    試し読み・入力
-                  </Button>
-                  <AccordionTrigger className="font-bold text-amber-600 text-sm hover:no-underline">
-                    条文詳細
+                <div className="flex-1">
+                  <span className="font-bold text-amber-600 text-xs uppercase tracking-wider">
+                    事例 2｜建設・設備メンテナンス業
+                  </span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
+                    請負契約の収入印紙と協力会社の
+                    <br className="sm:hidden" />
+                    押印待ちを解消、着工を前倒し
+                  </h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    工事請負契約・安全協定書を現場からスマホで送信。印紙代ゼロ・郵送ゼロで協力会社との締結が翌朝に完了。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-amber-600 text-sm hover:no-underline sm:text-base">
+                    課題・導入後のフロー・削減効果の詳細を見る
                   </AccordionTrigger>
                 </div>
               </div>
-              <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
-                双務開示（双方が秘密情報を開示し合う）に対応。秘密情報の定義、目的外利用の禁止、
-                契約終了時の返還破棄、有効期間（締結から2年間等）を規定。
+
+              <AccordionContent className="mt-4 space-y-5 border-border border-t pt-5 text-foreground text-sm">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-muted/30 p-4">
+                    <div className="font-bold text-muted-foreground text-xs uppercase tracking-wider">
+                      Before｜印紙代と押印回覧の負担
+                    </div>
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground leading-relaxed">
+                      <li>
+                        ・請負金額に応じた収入印紙（100万円超: 1,000円 / 500万円超: 2,000円 など）を毎回購入・貼付
+                      </li>
+                      <li>・元請 → 自社 → 協力会社の押印が郵送で回り、着工が1週間以上遅れる</li>
+                      <li>・現場監督が事務所に戻ってから印刷・押印・郵送。残業と移動時間の原因に</li>
+                      <li>・安全協定書・発注書など案件ごとの書類が月数十通、管理が分散</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+                    <div className="font-bold text-amber-600 text-xs uppercase tracking-wider">
+                      After｜デンケイ導入後のフロー
+                    </div>
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground leading-relaxed">
+                      <li>・現場からタブレット・スマホで送信。協力会社は届いたメールから翌朝には締結完了</li>
+                      <li>・電子データで作成した契約書は印紙税の課税対象外 → 収入印紙がゼロに</li>
+                      <li>・押印時刻・IPアドレス付きの監査ログが自動保存。事故・トラブル時に即証跡提示</li>
+                      <li>・締結済みPDFが自動で双方に保存され、協定書の紛失・版の混在を防止</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-amber-500/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">年間コスト削減</div>
+                    <div className="mt-1 font-black text-2xl text-amber-600">約23.6万円</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">印紙・製本・郵送 代</div>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">年間作業時間削減</div>
+                    <div className="mt-1 font-black text-2xl text-amber-600">約36時間</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">現場監督の事務残業が減る</div>
+                  </div>
+                  <div className="rounded-xl border border-amber-500/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">締結リードタイム</div>
+                    <div className="mt-1 font-black text-2xl text-amber-600">翌朝</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">従来は約1週間</div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground">
+                  ※
+                  月15件の請負契約・協定書を電子化した場合の試算例（1通あたり印紙平均1,000円＋製本印刷代200円＋郵送代110円・事務時間約12分）。
+                </p>
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="tmpl-3" className="rounded-2xl border-2 border-border/80 bg-card p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 font-bold text-emerald-600">
-                    3
-                  </div>
-                  <div>
-                    <h3 className="font-black text-foreground text-xl sm:text-2xl">売買契約書</h3>
-                    <p className="text-muted-foreground text-xs sm:text-sm">取引先名と金額を差し込む参考書式</p>
-                  </div>
+            {/* 事例3: IT・Web制作 */}
+            <AccordionItem
+              value="case-it"
+              className="rounded-2xl border-2 border-border/80 bg-card p-6 shadow-sm transition-colors data-[state=open]:border-primary sm:p-7"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-14 sm:w-14">
+                  <Laptop className="h-7 w-7" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-emerald-500/30 font-bold text-emerald-600 text-xs hover:bg-emerald-500/10"
-                    onClick={() => setPreviewTemplateKey('sales')}
-                  >
-                    試し読み・入力
-                  </Button>
-                  <AccordionTrigger className="font-bold text-emerald-600 text-sm hover:no-underline">
-                    条文詳細
+                <div className="flex-1">
+                  <span className="font-bold text-primary text-xs uppercase tracking-wider">
+                    事例 3｜IT・Web制作／受託開発
+                  </span>
+                  <h3 className="mt-1 font-black text-foreground text-xl sm:text-2xl">
+                    NDA・業務委託契約を商談中に即送信、
+                    <br className="sm:hidden" />
+                    「押印待ち」で発注を止めない
+                  </h3>
+                  <p className="mt-1 font-medium text-base text-muted-foreground sm:text-lg">
+                    紙の印刷・郵送なしで契約書を3分送信。クライアントはスマホ10秒で即日押印し、キックオフが当日から始まる。
+                  </p>
+                  <AccordionTrigger className="mt-2 pt-2 font-bold text-primary text-sm hover:no-underline sm:text-base">
+                    課題・導入後のフロー・削減効果の詳細を見る
                   </AccordionTrigger>
                 </div>
               </div>
-              <AccordionContent className="mt-3 border-border border-t pt-4 text-muted-foreground text-xs leading-relaxed sm:text-sm">
-                売買物件の引渡し、売買代金の支払い時期・方法、所有権移転、契約不適合責任などを記載した参考書式。
-                利用にあたっては法務部門等のレビューをお願いします。
+
+              <AccordionContent className="mt-4 space-y-5 border-border border-t pt-5 text-foreground text-sm">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-border bg-muted/30 p-4">
+                    <div className="font-bold text-muted-foreground text-xs uppercase tracking-wider">
+                      Before｜契約事務が営業の足を引っ張る
+                    </div>
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground leading-relaxed">
+                      <li>
+                        ・商談後、NDA・業務委託契約書を印刷 → 押印 → 郵送。クライアントの押印待ちでキックオフが止まる
+                      </li>
+                      <li>・フリーランス・外注先ごとの個別契約書の締結漏れや、改訂版の混在が発生</li>
+                      <li>・契約書が担当者のPC・紙ファイルに散在し、条件確認のたびに時間がかかる</li>
+                      <li>・月20件超の契約事務が特定の管理担当者に集中</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+                    <div className="font-bold text-primary text-xs uppercase tracking-wider">
+                      After｜デンケイ導入後のフロー
+                    </div>
+                    <ul className="mt-2 space-y-1.5 text-muted-foreground leading-relaxed">
+                      <li>・商談中にその場でメール送信 → クライアントはスマホ10秒で押印し、キックオフが当日〜翌日に</li>
+                      <li>・NDA・業務委託契約書をその場で作成・送信し、押印までオンラインで完結</li>
+                      <li>・全員の押印完了と同時に最終PDFが自動配布。押印時刻・認証ログで「いつ・誰が」の齟齬を防止</li>
+                      <li>・契約書がクラウドに一元保存。条件確認も検索で数秒、担当者依存から脱却</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-primary/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">年間コスト削減</div>
+                    <div className="mt-1 font-black text-2xl text-primary">約12.2万円</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">印刷・郵送・印紙 代</div>
+                  </div>
+                  <div className="rounded-xl border border-primary/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">年間作業時間削減</div>
+                    <div className="mt-1 font-black text-2xl text-primary">約48時間</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">営業担当が商談に集中</div>
+                  </div>
+                  <div className="rounded-xl border border-primary/30 bg-background p-4 text-center">
+                    <div className="font-bold text-muted-foreground text-xs">締結リードタイム</div>
+                    <div className="mt-1 font-black text-2xl text-primary">最短当日</div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground">従来は約7日</div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-muted-foreground">
+                  ※
+                  月20件のNDA・業務委託契約を電子化した場合の試算例（1通あたり印紙平均200円＋製本印刷代200円＋郵送代110円・事務時間約12分）。
+                </p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-
-          {/* ひな形モーダル */}
-          <ContractTemplatePreviewModal
-            templateKey={previewTemplateKey}
-            open={!!previewTemplateKey}
-            onOpenChange={(open) => !open && setPreviewTemplateKey(null)}
-          />
         </div>
       </section>
 
@@ -1095,13 +1191,13 @@ export function LandingPage() {
                   <span className="font-bold text-muted-foreground text-xs">（税込）/ 月</span>
                 </div>
                 <div className="mt-1 font-semibold text-red-600 text-xs">
-                  {isAnnual ? '年額一括 ¥29,760（実質2ヶ月無料・年間1,200件枠）' : '月100件まで定額込み（月額2,980円）'}
+                  {isAnnual ? '年額一括 ¥29,760（実質2ヶ月無料・月100件/月）' : '月100件まで定額込み（月額2,980円）'}
                 </div>
 
                 <div className="mt-6 flex-1 space-y-2.5 font-bold text-sm">
                   <div className="flex items-center gap-2 text-red-600">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0" />{' '}
-                    {isAnnual ? '年間1,200件一括枠（繰越利用可）' : '月100件まで送信可能'}
+                    {isAnnual ? '月100件まで送信可能（年払いは2ヶ月実質無料）' : '月100件まで送信可能'}
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 電帳法 事務処理規程キット
@@ -1111,9 +1207,6 @@ export function LandingPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 自社ブランドメール設定
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 3大定型契約雛形＆差し込み
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 年間適格請求書（1クリックT番号PDF）
@@ -1326,7 +1419,12 @@ export function LandingPage() {
             <span>デンケイ</span>
             <span className="font-normal text-muted-foreground">| 中小企業特化型 電子契約サービス</span>
           </div>
-          <div>© 2026 デンケイ (Denkei). 電子帳簿保存法第3条・第4条準拠 / インボイス制度対応</div>
+          <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
+            <div>© 2026 デンケイ (Denkei). 電子帳簿保存法第3条・第4条準拠 / インボイス制度対応</div>
+            <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
+              利用規約
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

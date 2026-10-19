@@ -333,6 +333,15 @@ export const SignUpForm = ({
                             disabled={isSubmitting}
                             value={value}
                             onChange={(v) => onChange(v ?? '')}
+                            canUseCompanySeal={false}
+                            onUpgradeRequested={() =>
+                              toast({
+                                title: _(msg`会社角印・代表取締役印は有料プラン限定です`),
+                                description: _(
+                                  msg`アカウント登録後、中小応援スタンダード（月額2,980円）にアップグレードするとご利用いただけます。`,
+                                ),
+                              })
+                            }
                           />
                         </FormControl>
 

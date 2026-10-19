@@ -155,7 +155,7 @@ docker compose -f docker/compose.standalone.yml logs -f app
 | サービス | URL | 説明 |
 |---------|-----|------|
 | メインアプリ | http://localhost:3000 | デンケイ本体 |
-| 公式ランディングページ | http://localhost:3000/lp | 七つ道具・コスト診断シミュレーター |
+| 公式ランディングページ | http://localhost:3000/lp | 六つ道具・コスト診断シミュレーター |
 | データベース | コンテナ内:5432 | PostgreSQL（ホストへポート公開なし。`docker compose -f docker/compose.standalone.yml exec db psql -U denkei denkei` で接続） |
 
 ---
@@ -387,10 +387,9 @@ Webhook 受信後、`packages/ee/server-only/stripe/` でプラン即時昇格�
 | セクション | 内容 | 実装ファイル |
 |-----------|------|-------------|
 | ヒーロー | キャッチコピー、3大要約、CTAボタン | `apps/remix/app/components/general/landing-page.tsx` |
-| 七つ道具 | 電子認印、事務処理規程キット、WORM監査ログ、メールOTP、3大契約書雛形、インボイス適格請求書、月額定額 | 同上 |
+| 六つ道具 | 電子認印、事務処理規程キット、WORM監査ログ、メールOTP、インボイス適格請求書、月額定額 | 同上 |
 | 電子認印10秒体験 | 苗字入力・印影色選択・電子印影プレビュー | 同上 |
 | コスト診断シミュレーター | 月間契約書件数による年間コスト削減額・削減時間試算 | 同上 |
-| 契約雛形 | 売買契約書、業務委託基本契約書、秘密保持契約書（NDA） | 同上 |
 | 料金プラン | FREE/STANDARD/BUSINESS の3プラン比較・コスト比較表 | 同上 |
 
 ### ランディングページのアクセス

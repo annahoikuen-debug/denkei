@@ -101,7 +101,7 @@ describe('適格請求書(インボイス制度) ユーティリティ', () => {
       expect(html).toContain('¥2,705');
       expect(html).toContain('¥27,055');
       expect(html).toContain('実質2ヶ月無料');
-      expect(html).toContain('年間1,200件枠');
+      expect(html).toContain('100件/月');
     });
   });
 });

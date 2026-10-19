@@ -15,9 +15,9 @@ export type PlanFeatures = {
   id: PlanId;
   /** ja 表示名 */
   label: string;
-  /** 月額(円・税抜)。FREE は 0 */
+  /** 月額(円・税込)。FREE は 0 */
   monthlyPriceJpy: number;
-  /** 年額(円・税抜・一括)。実質2ヶ月分無料 */
+  /** 年額(円・税込・一括)。実質2ヶ月分無料 */
   annualPriceJpy: number;
   /** 月次送信件数上限。null は無制限 */
   monthlyDocumentLimit: number | null;

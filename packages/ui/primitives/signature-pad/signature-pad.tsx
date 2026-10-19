@@ -30,6 +30,11 @@ export type SignaturePadProps = Omit<HTMLAttributes<HTMLCanvasElement>, 'onChang
   uploadSignatureEnabled?: boolean;
   drawSignatureEnabled?: boolean;
 
+  /** 会社角印・代表印（有料プラン限定）の利用権限。既定は true */
+  canUseCompanySeal?: boolean;
+  /** 有料プランへのアップグレード誘導コールバック */
+  onUpgradeRequested?: () => void;
+
   onValidityChange?: (isValid: boolean) => void;
 };
 
@@ -41,6 +46,8 @@ export const SignaturePad = ({
   typedSignatureEnabled = true,
   uploadSignatureEnabled = true,
   drawSignatureEnabled = true,
+  canUseCompanySeal = true,
+  onUpgradeRequested,
 }: SignaturePadProps) => {
   const [imageSignature, setImageSignature] = useState(isBase64Image(value) ? value : '');
   const [drawSignature, setDrawSignature] = useState(isBase64Image(value) ? value : '');
@@ -178,7 +185,13 @@ export const SignaturePad = ({
         value="text"
         className="relative flex aspect-signature-pad items-center justify-center rounded-md border border-border bg-muted/25 text-center"
       >
-        <SignaturePadType value={typedSignature} defaultValue={fullName} onChange={onTypedSignatureChange} />
+        <SignaturePadType
+          value={typedSignature}
+          defaultValue={fullName}
+          onChange={onTypedSignatureChange}
+          canUseCompanySeal={canUseCompanySeal}
+          onUpgradeRequested={onUpgradeRequested}
+        />
       </TabsContent>
 
       <TabsContent

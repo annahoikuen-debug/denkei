@@ -88,7 +88,7 @@ export const generateAnnualQualifiedInvoiceHtml = ({
   isReceipt = true,
 }: AnnualQualifiedInvoiceProps): string => {
   const planLabel = planId === 'BUSINESS' ? 'ビジネスプラン' : 'スタンダードプラン';
-  const planQuota = planId === 'BUSINESS' ? '無制限' : '年間1,200件枠';
+  const planQuota = planId === 'BUSINESS' ? '無制限' : '100件/月';
   const docTitle = isReceipt ? '適格請求書 兼 領収書' : '適 格 請 求 書';
   const itemName = `デンケイ ${planLabel} 年一括利用料 (${planQuota}・実質2ヶ月無料)`;
 

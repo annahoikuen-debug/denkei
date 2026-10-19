@@ -5,9 +5,7 @@ import { seedPendingDocumentWithFullFields } from '@documenso/prisma/seed/docume
 import { seedUser } from '@documenso/prisma/seed/users';
 import { PDF } from '@libpdf/core';
 import { expect, test } from '@playwright/test';
-import { DocumentStatus, FieldType, RecipientRole } from '@prisma/client';
-
-import { signSignaturePad } from '../fixtures/signature';
+import { signSignaturePad } from './fixtures/signature';
 
 /**
  * フェーズ1 電帳法・署名検証コンプライアンス E2E(ステップ36)

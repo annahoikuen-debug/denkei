@@ -22,6 +22,11 @@ export type SignaturePadDialogProps = Omit<HTMLAttributes<HTMLCanvasElement>, 'o
   typedSignatureEnabled?: boolean;
   uploadSignatureEnabled?: boolean;
   drawSignatureEnabled?: boolean;
+
+  /** 会社角印・代表印（有料プラン限定）の利用権限。既定は true */
+  canUseCompanySeal?: boolean;
+  /** 有料プランへのアップグレード誘導コールバック */
+  onUpgradeRequested?: () => void;
 };
 
 export const SignaturePadDialog = ({
@@ -34,6 +39,8 @@ export const SignaturePadDialog = ({
   typedSignatureEnabled,
   uploadSignatureEnabled,
   drawSignatureEnabled,
+  canUseCompanySeal = true,
+  onUpgradeRequested,
   dialogConfirmText,
 }: SignaturePadDialogProps) => {
   const { i18n } = useLingui();
@@ -139,7 +146,7 @@ export const SignaturePadDialog = ({
           className={
             isMobileViewport
               ? // モバイル: 全画面シート化(大型ボタン・回転時リサイズに追従)
-              'h-screen w-screen max-w-none rounded-none p-4 pt-4 sm:rounded-none'
+                'h-screen w-screen max-w-none rounded-none p-4 pt-4 sm:rounded-none'
               : 'p-6 pt-4'
           }
           style={isMobileViewport ? { height: '100dvh' } : undefined}
@@ -154,6 +161,8 @@ export const SignaturePadDialog = ({
             typedSignatureEnabled={typedSignatureEnabled}
             uploadSignatureEnabled={uploadSignatureEnabled}
             drawSignatureEnabled={drawSignatureEnabled}
+            canUseCompanySeal={canUseCompanySeal}
+            onUpgradeRequested={onUpgradeRequested}
           />
 
           <DialogFooter>

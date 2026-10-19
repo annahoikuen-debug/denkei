@@ -1,3 +1,4 @@
+import { env } from '@documenso/lib/utils/env';
 import { Trans } from '@lingui/react/macro';
 
 import { Button, Column, Img, Section, Text } from '../components';
@@ -17,6 +18,9 @@ export const TemplateDocumentCompleted = ({
   assetBaseUrl,
   customBody,
 }: TemplateDocumentCompletedProps) => {
+  const NEXT_PUBLIC_WEBAPP_URL = env('NEXT_PUBLIC_WEBAPP_URL');
+
+  const landingPageUrl = `${NEXT_PUBLIC_WEBAPP_URL ?? 'https://denkei.jp'}/lp?ref=completed_email`;
   return (
     <>
       <TemplateDocumentImage className="mt-6" assetBaseUrl={assetBaseUrl} />
@@ -75,7 +79,7 @@ export const TemplateDocumentCompleted = ({
           </Text>
           <Button
             className="inline-block rounded-md bg-red-600 px-3.5 py-1.5 font-bold text-white text-xs no-underline"
-            href="https://denkei.jp?ref=completed_email"
+            href={landingPageUrl}
           >
             無料で電子契約をはじめる →
           </Button>

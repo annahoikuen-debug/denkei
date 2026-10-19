@@ -6,9 +6,7 @@ import { seedUser } from '@documenso/prisma/seed/users';
 import { PDF } from '@libpdf/core';
 import { expect, test } from '@playwright/test';
 import { DocumentStatus, FieldType, RecipientRole } from '@prisma/client';
-import { DateTime } from 'luxon';
-
-import { signSignaturePad } from '../fixtures/signature';
+import { signSignaturePad } from './fixtures/signature';
 
 /**
  * フェーズ1 コアフローリグレッション spec(ステップ2)

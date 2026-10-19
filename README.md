@@ -36,7 +36,7 @@
 | **電子署名法準拠の本人確認** | メールOTP、WebAuthn/Passkeys、2FA など多要素認証に対応 |
 | **月額定額課金** | Stripe 連携による 3 プラン（FREE/STANDARD/BUSINESS）のサブスクリプション課金 |
 
-### デンケイの「七つ道具」（公式ランディングページより）
+### デンケイの「六つ道具」（公式ランディングページより）
 
 | 道具 | 概要 |
 |------|------|
@@ -44,9 +44,8 @@
 | 2. 国税庁公認・事務処理規程キット | 貴社名入り規程をワンクリック生成・ダウンロード。電帳法第4条に完全準拠 |
 | 3. 改ざん防止 WORM監査ログ＆SHA-256ハッシュ | DB層に WORM トリガー。SHA-256 ハッシュチェーンで改ざん即検知 |
 | 4. メールワンタイム認証（OTP 二要素認証） | 6桁 OTP でなりすましを防止。IP・UA・認証時刻を監査ログ完全記録 |
-| 5. 日本の3大定型契約書ひな形 | 売買・業務委託・秘密保持(NDA)を標準搭載。差し込み変数対応 |
-| 6. インボイス適格請求書（T番号対応） | T+13桁登録番号・10%消費税額を記載した帳票をワンクリック出力 |
-| 7. 従量課金の恐怖ゼロ・月額2,980円定額（100件） | 大手の「1件220円課金」なし。月々更新・いつでも解約可能 |
+| 5. インボイス適格請求書（T番号対応） | T+13桁登録番号・10%消費税額を記載した帳票をワンクリック出力 |
+| 6. 従量課金の恐怖ゼロ・月額2,980円定額（100件） | 大手の「1件220円課金」なし。月々更新・いつでも解約可能 |
 
 ### コスト診断シミュレーター（公式ランディングページより）
 
@@ -64,17 +63,16 @@
 | 電帳法コンプライアンスキット | `packages/lib/universal/compliance-kit.ts` | 事務処理規程テンプレート生成・NTAチェックリスト |
 | 電帳法適合3問診断 | `packages/lib/universal/compliance-diagnostics.ts` | 国税庁告示根拠条文の即時判定カードコンポーネント |
 | 取引先安心配布キット | `packages/lib/universal/counterparty-guide.ts` | 相手方向けA4印刷対応・メール案内文・法的根拠キット |
-| 3大契約書ひな形プレビュー | `packages/lib/universal/contract-templates-meta.ts` | NDA・業務委託・売買の条項プレビュー＆即時差し込み |
 | オンボーディングチェックリスト | `packages/lib/universal/onboarding-checklist.ts` | 4ステップ進行バナーと初期導入支援ウィジェット |
 | 自立型3秒セルフヘルプ | `packages/lib/universal/self-help-guide.ts` | 署名受領者向け3大トラブル（OTP・Safari・通知）即時解決 |
-| 年払い一括＆適格請求書 | `packages/lib/server-only/pdf/generate-annual-invoice-pdf.ts` | 年29,760円（実質2ヶ月無料・1,200件枠）と1クリックPDF |
+| 年払い一括＆適格請求書 | `packages/lib/server-only/pdf/generate-annual-invoice-pdf.ts` | 年29,760円（実質2ヶ月無料）と1クリックPDF |
 | プラン定義・制限ゲート | `packages/lib/constants/plans.ts` | FREE/STANDARD/BUSINESS 3プラン・月次/年次枠管理 |
 | チームプラン情報取得 | `packages/lib/server-only/team/get-team-plan.ts` | プラン判定・送信上限チェック・機能ゲート |
 | 翻訳漏れ検出 | `scripts/check-translations.mjs` | `ja/web.po` の未訳エントリ検出 |
 | 日本語日付フィールド | `jp-core-signing-flow.spec.ts` | E2E: `yyyy年M月d日` 形式のDATEフィールド検証 |
 | ドキュメントメタ既定日本語 | `migrations/20261015000000_ja_default_document_meta/` | `DocumentMeta.language='ja'` / `timezone='Asia/Tokyo'` |
 | 負荷テスト | `scripts/load-test-burst.ts` | 100件バースト耐性テスト（エラー率0.00%、p95 294ms） |
-| ランディングページ | `apps/remix/app/components/general/landing-page.tsx` | スマホ認印デモ・電帳法診断・契約書試し読み・年払いトグル |
+| ランディングページ | `apps/remix/app/components/general/landing-page.tsx` | スマホ認印デモ・電帳法診断・コスト試算・年払いトグル |
 | 組織請求書テーブル | `apps/remix/app/components/tables/organisation-billing-invoices-table.tsx` | Stripe 適格請求書（インボイス）表示・ダウンロード |
 
 ## 技術スタック
@@ -211,7 +209,7 @@ npm run d
 | サービス | URL | 説明 |
 |---------|-----|------|
 | メインアプリ | http://localhost:3000 | デンケイ本体 |
-| ランディングページ | http://localhost:3000/lp | 七つ道具・コスト診断シミュレーター |
+| ランディングページ | http://localhost:3000/lp | 六つ道具・コスト診断シミュレーター |
 | インバケット (メール確認) | http://localhost:9000 | 開発用送信メールをWebで確認 |
 | データベース | localhost:54320 | PostgreSQL (Docker経由) |
 
