@@ -48,7 +48,7 @@ export const WebhookCreateDialog = ({ trigger, ...props }: WebhookCreateDialogPr
   const { _ } = useLingui();
   const { toast } = useToast();
 
-  const team = useCurrentTeam();
+  const _team = useCurrentTeam();
 
   const [open, setOpen] = useState(false);
 
@@ -81,7 +81,7 @@ export const WebhookCreateDialog = ({ trigger, ...props }: WebhookCreateDialogPr
       });
 
       form.reset();
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: _(msg`Error`),
         description: _(msg`An error occurred while creating the webhook. Please try again.`),

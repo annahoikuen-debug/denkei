@@ -48,6 +48,8 @@ export const APP_ERROR_JA_MESSAGES: Partial<Record<AppErrorCode, string>> & Reco
       '未記入の必須フィールドがあります。すべて入力してから再試行してください。',
     [AppErrorCode.RECIPIENT_OUT_OF_TURN]: 'まだ署名の順番ではありません。',
     [AppErrorCode.MISSING_SIGNATURE_FIELD]: '署名フィールドが割り当てられていません。',
+    [AppErrorCode.DOCUMENT_DATA_PURGED]:
+      'この文書は保管期限を過ぎたため、本文PDFは削除されました。締結証明書・監査ログは完了時に配信されています。監査記録は引き続き本システムで照会できます。',
   };
 
 /**
@@ -59,5 +61,5 @@ export const getAppErrorMessageJa = (code: string | undefined | null): string =>
     return APP_ERROR_JA_MESSAGES[code];
   }
 
-  return APP_ERROR_JA_MESSAGES[AppErrorCode.UNKNOWN_ERROR];
+  return APP_ERROR_JA_MESSAGES[AppErrorCode.UNKNOWN_ERROR] ?? '不明なエラーが発生しました。';
 };

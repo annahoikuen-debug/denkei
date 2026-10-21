@@ -2,7 +2,7 @@ import { Input } from '@documenso/ui/primitives/input';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { useQueryStates } from 'nuqs';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { documentsSearchParams } from '~/utils/documents-search-params';
 
@@ -40,7 +40,14 @@ export const DocumentElectronicLedgerFilters = () => {
   useEffect(() => {
     const timer = setTimeout(debouncedSetParams, 500);
     return () => clearTimeout(timer);
-  }, [localContractType, localCounterpartyName, localContractAmount, localContractDateFrom, localContractDateTo, debouncedSetParams]);
+  }, [
+    localContractType,
+    localCounterpartyName,
+    localContractAmount,
+    localContractDateFrom,
+    localContractDateTo,
+    debouncedSetParams,
+  ]);
 
   const hasFilters = Boolean(contractType || counterpartyName || contractAmount || contractDateFrom || contractDateTo);
 
@@ -89,30 +96,16 @@ export const DocumentElectronicLedgerFilters = () => {
       </div>
 
       <div className="w-40">
-        <Input
-          type="date"
-          value={localContractDateFrom}
-          onChange={(e) => setLocalContractDateFrom(e.target.value)}
-        />
+        <Input type="date" value={localContractDateFrom} onChange={(e) => setLocalContractDateFrom(e.target.value)} />
       </div>
 
       <div className="w-40">
-        <Input
-          type="date"
-          value={localContractDateTo}
-          onChange={(e) => setLocalContractDateTo(e.target.value)}
-        />
+        <Input type="date" value={localContractDateTo} onChange={(e) => setLocalContractDateTo(e.target.value)} />
       </div>
 
       {hasFilters && (
-        <button
-          type="button"
-          className="px-2 text-muted-foreground lg:px-3"
-          onClick={onResetFilters}
-        >
-          <span className="flex items-center gap-1">
-            {_(msg`Reset`)}
-          </span>
+        <button type="button" className="px-2 text-muted-foreground lg:px-3" onClick={onResetFilters}>
+          <span className="flex items-center gap-1">{_(msg`Reset`)}</span>
         </button>
       )}
     </div>

@@ -52,7 +52,7 @@ export const createTeam = async ({ userId, teamName, teamUrl, organisationId, in
     where: buildOrganisationWhereQuery({
       organisationId,
       userId,
-      roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
+      roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
     }),
     include: {
       groups: true,

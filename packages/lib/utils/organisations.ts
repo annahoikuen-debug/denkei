@@ -126,7 +126,8 @@ export const generateDefaultOrganisationSettings = (): Omit<OrganisationGlobalSe
 
     includeSenderDetails: true,
     includeSigningCertificate: true,
-    includeAuditLog: false,
+    // R-03: 完了文書に監査ログPDFを同梱し、利用者が電帳法の保存義務を自己完結できるようにする。
+    includeAuditLog: true,
 
     typedSignatureEnabled: true,
     uploadSignatureEnabled: true,

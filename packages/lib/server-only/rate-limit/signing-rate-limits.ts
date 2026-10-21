@@ -13,16 +13,16 @@ import { createRateLimit } from './rate-limit';
 
 /** OTP 検証: 5回/10分(IP + トークン identifier 単位) */
 export const otpVerificationRateLimit = createRateLimit({
-    action: 'signing.otp-verify',
-    max: 5,
-    window: '10m',
+  action: 'signing.otp-verify',
+  max: 5,
+  window: '10m',
 });
 
 /** 署名リンクアクセス: 30回/分(IP 単位) */
 export const signingLinkAccessRateLimit = createRateLimit({
-    action: 'signing.link-access',
-    max: 30,
-    window: '1m',
+  action: 'signing.link-access',
+  max: 30,
+  window: '1m',
 });
 
 /**
@@ -30,10 +30,7 @@ export const signingLinkAccessRateLimit = createRateLimit({
  * ja エラーメッセージはフロント側 app-error-ja.ts の TOO_MANY_REQUESTS を使用する。
  */
 export const isRateLimitedError = (error: unknown): boolean => {
-    return (
-        typeof error === 'object' &&
-        error !== null &&
-        'status' in error &&
-        (error as { status?: number }).status === 429
-    );
+  return (
+    typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status === 429
+  );
 };

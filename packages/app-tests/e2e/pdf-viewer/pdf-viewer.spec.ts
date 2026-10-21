@@ -168,7 +168,7 @@ test.describe('PDF Viewer Rendering', () => {
       const qrTokenV1 = prefixedId('qr');
       const qrTokenV2 = prefixedId('qr');
 
-      const documentV1 = await seedCompletedDocument(user, team.id, ['share-v1@test.documenso.com'], {
+      const _documentV1 = await seedCompletedDocument(user, team.id, ['share-v1@test.documenso.com'], {
         createDocumentOptions: { qrToken: qrTokenV1 },
       });
 

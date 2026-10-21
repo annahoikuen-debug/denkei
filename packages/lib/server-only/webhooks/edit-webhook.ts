@@ -18,7 +18,7 @@ export const editWebhook = async ({ id, data, userId, teamId }: EditWebhookOptio
       team: buildTeamWhereQuery({
         teamId,
         userId,
-        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
       }),
     },
     data: {

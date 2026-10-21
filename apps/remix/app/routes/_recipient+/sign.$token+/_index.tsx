@@ -91,8 +91,8 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
   const allRecipients =
     recipient.role === RecipientRole.ASSISTANT
       ? await getRecipientsForAssistant({
-        token,
-      })
+          token,
+        })
       : [recipient];
 
   // Dictation eligibility must be decided here, over the FULL recipient list
@@ -103,9 +103,9 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
   const nextPendingRecipient =
     document.documentMeta?.signingOrder === DocumentSigningOrder.SEQUENTIAL
       ? await getNextPendingRecipient({
-        documentId: document.id,
-        currentRecipientId: recipient.id,
-      })
+          documentId: document.id,
+          currentRecipientId: recipient.id,
+        })
       : null;
 
   // Only the identity is needed client-side (dictation flag + prefill).

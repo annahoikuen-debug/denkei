@@ -39,7 +39,7 @@ export const getOrganisationEmailDomain = async ({ userId, emailDomainId }: GetO
       organisation: buildOrganisationWhereQuery({
         organisationId: undefined,
         userId,
-        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
+        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
       }),
     },
     omit: {

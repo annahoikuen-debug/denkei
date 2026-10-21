@@ -132,7 +132,6 @@ export async function getOrganisationInsights({
         dateCondition = sql<boolean>`e."createdAt" >= ${oneYearAgo}`;
         break;
       }
-      case 'allTime':
       default:
         dateCondition = sql<boolean>`1=1`;
         break;

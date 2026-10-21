@@ -16,65 +16,65 @@ import type { TSendOtpEmailJobDefinition } from './send-otp-email';
  * OTP 値は監査ログに残さず、メール本文にのみ含める。
  */
 export const run = async ({ payload }: { payload: TSendOtpEmailJobDefinition; io: JobRunIO }) => {
-    const { recipientId, envelopeId, otpCode } = payload;
+  const { recipientId, envelopeId, otpCode } = payload;
 
-    const envelope = await prisma.envelope.findFirst({
-        where: {
-            id: envelopeId,
-            recipients: {
-                some: { id: recipientId },
-            },
-        },
-        include: {
-            recipients: {
-                where: { id: recipientId },
-            },
-            documentMeta: true,
-        },
-    });
+  const envelope = await prisma.envelope.findFirst({
+    where: {
+      id: envelopeId,
+      recipients: {
+        some: { id: recipientId },
+      },
+    },
+    include: {
+      recipients: {
+        where: { id: recipientId },
+      },
+      documentMeta: true,
+    },
+  });
 
-    if (!envelope || envelope.recipients.length === 0) {
-        return;
-    }
+  if (!envelope || envelope.recipients.length === 0) {
+    return;
+  }
 
-    const recipient = envelope.recipients[0];
+  const recipient = envelope.recipients[0];
 
-    const { branding, emailLanguage, senderEmail, replyToEmail, emailsDisabled } = await getEmailContext({
-        emailType: 'RECIPIENT',
-        source: {
-            type: 'team',
-            teamId: envelope.teamId,
-        },
-        meta: envelope.documentMeta,
-    });
+  const { branding, emailLanguage, senderEmail, replyToEmail, emailsDisabled } = await getEmailContext({
+    emailType: 'RECIPIENT',
+    source: {
+      type: 'team',
+      teamId: envelope.teamId,
+    },
+    meta: envelope.documentMeta,
+  });
 
-    if (emailsDisabled) {
-        return;
-    }
+  if (emailsDisabled) {
+    return;
+  }
 
-    const template = createElement(OtpVerificationEmailTemplate, {
-        otpCode,
-        documentName: envelope.title,
-        expiresMinutes: 10,
-        assetBaseUrl: '',
-    });
+  const template = createElement(OtpVerificationEmailTemplate, {
+    otpCode,
+    documentName: envelope.title,
+    expiresMinutes: 10,
+    assetBaseUrl: '',
+  });
 
-    const [html, text] = await Promise.all([
-        renderEmailWithI18N(template, { lang: emailLanguage, branding }),
-        renderEmailWithI18N(template, { lang: emailLanguage, branding, plainText: true }),
-    ]);
+  const [html, text] = await Promise.all([
+    renderEmailWithI18N(template, { lang: emailLanguage, branding }),
+    renderEmailWithI18N(template, { lang: emailLanguage, branding, plainText: true }),
+  ]);
 
-    const i18n = await getI18nInstance(emailLanguage);
+  const i18n = await getI18nInstance(emailLanguage);
 
-    await mailer.sendMail({
-        to: {
-            name: recipient.name || '',
-            address: recipient.email,
-        },
-        from: senderEmail,
-        replyTo: replyToEmail,
-        subject: i18n._(msg`署名前の本人確認コード`),
-        html,
-        text,
-    });
+  await mailer.sendMail({
+    to: {
+      name: recipient.name || '',
+      address: recipient.email,
+    },
+    from: senderEmail,
+    replyTo: replyToEmail,
+    subject: i18n._(msg`署名前の本人確認コード`),
+    html,
+    text,
+  });
 };

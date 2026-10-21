@@ -8,7 +8,7 @@ export const getWebhooksByTeamId = async (teamId: number, userId: number) => {
     where: buildTeamWhereQuery({
       teamId,
       userId,
-      roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+      roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
     }),
   });
 

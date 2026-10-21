@@ -11,35 +11,35 @@ import { RecipientRole } from '@prisma/client';
  */
 
 export type ApprovalActionResult =
-    | { success: true; status: 'APPROVED' | 'REJECTED' }
-    | { success: false; reason: 'not-approver' | 'not-pending' | 'not-found' };
+  | { success: true; status: 'APPROVED' | 'REJECTED' }
+  | { success: false; reason: 'not-approver' | 'not-pending' | 'not-found' };
 
 /**
  * 承認可能な状態か(送信保留中)を判定する。
  */
 export const isEnvelopePendingApproval = async ({ envelopeId }: { envelopeId: string }) => {
-    const envelope = await prisma.envelope.findFirst({
-        where: { id: envelopeId },
-        select: {
-            status: true,
-            recipients: {
-                where: { role: 'APPROVER' },
-                select: { id: true, signingStatus: true, email: true },
-            },
-        },
-    });
+  const envelope = await prisma.envelope.findFirst({
+    where: { id: envelopeId },
+    select: {
+      status: true,
+      recipients: {
+        where: { role: 'APPROVER' },
+        select: { id: true, signingStatus: true, email: true },
+      },
+    },
+  });
 
-    if (!envelope) {
-        return { exists: false, pending: false, approvers: [] };
-    }
+  if (!envelope) {
+    return { exists: false, pending: false, approvers: [] };
+  }
 
-    const pendingApprovers = envelope.recipients.filter((r) => r.signingStatus === 'NOT_SIGNED');
+  const pendingApprovers = envelope.recipients.filter((r) => r.signingStatus === 'NOT_SIGNED');
 
-    return {
-        exists: true,
-        pending: pendingApprovers.length > 0,
-        approvers: pendingApprovers.map((r) => ({ id: r.id, email: r.email })),
-    };
+  return {
+    exists: true,
+    pending: pendingApprovers.length > 0,
+    approvers: pendingApprovers.map((r) => ({ id: r.id, email: r.email })),
+  };
 };
 
 /**
@@ -47,139 +47,139 @@ export const isEnvelopePendingApproval = async ({ envelopeId }: { envelopeId: st
  * 全 APPROVER が承認済みの場合、エンベロープの配信準備が整ったことを示す。
  */
 export const approveEnvelopeByRecipient = async ({
-    envelopeId,
-    recipientId,
-    now = new Date(),
+  envelopeId,
+  recipientId,
+  now = new Date(),
 }: {
-    envelopeId: string;
-    recipientId: number;
-    now?: Date;
+  envelopeId: string;
+  recipientId: number;
+  now?: Date;
 }): Promise<ApprovalActionResult> => {
-    const recipient = await prisma.recipient.findFirst({
-        where: { id: recipientId, envelopeId },
-    });
+  const recipient = await prisma.recipient.findFirst({
+    where: { id: recipientId, envelopeId },
+  });
 
-    if (!recipient) {
-        return { success: false, reason: 'not-found' };
-    }
+  if (!recipient) {
+    return { success: false, reason: 'not-found' };
+  }
 
-    if (recipient.role !== RecipientRole.APPROVER) {
-        return { success: false, reason: 'not-approver' };
-    }
+  if (recipient.role !== RecipientRole.APPROVER) {
+    return { success: false, reason: 'not-approver' };
+  }
 
-    if (recipient.signingStatus !== 'NOT_SIGNED') {
-        return { success: false, reason: 'not-pending' };
-    }
+  if (recipient.signingStatus !== 'NOT_SIGNED') {
+    return { success: false, reason: 'not-pending' };
+  }
 
-    await prisma.recipient.update({
-        where: { id: recipientId },
-        data: { signingStatus: 'SIGNED', signedAt: now },
-    });
+  await prisma.recipient.update({
+    where: { id: recipientId },
+    data: { signingStatus: 'SIGNED', signedAt: now },
+  });
 
-    // 監査ログ(ハッシュチェーン)
-    await recordApprovalAuditLog({
-        envelopeId,
-        type: 'ENVELOPE_APPROVAL_GRANTED',
-        recipientEmail: recipient.email,
-        data: { recipientId, role: RecipientRole.APPROVER },
-    });
+  // 監査ログ(ハッシュチェーン)
+  await recordApprovalAuditLog({
+    envelopeId,
+    type: 'ENVELOPE_APPROVAL_GRANTED',
+    recipientEmail: recipient.email,
+    data: { recipientId, role: RecipientRole.APPROVER },
+  });
 
-    const { pending } = await isEnvelopePendingApproval({ envelopeId });
+  const { pending } = await isEnvelopePendingApproval({ envelopeId });
 
-    return { success: true, status: pending ? 'APPROVED' : 'APPROVED' };
+  return { success: true, status: pending ? 'APPROVED' : 'APPROVED' };
 };
 
 /**
  * 差し戻す。エンベロープを DRAFT へ戻し、APPROVER の署名ステータスをリセットする。
  */
 export const rejectEnvelopeByRecipient = async ({
-    envelopeId,
-    recipientId,
-    reason,
-    now = new Date(),
+  envelopeId,
+  recipientId,
+  reason,
+  now = new Date(),
 }: {
-    envelopeId: string;
-    recipientId: number;
-    reason?: string;
-    now?: Date;
+  envelopeId: string;
+  recipientId: number;
+  reason?: string;
+  now?: Date;
 }): Promise<ApprovalActionResult> => {
-    const recipient = await prisma.recipient.findFirst({
-        where: { id: recipientId, envelopeId },
+  const recipient = await prisma.recipient.findFirst({
+    where: { id: recipientId, envelopeId },
+  });
+
+  if (!recipient) {
+    return { success: false, reason: 'not-found' };
+  }
+
+  if (recipient.role !== RecipientRole.APPROVER) {
+    return { success: false, reason: 'not-approver' };
+  }
+
+  await prisma.envelope.update({
+    where: { id: envelopeId },
+    data: { status: 'DRAFT', completedAt: null },
+  });
+
+  if (reason) {
+    await prisma.recipient.update({
+      where: { id: recipientId },
+      data: { rejectionReason: reason },
     });
+  }
 
-    if (!recipient) {
-        return { success: false, reason: 'not-found' };
-    }
+  // 監査ログ(ハッシュチェーン)
+  await recordApprovalAuditLog({
+    envelopeId,
+    type: 'ENVELOPE_APPROVAL_REJECTED',
+    recipientEmail: recipient.email,
+    data: { recipientId, role: RecipientRole.APPROVER, reason: reason ?? null },
+    now,
+  });
 
-    if (recipient.role !== RecipientRole.APPROVER) {
-        return { success: false, reason: 'not-approver' };
-    }
-
-    await prisma.envelope.update({
-        where: { id: envelopeId },
-        data: { status: 'DRAFT', completedAt: null },
-    });
-
-    if (reason) {
-        await prisma.recipient.update({
-            where: { id: recipientId },
-            data: { rejectionReason: reason },
-        });
-    }
-
-    // 監査ログ(ハッシュチェーン)
-    await recordApprovalAuditLog({
-        envelopeId,
-        type: 'ENVELOPE_APPROVAL_REJECTED',
-        recipientEmail: recipient.email,
-        data: { recipientId, role: RecipientRole.APPROVER, reason: reason ?? null },
-        now,
-    });
-
-    return { success: true, status: 'REJECTED' };
+  return { success: true, status: 'REJECTED' };
 };
 
 /**
  * 承認操作の監査ログを記録する(ハッシュチェーン対応)。
  */
 export const recordApprovalAuditLog = async ({
-    envelopeId,
-    type,
-    recipientEmail,
-    data,
-    now = new Date(),
+  envelopeId,
+  type,
+  recipientEmail,
+  data,
+  now = new Date(),
 }: {
-    envelopeId: string;
-    type: 'ENVELOPE_APPROVAL_REQUESTED' | 'ENVELOPE_APPROVAL_GRANTED' | 'ENVELOPE_APPROVAL_REJECTED';
-    recipientEmail?: string;
-    data: Record<string, unknown>;
-    now?: Date;
+  envelopeId: string;
+  type: 'ENVELOPE_APPROVAL_REQUESTED' | 'ENVELOPE_APPROVAL_GRANTED' | 'ENVELOPE_APPROVAL_REJECTED';
+  recipientEmail?: string;
+  data: Record<string, unknown>;
+  now?: Date;
 }) => {
-    const previous = await prisma.documentAuditLog.findFirst({
-        where: { envelopeId },
-        orderBy: { createdAt: 'desc' },
-        select: { hash: true },
-    });
+  const previous = await prisma.documentAuditLog.findFirst({
+    where: { envelopeId },
+    orderBy: { createdAt: 'desc' },
+    select: { hash: true },
+  });
 
-    const { computeAuditLogHash } = await import('../document-audit-log-hash');
+  const { computeAuditLogHash } = await import('../document-audit-log-hash');
 
-    const log = await prisma.documentAuditLog.create({
-        data: {
-            envelopeId,
-            type,
-            data: { ...data, recipientEmail: recipientEmail ?? null },
-            email: recipientEmail,
-            createdAt: now,
-            prevHash: previous?.hash ?? '',
-        },
-    });
+  const log = await prisma.documentAuditLog.create({
+    data: {
+      envelopeId,
+      type,
+      data: { ...data, recipientEmail: recipientEmail ?? null },
+      email: recipientEmail,
+      createdAt: now,
+      prevHash: previous?.hash ?? '',
+    },
+  });
 
-    const hash = computeAuditLogHash(log, log.prevHash);
+  const hash = computeAuditLogHash(log, log.prevHash);
 
-    await prisma.documentAuditLog.update({
-        where: { id: log.id },
-        data: { hash },
-    });
+  await prisma.documentAuditLog.update({
+    where: { id: log.id },
+    data: { hash },
+  });
 
-    return { ...log, hash };
+  return { ...log, hash };
 };

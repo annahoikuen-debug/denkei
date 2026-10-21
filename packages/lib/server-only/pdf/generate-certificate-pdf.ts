@@ -66,25 +66,27 @@ export const generateCertificatePdf = async (options: GenerateCertificatePdfOpti
         (field) => field.recipientId === recipient.id && field.type === FieldType.SIGNATURE,
       );
 
-      const emailSent: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs['EMAIL_SENT'].find(
+      const emailSent: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs.EMAIL_SENT.find(
         (log) => log.type === 'EMAIL_SENT' && log.data.recipientId === recipientId,
       );
 
-      const documentSent: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs['DOCUMENT_SENT'].find(
+      const documentSent: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs.DOCUMENT_SENT.find(
         (log) => log.type === 'DOCUMENT_SENT',
       );
 
-      const documentOpened: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs['DOCUMENT_OPENED'].find(
+      const documentOpened: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs.DOCUMENT_OPENED.find(
         (log) => log.type === 'DOCUMENT_OPENED' && log.data.recipientId === recipientId,
       );
 
-      const documentRecipientCompleted: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs[
-        'DOCUMENT_RECIPIENT_COMPLETED'
-      ].find((log) => log.type === 'DOCUMENT_RECIPIENT_COMPLETED' && log.data.recipientId === recipientId);
+      const documentRecipientCompleted: TDocumentAuditLogBaseSchema | undefined =
+        groupedAuditLogs.DOCUMENT_RECIPIENT_COMPLETED.find(
+          (log) => log.type === 'DOCUMENT_RECIPIENT_COMPLETED' && log.data.recipientId === recipientId,
+        );
 
-      const documentRecipientRejected: TDocumentAuditLogBaseSchema | undefined = groupedAuditLogs[
-        'DOCUMENT_RECIPIENT_REJECTED'
-      ].find((log) => log.type === 'DOCUMENT_RECIPIENT_REJECTED' && log.data.recipientId === recipientId);
+      const documentRecipientRejected: TDocumentAuditLogBaseSchema | undefined =
+        groupedAuditLogs.DOCUMENT_RECIPIENT_REJECTED.find(
+          (log) => log.type === 'DOCUMENT_RECIPIENT_REJECTED' && log.data.recipientId === recipientId,
+        );
 
       const extractedAuthMethods = extractDocumentAuthMethods({
         documentAuth: envelope.authOptions,

@@ -45,7 +45,7 @@ export const createTeamMembers = async ({ userId, teamId, membersToCreate }: Cre
     where: buildTeamWhereQuery({
       teamId,
       userId,
-      roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+      roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
     }),
     include: {
       organisation: {

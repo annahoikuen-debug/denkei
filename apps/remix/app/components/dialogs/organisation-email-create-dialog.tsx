@@ -169,7 +169,7 @@ export const OrganisationEmailCreateDialog = ({
                           {...field}
                           value={field.value.split('@')[0]}
                           onChange={(e) => {
-                            field.onChange(e.target.value + '@' + emailDomain.domain);
+                            field.onChange(`${e.target.value}@${emailDomain.domain}`);
                           }}
                           placeholder={t`support`}
                         />

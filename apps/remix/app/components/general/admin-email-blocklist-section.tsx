@@ -94,7 +94,7 @@ export const AdminEmailBlocklistSection = ({ emailBlocklist }: AdminEmailBlockli
       });
 
       await revalidate();
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: _(msg`An unknown error occurred`),
         variant: 'destructive',

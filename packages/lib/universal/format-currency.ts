@@ -2,7 +2,7 @@
  * フェーズ1 ステップ4: 金額表示(円・3桁カンマ・税込表記)ユーティリティ
  */
 
-const JPY_FORMATTER = new Intl.NumberFormat('ja-JP', {
+const _JPY_FORMATTER = new Intl.NumberFormat('ja-JP', {
   style: 'currency',
   currency: 'JPY',
 });

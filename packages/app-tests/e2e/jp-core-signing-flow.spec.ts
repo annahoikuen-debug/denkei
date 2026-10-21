@@ -6,6 +6,7 @@ import { seedUser } from '@documenso/prisma/seed/users';
 import { PDF } from '@libpdf/core';
 import { expect, test } from '@playwright/test';
 import { DocumentStatus, FieldType, RecipientRole } from '@prisma/client';
+import { DateTime } from 'luxon';
 import { signSignaturePad } from './fixtures/signature';
 
 /**
@@ -48,7 +49,8 @@ test.describe('[JP] Core Signing Flow', () => {
     await page.getByRole('button', { name: 'Complete' }).click();
     await page.waitForTimeout(1000);
 
-    await page.getByRole('button', { name: 'Sign' }).click({ force: true });
+    // 完了確認ダイアログのボタンは DocumentMeta.language に依存する(ja: 合意して電子認印を押印する / en: Sign)。
+    await page.getByRole('button', { name: /Sign|合意して電子認印を押印する/ }).click({ force: true });
     await page.waitForURL(`/sign/${recipient.token}/complete`);
 
     // --- 完了ステータスの反映を待機 ---
@@ -63,7 +65,8 @@ test.describe('[JP] Core Signing Flow', () => {
     await page.waitForTimeout(2500);
 
     // --- 完了画面が表示されていること ---
-    await expect(page.getByText('You have signed')).toBeVisible();
+    // 完了画面の文言は言語/宛先数により異なる(ja: 全員が署名しました / en: You have signed / Everyone has signed)。
+    await expect(page.getByText(/You have signed|Everyone has signed|全員が署名/).first()).toBeVisible();
   });
 
   test('should display the inserted DATE field in Japanese date format (DocumentMeta timezone/language)', async ({
@@ -107,7 +110,8 @@ test.describe('[JP] Core Signing Flow', () => {
     await page.getByRole('button', { name: 'Complete' }).click();
     await page.waitForTimeout(1000);
 
-    await page.getByRole('button', { name: 'Sign' }).click({ force: true });
+    // 完了確認ダイアログのボタンは DocumentMeta.language に依存する(ja: 合意して電子認印を押印する / en: Sign)。
+    await page.getByRole('button', { name: /Sign|合意して電子認印を押印する/ }).click({ force: true });
     await page.waitForURL(`/sign/${recipient.token}/complete`);
 
     // 完了後、DocumentMeta の timezone(Asia/Tokyo)と日本語 dateFormat で
@@ -116,16 +120,21 @@ test.describe('[JP] Core Signing Flow', () => {
 
     const expected = DateTime.now().setZone('Asia/Tokyo').toFormat('yyyy年M月d日');
 
-    const insertedField = await prisma.field.findFirstOrThrow({
-      where: { id: dateField?.id },
-    });
-
     // customText が設定されており、期待される日本語日付フォーマットに合致していることを検証
-    expect(insertedField.customText).toBe(expected);
+    // シール(完了処理)は非同期ジョブのため、反映までリトライする。
+    await expect(async () => {
+      const insertedField = await prisma.field.findFirstOrThrow({
+        where: { id: dateField?.id },
+      });
 
-    // 完了ステータスを担保
-    const { status } = await getDocumentByToken({ token: recipient.token });
-    expect(status).toBe(DocumentStatus.COMPLETED);
+      expect(insertedField.customText).toBe(expected);
+    }).toPass({ timeout: 30_000 });
+
+    // 完了ステータスを担保(シール完了の反映を待つ)
+    await expect(async () => {
+      const { status } = await getDocumentByToken({ token: recipient.token });
+      expect(status).toBe(DocumentStatus.COMPLETED);
+    }).toPass({ timeout: 30_000 });
   });
 
   test('should produce a valid completed PDF after signing', async ({ page }) => {
@@ -155,7 +164,8 @@ test.describe('[JP] Core Signing Flow', () => {
     await page.getByRole('button', { name: 'Complete' }).click();
     await page.waitForTimeout(1000);
 
-    await page.getByRole('button', { name: 'Sign' }).click({ force: true });
+    // 完了確認ダイアログのボタンは DocumentMeta.language に依存する(ja: 合意して電子認印を押印する / en: Sign)。
+    await page.getByRole('button', { name: /Sign|合意して電子認印を押印する/ }).click({ force: true });
     await page.waitForURL(`/sign/${recipient.token}/complete`);
 
     await expect(async () => {

@@ -61,7 +61,7 @@ export const WebhookTestDialog = ({ webhook, children }: WebhookTestDialogProps)
       });
 
       setOpen(false);
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: t`Test webhook failed`,
         description: t`We encountered an error while sending the test webhook. Please check your endpoint and try again.`,

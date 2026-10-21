@@ -38,7 +38,7 @@ export const validateDropdownField = (
     errors.push('Default value must be one of the available options');
   }
 
-  if (values && values.some((item) => item.value.length < 1)) {
+  if (values?.some((item) => item.value.length < 1)) {
     errors.push('Option value cannot be empty');
   }
 

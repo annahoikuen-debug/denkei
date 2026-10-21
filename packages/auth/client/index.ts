@@ -1,6 +1,6 @@
 import { formatPath, NEXT_PUBLIC_WEBAPP_URL } from '@documenso/lib/constants/app';
 import { AppError } from '@documenso/lib/errors/app-error';
-import type { ClientResponse, InferRequestType } from 'hono/client';
+import type { InferRequestType } from 'hono/client';
 import { hc } from 'hono/client';
 import superjson from 'superjson';
 
@@ -88,7 +88,7 @@ export class AuthClient {
   }
 
   public async getSessions() {
-    const response = await this.client['sessions'].$get();
+    const response = await this.client.sessions.$get();
 
     if (!response.ok) {
       const error = await response.json();
@@ -101,19 +101,9 @@ export class AuthClient {
     return superjson.deserialize<{ sessions: ActiveSession[] }>(result);
   }
 
-  // !: Unused for now since it isn't providing the type narrowing
-  // !: we need.
-  private async handleError<T>(response: ClientResponse<T>): Promise<void> {
-    if (!response.ok) {
-      const error = await response.json();
-
-      throw AppError.parseError(error);
-    }
-  }
-
   public account = {
     getMany: async () => {
-      const response = await this.client['accounts'].$get();
+      const response = await this.client.accounts.$get();
 
       if (!response.ok) {
         const error = await response.json();
@@ -126,7 +116,7 @@ export class AuthClient {
       return superjson.deserialize<{ accounts: PartialAccount[] }>(result);
     },
     delete: async (accountId: string) => {
-      const response = await this.client['account'][':accountId'].$delete({
+      const response = await this.client.account[':accountId'].$delete({
         param: { accountId },
       });
 
@@ -193,7 +183,7 @@ export class AuthClient {
     },
 
     signUp: async (data: TSignUpSchema) => {
-      const response = await this.client['email-password']['signup'].$post({ json: data });
+      const response = await this.client['email-password'].signup.$post({ json: data });
 
       if (!response.ok) {
         const error = await response.json();
@@ -274,7 +264,7 @@ export class AuthClient {
 
   public passkey = {
     signIn: async (data: TPasskeySignin) => {
-      const response = await this.client['passkey'].authorize.$post({ json: data });
+      const response = await this.client.passkey.authorize.$post({ json: data });
 
       if (!response.ok) {
         const error = await response.json();
@@ -346,7 +336,7 @@ export class AuthClient {
 
   public google = {
     signIn: async ({ redirectPath }: { redirectPath?: string } = {}) => {
-      const response = await this.client['oauth'].authorize.google.$post({
+      const response = await this.client.oauth.authorize.google.$post({
         json: { redirectPath },
       });
 
@@ -367,7 +357,7 @@ export class AuthClient {
 
   public microsoft = {
     signIn: async ({ redirectPath }: { redirectPath?: string } = {}) => {
-      const response = await this.client['oauth'].authorize.microsoft.$post({
+      const response = await this.client.oauth.authorize.microsoft.$post({
         json: { redirectPath },
       });
 
@@ -387,7 +377,7 @@ export class AuthClient {
 
   public oidc = {
     signIn: async ({ redirectPath }: { redirectPath?: string } = {}) => {
-      const response = await this.client['oauth'].authorize.oidc.$post({ json: { redirectPath } });
+      const response = await this.client.oauth.authorize.oidc.$post({ json: { redirectPath } });
 
       if (!response.ok) {
         const error = await response.json();
@@ -404,7 +394,7 @@ export class AuthClient {
     },
     org: {
       signIn: async ({ orgUrl }: { orgUrl: string }) => {
-        const response = await this.client['oauth'].authorize.oidc.org[':orgUrl'].$post({
+        const response = await this.client.oauth.authorize.oidc.org[':orgUrl'].$post({
           param: { orgUrl },
         });
 

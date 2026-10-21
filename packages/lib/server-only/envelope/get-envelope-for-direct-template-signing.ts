@@ -147,13 +147,13 @@ export const getEnvelopeForDirectTemplateSigning = async ({
 
   const sender = settings.includeSenderDetails
     ? {
-      email: envelope.user.email,
-      name: envelope.user.name || '',
-    }
+        email: envelope.user.email,
+        name: envelope.user.name || '',
+      }
     : {
-      email: envelope.team.teamEmail?.email || '',
-      name: envelope.team.name || '',
-    };
+        email: envelope.team.teamEmail?.email || '',
+        name: envelope.team.name || '',
+      };
 
   return ZEnvelopeForSigningResponse.parse({
     envelope,

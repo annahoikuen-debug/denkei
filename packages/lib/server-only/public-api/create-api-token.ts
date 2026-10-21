@@ -32,7 +32,7 @@ export const createApiToken = async ({ userId, teamId, tokenName, expiresIn }: C
     where: buildTeamWhereQuery({
       teamId,
       userId,
-      roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+      roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
     }),
   });
 

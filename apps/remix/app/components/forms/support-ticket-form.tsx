@@ -60,7 +60,7 @@ export const SupportTicketForm = ({ organisationId, teamId, onSuccess, onClose }
       }
 
       form.reset();
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: t`Failed to create support ticket`,
         description: t`An error occurred. Please try again later.`,

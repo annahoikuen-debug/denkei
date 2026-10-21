@@ -46,7 +46,7 @@ export const SendConfirmationEmailForm = ({ className }: SendConfirmationEmailFo
       });
 
       form.reset();
-    } catch (err) {
+    } catch (_err) {
       toast({
         variant: 'destructive',
         title: _(msg`An error occurred while sending your confirmation email`),

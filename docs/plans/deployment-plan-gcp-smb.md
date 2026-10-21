@@ -42,6 +42,7 @@ Google Cloud (GCP) の充実した無料枠とセキュアな暗号化モジュ�
 | **合 計** | | | **約 $1.05 / 月** | **約 160 円 / 月** | 初期費用 0 円、月額約160円 |
 
 > ※完全0円運用を希望する場合は、Google Cloud HSM の代わりにローカルP12証明書（`NEXT_PRIVATE_SIGNING_TRANSPORT=local`）を用いることで月額 0 円も可能です。
+> ただし本番環境（`NODE_ENV=production`）では local トランスポートが禁止されているため、`NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION=true` を併せて設定する必要があります。
 
 ---
 
@@ -93,10 +94,10 @@ NEXT_PRIVATE_ENCRYPTION_KEY=<openssl rand -hex 32 で生成>
 NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY=<openssl rand -hex 32 で生成>
 
 # --- 日本法・表示設定 ---
-NEXT_PUBLIC_JP_COMPLIANCE_MODE=true
-NEXT_PUBLIC_DEFAULT_LOCALE=ja
-NEXT_PUBLIC_SIGNING_REASON=電子署名法第2条および第3条に基づく電子契約締結
+# UIロケールはブラウザの Accept-Language ヘッダから自動判定（jaブラウザなら日本語表示・fallback en）
+NEXT_PRIVATE_SIGNING_REASON=電子署名法第2条および第3条に基づく電子契約締結
 NEXT_PUBLIC_SIGNING_CONTACT_INFO=legal@yourcompany.com
+NEXT_PUBLIC_SUPPORT_EMAIL=support@yourcompany.com
 
 # --- 電子署名 (Google Cloud HSM: 月額約$1) ---
 NEXT_PRIVATE_SIGNING_TRANSPORT=gcloud-hsm
@@ -108,11 +109,11 @@ NEXT_PRIVATE_SIGNING_GCLOUD_HSM_PUBLIC_CRT_FILE_CONTENTS=<Base64化したCRT証�
 
 # --- PDFストレージ (Cloud Storage HMAC / S3互換) ---
 NEXT_PUBLIC_UPLOAD_TRANSPORT=s3
-NEXT_PRIVATE_S3_ACCESS_KEY_ID=<GCS HMAC Access Key>
-NEXT_PRIVATE_S3_SECRET_ACCESS_KEY=<GCS HMAC Secret Key>
-NEXT_PRIVATE_S3_BUCKET=denkei-contracts
-NEXT_PRIVATE_S3_ENDPOINT=https://storage.googleapis.com
-NEXT_PRIVATE_S3_REGION=auto
+NEXT_PRIVATE_UPLOAD_ENDPOINT=https://storage.googleapis.com
+NEXT_PRIVATE_UPLOAD_REGION=auto
+NEXT_PRIVATE_UPLOAD_BUCKET=denkei-contracts
+NEXT_PRIVATE_UPLOAD_ACCESS_KEY_ID=<GCS HMAC Access Key>
+NEXT_PRIVATE_UPLOAD_SECRET_ACCESS_KEY=<GCS HMAC Secret Key>
 
 # --- データベース (Neon Serverless Postgres) ---
 NEXT_PRIVATE_DATABASE_URL=postgresql://user:pass@ep-xyz-pooler.neon.tech/neondb?sslmode=require
@@ -122,6 +123,7 @@ NEXT_PRIVATE_DIRECT_DATABASE_URL=postgresql://user:pass@ep-xyz.neon.tech/neondb?
 NEXT_PRIVATE_SMTP_TRANSPORT=smtp-auth
 NEXT_PRIVATE_SMTP_HOST=smtp.resend.com
 NEXT_PRIVATE_SMTP_PORT=465
+NEXT_PRIVATE_SMTP_SECURE=true
 NEXT_PRIVATE_SMTP_USERNAME=resend
 NEXT_PRIVATE_SMTP_PASSWORD=<Resend API Key>
 NEXT_PRIVATE_SMTP_FROM_NAME=デンケイ電子契約
@@ -153,6 +155,10 @@ Cloud Run の GitHub 継続的デプロイ（Cloud Build 連携）を有効化�
    - Neon が毎秒レベルの WAL ログ保存（PITR）を行っているため、誤操作時も過去の任意の時点へ1クリックで巻き戻し可能。
 3. **死活監視（完全無料）**:
    - [UptimeRobot](https://uptimerobot.com) や [Better Stack](https://betterstack.com) 等の無料プランで `https://<ドメイン>/api/health` を 5分間隔でヘルスチェック設定。異常時のみメール/Slackへアラート通知。
+4. **定期ジョブの確実実行（Cloud Scheduler・無料枠）**:
+   - インスタンス最小数 0 運用では、署名リマインダー等の定期ジョブ（sweep）はインスタンス起動中しか動作しません。
+   - Cloud Scheduler（月3ジョブまで無料）で `https://<ドメイン>/api/health` を 5分間隔で叩きインスタンスを確実に起床させることで、定期ジョブを約5分単位の精度で実行できます。
+   - 役割分担: UptimeRobot＝異常時アラート、Cloud Scheduler＝定期起床。リマインダー時刻の厳密性が必要になった場合は、インスタンス最小数を `1` に変更（月額約$5）。
 
 ---
 
@@ -178,12 +184,12 @@ Cloud Run の GitHub 継続的デプロイ（Cloud Build 連携）を有効化�
 - [ ] **GitHub 連携 / ビルド設定**
   - [ ] Cloud Run の「サービスの作成」から GitHub リポジトリ（denkei）を連携
   - [ ] ビルドタイプ: Dockerfile（パス: `docker/Dockerfile`）を指定
-  - [ ] インスタンス構成（最小: 0、最大: 5、CPU: 1、メモリ: 1GiB）を設定
+  - [ ] インスタンス構成（最小: 0、最大: 5、CPU: 1、メモリ: 2GiB）を設定
 - [ ] **環境変数の登録**
   - [ ] 基本設定（`NODE_ENV=production`, `PORT=8080`, `NEXT_PUBLIC_WEBAPP_URL` 等）
-  - [ ] 日本法準拠設定（`NEXT_PUBLIC_JP_COMPLIANCE_MODE=true` 等）
+  - [ ] 日本法・表示設定（`NEXT_PRIVATE_SIGNING_REASON`、`NEXT_PUBLIC_SIGNING_CONTACT_INFO` 等）
   - [ ] Google Cloud KMS 設定（`NEXT_PRIVATE_SIGNING_TRANSPORT=gcloud-hsm` 等）
-  - [ ] GCS HMAC 設定（`NEXT_PUBLIC_UPLOAD_TRANSPORT=s3` 等）
+  - [ ] GCS HMAC 設定（`NEXT_PUBLIC_UPLOAD_TRANSPORT=s3`、`NEXT_PRIVATE_UPLOAD_*` 等）
   - [ ] Neon DB 接続文字列
   - [ ] Resend SMTP 設定
 - [ ] **初回デプロイ & データベース初期化**
@@ -192,7 +198,7 @@ Cloud Run の GitHub 継続的デプロイ（Cloud Build 連携）を有効化�
 
 ### Phase 3: 動作検証（スモークテスト）
 - [ ] **ヘルスチェック**: `https://<URL>/api/health` で 200 OK が返ることを確認
-- [ ] **トップ・利用規約表示**: LPおよび特定商取引法・利用規約ページの正常表示
+- [ ] **トップ・法務ページ表示**: LP および 利用規約（`/terms`）・プライバシーポリシー（`/privacy`）・特定商取引法に基づく表記（`/tokushoho`）の正常表示（特商法表記の運営者情報〈 〉の差し替え完了を含む）
 - [ ] **アカウント作成・ログイン**: メール認証 / パスワードでの登録・ログイン確認
 - [ ] **契約書作成 & 署名（日本法テスト）**:
   - [ ] PDF のアップロード（GCS への保存確認）
@@ -203,5 +209,6 @@ Cloud Run の GitHub 継続的デプロイ（Cloud Build 連携）を有効化�
 ### Phase 4: 独自ドメイン & 運用・監視設定
 - [ ] **ドメイン設定**: 独自ドメイン（例: `contracts.example.com`）のマッピングと SSL 自動発行確認
 - [ ] **死活監視（完全無料）**: UptimeRobot 等に `/api/health` を登録（5分間隔監視・異常時通知）
+- [ ] **定期起床（Cloud Scheduler）**: 5分間隔で `https://<ドメイン>/api/health` へ HTTP ジョブを作成（署名リマインダー等の定期ジョブ確実実行）
 - [ ] **バックアップ確認**: Neon ダッシュボードで自動バックアップ状態の確認
 

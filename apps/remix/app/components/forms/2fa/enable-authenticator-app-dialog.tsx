@@ -68,7 +68,7 @@ export const EnableAuthenticatorAppDialog = ({ onSuccess }: EnableAuthenticatorA
       await refreshSession();
 
       setSetup2FAData(data);
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: _(msg`Unable to setup two-factor authentication`),
         description: _(

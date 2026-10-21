@@ -32,7 +32,7 @@ export const EnvelopeEditorPreviewPage = () => {
 
   const scrollableContainerRef = useRef<HTMLDivElement>(null);
 
-  const [selectedPreviewMode, setSelectedPreviewMode] = useState<'recipient' | 'signed'>('recipient');
+  const [selectedPreviewMode, _setSelectedPreviewMode] = useState<'recipient' | 'signed'>('recipient');
 
   const [fakerInstance, setFakerInstance] = useState<Faker | null>(null);
 

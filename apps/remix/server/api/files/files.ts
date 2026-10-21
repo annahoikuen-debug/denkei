@@ -122,14 +122,24 @@ export const filesRoute = new Hono<HonoEnv>()
         return c.json({ error: 'Document data not found' }, 404);
       }
 
-      return await handleEnvelopeItemFileRequest({
-        title: envelopeItem.title,
-        status: envelope.status,
-        documentData: envelopeItem.documentData,
-        version: 'signed',
-        isDownload: false,
-        context: c,
-      });
+      try {
+        return await handleEnvelopeItemFileRequest({
+          title: envelopeItem.title,
+          status: envelope.status,
+          documentData: envelopeItem.documentData,
+          version: 'signed',
+          isDownload: false,
+          context: c,
+        });
+      } catch (error) {
+        if (error instanceof AppError) {
+          const { status, body } = AppError.toRestAPIError(error);
+
+          return c.json({ error: body.message, code: error.code }, status);
+        }
+
+        throw error;
+      }
     },
   )
   .get(
@@ -275,14 +285,24 @@ export const filesRoute = new Hono<HonoEnv>()
         return c.json({ error: 'Document data not found' }, 404);
       }
 
-      return await handleEnvelopeItemFileRequest({
-        title: envelopeItem.title,
-        status: envelopeItem.envelope.status,
-        documentData: envelopeItem.documentData,
-        version: 'signed',
-        isDownload: false,
-        context: c,
-      });
+      try {
+        return await handleEnvelopeItemFileRequest({
+          title: envelopeItem.title,
+          status: envelopeItem.envelope.status,
+          documentData: envelopeItem.documentData,
+          version: 'signed',
+          isDownload: false,
+          context: c,
+        });
+      } catch (error) {
+        if (error instanceof AppError) {
+          const { status, body } = AppError.toRestAPIError(error);
+
+          return c.json({ error: body.message, code: error.code }, status);
+        }
+
+        throw error;
+      }
     },
   )
   .get(
@@ -327,14 +347,24 @@ export const filesRoute = new Hono<HonoEnv>()
         return c.json({ error: 'Document data not found' }, 404);
       }
 
-      return await handleEnvelopeItemFileRequest({
-        title: envelopeItem.title,
-        status: envelopeItem.envelope.status,
-        documentData: envelopeItem.documentData,
-        version,
-        isDownload: true,
-        context: c,
-      });
+      try {
+        return await handleEnvelopeItemFileRequest({
+          title: envelopeItem.title,
+          status: envelopeItem.envelope.status,
+          documentData: envelopeItem.documentData,
+          version,
+          isDownload: true,
+          context: c,
+        });
+      } catch (error) {
+        if (error instanceof AppError) {
+          const { status, body } = AppError.toRestAPIError(error);
+
+          return c.json({ error: body.message, code: error.code }, status);
+        }
+
+        throw error;
+      }
     },
   );
 

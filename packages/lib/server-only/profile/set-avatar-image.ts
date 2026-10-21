@@ -37,7 +37,7 @@ export const setAvatarImage = async ({ userId, target, bytes, requestMetadata }:
       where: buildTeamWhereQuery({
         teamId: target.teamId,
         userId,
-        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
       }),
     });
 
@@ -53,7 +53,7 @@ export const setAvatarImage = async ({ userId, target, bytes, requestMetadata }:
       where: buildOrganisationWhereQuery({
         organisationId: target.organisationId,
         userId,
-        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
+        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
       }),
     });
 

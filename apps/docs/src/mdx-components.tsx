@@ -4,8 +4,7 @@ import type { MDXComponents } from 'mdx/types';
 import { EnvelopeWarning } from '@/components/mdx/envelope-warning';
 import { Mermaid } from '@/components/mdx/mermaid';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getMDXComponents(components?: MDXComponents): any {
+export function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
     ...defaultMdxComponents,
     ...TabsComponents,

@@ -9,29 +9,31 @@ import { createHash } from 'node:crypto';
  */
 
 export type AuditLogHashChainEntry = {
-    id: string;
-    createdAt: Date | string;
-    type: string;
-    data: unknown;
-    name?: string | null;
-    email?: string | null;
-    userId?: number | null;
-    userAgent?: string | null;
-    ipAddress?: string | null;
-    prevHash?: string | null;
-    hash?: string | null;
+  id: string;
+  createdAt: Date | string;
+  type: string;
+  data: unknown;
+  name?: string | null;
+  email?: string | null;
+  userId?: number | null;
+  userAgent?: string | null;
+  ipAddress?: string | null;
+  prevHash?: string | null;
+  hash?: string | null;
 };
 
 /**
  * チェーンペイロードの正規化文字列を生成する。
  */
-export const buildAuditLogPayload = (entry: Pick<AuditLogHashChainEntry, 'id' | 'createdAt' | 'type' | 'data'>): string => {
-    return JSON.stringify({
-        id: entry.id,
-        createdAt: entry.createdAt instanceof Date ? entry.createdAt.toISOString() : entry.createdAt,
-        type: entry.type,
-        data: entry.data ?? null,
-    });
+export const buildAuditLogPayload = (
+  entry: Pick<AuditLogHashChainEntry, 'id' | 'createdAt' | 'type' | 'data'>,
+): string => {
+  return JSON.stringify({
+    id: entry.id,
+    createdAt: entry.createdAt instanceof Date ? entry.createdAt.toISOString() : entry.createdAt,
+    type: entry.type,
+    data: entry.data ?? null,
+  });
 };
 
 /**
@@ -40,10 +42,12 @@ export const buildAuditLogPayload = (entry: Pick<AuditLogHashChainEntry, 'id' | 
  * @param prevHash 直前レコードの hash(チェーン先頭は '' または null)
  */
 export const computeAuditLogHash = (
-    entry: Pick<AuditLogHashChainEntry, 'id' | 'createdAt' | 'type' | 'data'>,
-    prevHash: string | null | undefined,
+  entry: Pick<AuditLogHashChainEntry, 'id' | 'createdAt' | 'type' | 'data'>,
+  prevHash: string | null | undefined,
 ): string => {
-    return createHash('sha256').update(`${prevHash ?? ''}|${buildAuditLogPayload(entry)}`).digest('hex');
+  return createHash('sha256')
+    .update(`${prevHash ?? ''}|${buildAuditLogPayload(entry)}`)
+    .digest('hex');
 };
 
 /**
@@ -52,27 +56,27 @@ export const computeAuditLogHash = (
  * @returns 検証結果。isValid = false の場合は破損位置(breakAtId)を返す。
  */
 export const verifyAuditLogHashChain = (
-    entries: AuditLogHashChainEntry[],
+  entries: AuditLogHashChainEntry[],
 ): { isValid: boolean; breakAtId?: string } => {
-    let expectedPrevHash = '';
+  let expectedPrevHash = '';
 
-    for (const entry of entries) {
-        if (!entry.hash) {
-            return { isValid: false, breakAtId: entry.id };
-        }
-
-        if ((entry.prevHash ?? '') !== expectedPrevHash) {
-            return { isValid: false, breakAtId: entry.id };
-        }
-
-        const computed = computeAuditLogHash(entry, entry.prevHash);
-
-        if (computed !== entry.hash) {
-            return { isValid: false, breakAtId: entry.id };
-        }
-
-        expectedPrevHash = entry.hash;
+  for (const entry of entries) {
+    if (!entry.hash) {
+      return { isValid: false, breakAtId: entry.id };
     }
 
-    return { isValid: true };
+    if ((entry.prevHash ?? '') !== expectedPrevHash) {
+      return { isValid: false, breakAtId: entry.id };
+    }
+
+    const computed = computeAuditLogHash(entry, entry.prevHash);
+
+    if (computed !== entry.hash) {
+      return { isValid: false, breakAtId: entry.id };
+    }
+
+    expectedPrevHash = entry.hash;
+  }
+
+  return { isValid: true };
 };

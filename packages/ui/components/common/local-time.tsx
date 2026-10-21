@@ -23,7 +23,7 @@ export const LocalTime = ({ date, className }: LocalTimeProps) => {
 
   const relative = dt.toRelative() ?? '';
   const local = dt.toFormat('yyyy-MM-dd HH:mm:ss ZZZZ');
-  const utc = dt.toUTC().toFormat('yyyy-MM-dd HH:mm:ss') + ' UTC';
+  const utc = `${dt.toUTC().toFormat('yyyy-MM-dd HH:mm:ss')} UTC`;
   const unix = Math.floor(dt.toSeconds()).toString();
 
   const onMouseEnter = useCallback(() => {

@@ -193,7 +193,7 @@ const FieldItemInner = ({
     }
 
     const parsedMeta = parser?.parse(fieldMeta);
-    return parsedMeta && parsedMeta.values && parsedMeta.values.length > 0;
+    return parsedMeta?.values && parsedMeta.values.length > 0;
   };
 
   const checkBoxHasValues = useMemo(

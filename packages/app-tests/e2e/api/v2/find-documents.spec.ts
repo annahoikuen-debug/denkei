@@ -77,10 +77,10 @@ test.describe('Find Documents API - Personal Context', () => {
 
     expect(res.ok()).toBeTruthy();
     expect(json).toBeDefined();
-    expect(json!.data).toHaveLength(0);
-    expect(json!.count).toBe(0);
-    expect(json!.currentPage).toBe(1);
-    expect(json!.totalPages).toBe(0);
+    expect(json?.data).toHaveLength(0);
+    expect(json?.count).toBe(0);
+    expect(json?.currentPage).toBe(1);
+    expect(json?.totalPages).toBe(0);
   });
 
   test('should return only documents owned by the user and not the other user', async ({ request }) => {
@@ -109,7 +109,7 @@ test.describe('Find Documents API - Personal Context', () => {
     const { json: jsonA } = await findDocuments(request, tokenA);
     const { json: jsonB } = await findDocuments(request, tokenB);
 
-    const titlesA = jsonA!.data.map((d) => d.title);
+    const titlesA = jsonA?.data.map((d) => d.title);
     // UserA sees only their own team's docs
     expect(titlesA).toContain('UserA Draft 1');
     expect(titlesA).toContain('UserA Draft 2');
@@ -118,16 +118,16 @@ test.describe('Find Documents API - Personal Context', () => {
     expect(titlesA).not.toContain('UserB Pending');
     expect(titlesA).not.toContain('UserB Completed');
     expect(titlesA).not.toContain('UserB Draft 1');
-    expect(jsonA!.count).toBe(3);
+    expect(jsonA?.count).toBe(3);
 
-    const titlesB = jsonB!.data.map((d) => d.title);
+    const titlesB = jsonB?.data.map((d) => d.title);
     expect(titlesB).toContain('UserB Draft 1');
     expect(titlesB).toContain('UserB Pending');
     expect(titlesB).toContain('UserB Completed');
     expect(titlesB).not.toContain('UserA Draft 1');
     expect(titlesB).not.toContain('UserA Draft 2');
     expect(titlesB).not.toContain('UserA Pending');
-    expect(jsonB!.count).toBe(3);
+    expect(jsonB?.count).toBe(3);
   });
 
   test('should only return documents belonging to the personal team, not cross-team received docs', async ({
@@ -151,14 +151,14 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA);
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
 
     expect(titles).toContain('UserA Own Draft');
     expect(titles).toContain('UserA Own Pending');
     // Cross-team received docs NOT visible
     expect(titles).not.toContain('Pending for A from B Team');
     expect(titles).not.toContain('Completed for A from B Team');
-    expect(json!.count).toBe(2);
+    expect(json?.count).toBe(2);
   });
 
   test('should NOT leak documents between unrelated users', async ({ request }) => {
@@ -187,12 +187,12 @@ test.describe('Find Documents API - Personal Context', () => {
     const { json: jsonB } = await findDocuments(request, tokenB);
 
     // UserA should see only their own doc
-    expect(jsonA!.data).toHaveLength(1);
-    expect(jsonA!.data[0].title).toBe('UserA Own Doc');
+    expect(jsonA?.data).toHaveLength(1);
+    expect(jsonA?.data[0].title).toBe('UserA Own Doc');
 
     // UserB should see only their own doc
-    expect(jsonB!.data).toHaveLength(1);
-    expect(jsonB!.data[0].title).toBe('UserB Own Doc');
+    expect(jsonB?.data).toHaveLength(1);
+    expect(jsonB?.data[0].title).toBe('UserB Own Doc');
   });
 
   test('should filter by status correctly across all statuses', async ({ request }) => {
@@ -219,18 +219,18 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json: draftResults } = await findDocuments(request, tokenA, { status: 'DRAFT' });
-    expect(draftResults!.data).toHaveLength(2);
-    expect(draftResults!.data.every((d) => d.status === DocumentStatus.DRAFT)).toBe(true);
+    expect(draftResults?.data).toHaveLength(2);
+    expect(draftResults?.data.every((d) => d.status === DocumentStatus.DRAFT)).toBe(true);
 
     const { json: pendingResults } = await findDocuments(request, tokenA, { status: 'PENDING' });
-    expect(pendingResults!.data).toHaveLength(2);
-    expect(pendingResults!.data.every((d) => d.status === DocumentStatus.PENDING)).toBe(true);
+    expect(pendingResults?.data).toHaveLength(2);
+    expect(pendingResults?.data.every((d) => d.status === DocumentStatus.PENDING)).toBe(true);
 
     const { json: completedResults } = await findDocuments(request, tokenA, {
       status: 'COMPLETED',
     });
-    expect(completedResults!.data).toHaveLength(2);
-    expect(completedResults!.data.every((d) => d.status === DocumentStatus.COMPLETED)).toBe(true);
+    expect(completedResults?.data).toHaveLength(2);
+    expect(completedResults?.data.every((d) => d.status === DocumentStatus.COMPLETED)).toBe(true);
   });
 
   test('should paginate correctly', async ({ request }) => {
@@ -249,25 +249,25 @@ test.describe('Find Documents API - Personal Context', () => {
     }
 
     const { json: page1 } = await findDocuments(request, tokenA, { page: '1', perPage: '2' });
-    expect(page1!.data).toHaveLength(2);
-    expect(page1!.count).toBe(5);
-    expect(page1!.currentPage).toBe(1);
-    expect(page1!.totalPages).toBe(3);
-    expect(page1!.perPage).toBe(2);
+    expect(page1?.data).toHaveLength(2);
+    expect(page1?.count).toBe(5);
+    expect(page1?.currentPage).toBe(1);
+    expect(page1?.totalPages).toBe(3);
+    expect(page1?.perPage).toBe(2);
 
     const { json: page2 } = await findDocuments(request, tokenA, { page: '2', perPage: '2' });
-    expect(page2!.data).toHaveLength(2);
-    expect(page2!.currentPage).toBe(2);
+    expect(page2?.data).toHaveLength(2);
+    expect(page2?.currentPage).toBe(2);
 
     const { json: page3 } = await findDocuments(request, tokenA, { page: '3', perPage: '2' });
-    expect(page3!.data).toHaveLength(1);
-    expect(page3!.currentPage).toBe(3);
+    expect(page3?.data).toHaveLength(1);
+    expect(page3?.currentPage).toBe(3);
 
     // Ensure no duplicates across pages and no B docs leaked
     const allTitles = [
-      ...page1!.data.map((d) => d.title),
-      ...page2!.data.map((d) => d.title),
-      ...page3!.data.map((d) => d.title),
+      ...page1?.data.map((d) => d.title),
+      ...page2?.data.map((d) => d.title),
+      ...page3?.data.map((d) => d.title),
     ];
     const uniqueTitles = new Set(allTitles);
     expect(uniqueTitles.size).toBe(5);
@@ -286,8 +286,8 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA, { query: 'Quarterly' });
-    expect(json!.data).toHaveLength(1);
-    expect(json!.data[0].title).toBe('Quarterly Report 2024');
+    expect(json?.data).toHaveLength(1);
+    expect(json?.data[0].title).toBe('Quarterly Report 2024');
   });
 
   test('should search by recipient email and not return docs with different recipients', async ({ request }) => {
@@ -305,8 +305,8 @@ test.describe('Find Documents API - Personal Context', () => {
 
     const { json } = await findDocuments(request, tokenA, { query: userB.email });
     // Should find the doc with B and the doc with both, but not the doc with only C
-    expect(json!.data).toHaveLength(2);
-    const titles = json!.data.map((d) => d.title);
+    expect(json?.data).toHaveLength(2);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Doc with Recipient B');
     expect(titles).toContain('Doc with Both Recipients');
     expect(titles).not.toContain('Doc with Recipient C');
@@ -323,14 +323,14 @@ test.describe('Find Documents API - Personal Context', () => {
     const { json: lowerCase } = await findDocuments(request, tokenA, {
       query: 'important contract',
     });
-    expect(lowerCase!.data).toHaveLength(1);
-    expect(lowerCase!.data[0].title).toBe('Important Contract');
+    expect(lowerCase?.data).toHaveLength(1);
+    expect(lowerCase?.data[0].title).toBe('Important Contract');
 
     const { json: upperCase } = await findDocuments(request, tokenA, {
       query: 'IMPORTANT CONTRACT',
     });
-    expect(upperCase!.data).toHaveLength(1);
-    expect(upperCase!.data[0].title).toBe('Important Contract');
+    expect(upperCase?.data).toHaveLength(1);
+    expect(upperCase?.data[0].title).toBe('Important Contract');
   });
 
   test('should order by createdAt descending by default', async ({ request }) => {
@@ -351,10 +351,10 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA);
-    expect(json!.data).toHaveLength(3);
-    expect(json!.data[0].title).toBe('Third Created');
-    expect(json!.data[1].title).toBe('Second Created');
-    expect(json!.data[2].title).toBe('First Created');
+    expect(json?.data).toHaveLength(3);
+    expect(json?.data[0].title).toBe('Third Created');
+    expect(json?.data[1].title).toBe('Second Created');
+    expect(json?.data[2].title).toBe('First Created');
   });
 
   test('should support ascending order', async ({ request }) => {
@@ -379,9 +379,9 @@ test.describe('Find Documents API - Personal Context', () => {
       orderByDirection: 'asc',
     });
 
-    expect(json!.data[0].title).toBe('First Created');
-    expect(json!.data[1].title).toBe('Second Created');
-    expect(json!.data[2].title).toBe('Third Created');
+    expect(json?.data[0].title).toBe('First Created');
+    expect(json?.data[1].title).toBe('Second Created');
+    expect(json?.data[2].title).toBe('Third Created');
   });
 
   test('owner should see all recipient tokens on their documents', async ({ request }) => {
@@ -396,11 +396,11 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA);
-    const doc = json!.data.find((d) => d.title === 'Token Visibility Test');
+    const doc = json?.data.find((d) => d.title === 'Token Visibility Test');
     expect(doc).toBeDefined();
-    expect(doc!.recipients.length).toBe(2);
+    expect(doc?.recipients.length).toBe(2);
     // Owner should see all recipient tokens (not masked)
-    for (const r of doc!.recipients) {
+    for (const r of doc?.recipients) {
       expect(r.token).not.toBe('');
     }
   });
@@ -429,8 +429,8 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA);
-    expect(json!.count).toBe(2);
-    const titles = json!.data.map((d) => d.title);
+    expect(json?.count).toBe(2);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Root Document 1');
     expect(titles).toContain('Root Document 2');
     expect(titles).not.toContain('Foldered Document 1');
@@ -466,8 +466,8 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA, { folderId: folder1.id });
-    expect(json!.data).toHaveLength(1);
-    expect(json!.data[0].title).toBe('Folder1 Document');
+    expect(json?.data).toHaveLength(1);
+    expect(json?.data[0].title).toBe('Folder1 Document');
   });
 
   test('should return correct response schema fields', async ({ request }) => {
@@ -479,12 +479,12 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA);
-    expect(json!.count).toBe(2);
-    expect(json!.currentPage).toBeDefined();
-    expect(json!.perPage).toBeDefined();
-    expect(json!.totalPages).toBeDefined();
+    expect(json?.count).toBe(2);
+    expect(json?.currentPage).toBeDefined();
+    expect(json?.perPage).toBeDefined();
+    expect(json?.totalPages).toBeDefined();
 
-    const doc = json!.data.find((d) => d.title === 'Schema Check Doc')!;
+    const doc = json?.data.find((d) => d.title === 'Schema Check Doc')!;
     expect(doc.id).toBeDefined();
     expect(doc.status).toBe(DocumentStatus.PENDING);
     expect(doc.createdAt).toBeDefined();
@@ -515,8 +515,8 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA);
-    expect(json!.count).toBe(2);
-    const titles = json!.data.map((d) => d.title);
+    expect(json?.count).toBe(2);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Active Document 1');
     expect(titles).toContain('Active Document 2');
     expect(titles).not.toContain('Deleted Document');
@@ -537,8 +537,8 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA, { query: 'EXT-12345-UNIQUE' });
-    expect(json!.data).toHaveLength(1);
-    expect(json!.data[0].title).toBe('External ID Doc');
+    expect(json?.data).toHaveLength(1);
+    expect(json?.data[0].title).toBe('External ID Doc');
   });
 
   test('should search by recipient name', async ({ request }) => {
@@ -553,8 +553,8 @@ test.describe('Find Documents API - Personal Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenA, { query: 'Unique Recipient' });
-    expect(json!.data).toHaveLength(1);
-    expect(json!.data[0].title).toBe('Doc for Unique Person');
+    expect(json?.data).toHaveLength(1);
+    expect(json?.data[0].title).toBe('Doc for Unique Person');
   });
 });
 
@@ -616,8 +616,8 @@ test.describe('Find Documents API - Team Context', () => {
     });
 
     const { json } = await findDocuments(request, memberToken);
-    expect(json!.data.length).toBe(3);
-    const titles = json!.data.map((d) => d.title);
+    expect(json?.data.length).toBe(3);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Team Doc 1');
     expect(titles).toContain('Team Doc 2');
     expect(titles).toContain('Team Doc 3');
@@ -659,7 +659,7 @@ test.describe('Find Documents API - Team Context', () => {
     });
 
     const { json } = await findDocuments(request, outsideToken);
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     // Outside user should see their own doc but not team docs
     expect(titles).toContain('Outside Own Doc');
     expect(titles).not.toContain('Secret Team Draft');
@@ -710,12 +710,12 @@ test.describe('Find Documents API - Team Context', () => {
     });
 
     const { json } = await findDocuments(request, tokenX);
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Team X Completed');
     expect(titles).toContain('Team X Draft');
     expect(titles).not.toContain('Team Y Completed');
     expect(titles).not.toContain('Team Y Draft');
-    expect(json!.count).toBe(2);
+    expect(json?.count).toBe(2);
   });
 
   test('should enforce visibility across admin and manager levels with adequate data', async ({ request }) => {
@@ -786,7 +786,7 @@ test.describe('Find Documents API - Team Context', () => {
       expiresIn: null,
     });
     const { json: adminJson } = await findDocuments(request, adminToken);
-    expect(adminJson!.count).toBe(6);
+    expect(adminJson?.count).toBe(6);
 
     // Manager sees 4 (Everyone + Manager)
     const { token: managerToken } = await createApiToken({
@@ -796,8 +796,8 @@ test.describe('Find Documents API - Team Context', () => {
       expiresIn: null,
     });
     const { json: managerJson } = await findDocuments(request, managerToken);
-    expect(managerJson!.count).toBe(4);
-    const managerTitles = managerJson!.data.map((d) => d.title);
+    expect(managerJson?.count).toBe(4);
+    const managerTitles = managerJson?.data.map((d) => d.title);
     expect(managerTitles).toContain('Everyone Doc 1');
     expect(managerTitles).toContain('Manager Doc 1');
     expect(managerTitles).not.toContain('Admin Doc 1');
@@ -854,7 +854,7 @@ test.describe('Find Documents API - Team Context', () => {
     });
 
     const { json } = await findDocuments(request, managerToken);
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     // Manager sees their own ADMIN doc + EVERYONE + MANAGER_AND_ABOVE docs, but NOT the owner's ADMIN doc
     expect(titles).toContain('Manager Owned Admin Vis');
     expect(titles).toContain('Everyone Vis Control');
@@ -912,7 +912,7 @@ test.describe('Find Documents API - Team Context', () => {
     });
 
     const { json } = await findDocuments(request, managerToken);
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Admin Doc with Manager Recipient');
     expect(titles).toContain('Everyone Doc Control');
     expect(titles).not.toContain('Admin Doc without Manager');
@@ -963,7 +963,7 @@ test.describe('Find Documents API - Team with Team Email', () => {
     });
 
     const { json } = await findDocuments(request, adminToken);
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Team Owned Pending');
     expect(titles).toContain('Received by Team Email');
     expect(titles).toContain('Completed for Team Email');
@@ -1005,7 +1005,7 @@ test.describe('Find Documents API - Team with Team Email', () => {
       expiresIn: null,
     });
     const { json: adminJson } = await findDocuments(request, adminToken);
-    const adminTitles = adminJson!.data.map((d) => d.title);
+    const adminTitles = adminJson?.data.map((d) => d.title);
     expect(adminTitles).toContain('Admin Email Doc');
     expect(adminTitles).toContain('Everyone Email Doc');
 
@@ -1017,7 +1017,7 @@ test.describe('Find Documents API - Team with Team Email', () => {
       expiresIn: null,
     });
     const { json: managerJson } = await findDocuments(request, managerToken);
-    const managerTitles = managerJson!.data.map((d) => d.title);
+    const managerTitles = managerJson?.data.map((d) => d.title);
     expect(managerTitles).toContain('Everyone Email Doc');
     expect(managerTitles).not.toContain('Admin Email Doc');
   });
@@ -1050,8 +1050,8 @@ test.describe('Find Documents API - Deleted Document Handling', () => {
     });
 
     const { json } = await findDocuments(request, token);
-    expect(json!.count).toBe(2);
-    const titles = json!.data.map((d) => d.title);
+    expect(json?.count).toBe(2);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Still Active Doc 1');
     expect(titles).toContain('Still Active Doc 2');
     expect(titles).not.toContain('Soft Deleted by Owner');
@@ -1084,7 +1084,7 @@ test.describe('Find Documents API - Deleted Document Handling', () => {
     });
 
     const { json } = await findDocuments(request, token);
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Owner Active Doc');
     expect(titles).not.toContain('Owner Soft Deleted');
   });
@@ -1116,8 +1116,8 @@ test.describe('Find Documents API - Deleted Document Handling', () => {
     });
 
     const { json } = await findDocuments(request, memberToken);
-    expect(json!.count).toBe(2);
-    const titles = json!.data.map((d) => d.title);
+    expect(json?.count).toBe(2);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Active Team Doc 1');
     expect(titles).toContain('Active Team Doc 2');
     expect(titles).not.toContain('Deleted Team Doc');
@@ -1143,7 +1143,7 @@ test.describe('Find Documents API - Edge Cases', () => {
     });
 
     const { json } = await findDocuments(request, token, { query: '' });
-    expect(json!.data).toHaveLength(2);
+    expect(json?.data).toHaveLength(2);
   });
 
   test('should handle page beyond total pages', async ({ request }) => {
@@ -1161,9 +1161,9 @@ test.describe('Find Documents API - Edge Cases', () => {
     });
 
     const { json } = await findDocuments(request, token, { page: '999', perPage: '10' });
-    expect(json!.data).toHaveLength(0);
-    expect(json!.count).toBe(1);
-    expect(json!.totalPages).toBe(1);
+    expect(json?.data).toHaveLength(0);
+    expect(json?.count).toBe(1);
+    expect(json?.totalPages).toBe(1);
   });
 
   test('should reject unauthenticated requests', async ({ request }) => {
@@ -1227,12 +1227,12 @@ test.describe('Find Documents API - Edge Cases', () => {
     });
 
     const { json } = await findDocuments(request, teamToken);
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Team Doc by Member 1');
     expect(titles).toContain('Team Doc by Owner');
     expect(titles).not.toContain('Personal Doc 1');
     expect(titles).not.toContain('Personal Doc 2');
-    expect(json!.count).toBe(2);
+    expect(json?.count).toBe(2);
   });
 });
 
@@ -1388,13 +1388,13 @@ test.describe('Find Documents API - Adversarial: Cross-Team folderId', () => {
 
     // UserA tries to query with teamB's folderId — should return empty, not teamB's docs
     const { json } = await findDocuments(request, tokenA, { folderId: folderB.id });
-    expect(json!.data).toHaveLength(0);
-    expect(json!.count).toBe(0);
+    expect(json?.data).toHaveLength(0);
+    expect(json?.count).toBe(0);
 
     // Positive control: querying own folder works
     const { json: ownFolder } = await findDocuments(request, tokenA, { folderId: folderA.id });
-    expect(ownFolder!.data).toHaveLength(1);
-    expect(ownFolder!.data[0].title).toBe('TeamA Folder Doc');
+    expect(ownFolder?.data).toHaveLength(1);
+    expect(ownFolder?.data[0].title).toBe('TeamA Folder Doc');
   });
 
   test('cross-team folderId via session/tRPC should also return empty', async ({ page }) => {
@@ -1555,15 +1555,15 @@ test.describe('Find Documents API - Adversarial: Cross-Team templateId', () => {
     const { json } = await findDocuments(request, tokenA, {
       templateId: String(fakeTemplateId),
     });
-    expect(json!.data).toHaveLength(0);
-    expect(json!.count).toBe(0);
+    expect(json?.data).toHaveLength(0);
+    expect(json?.count).toBe(0);
 
     // Positive control: own templateId returns own docs
     const { json: ownTemplate } = await findDocuments(request, tokenA, {
       templateId: String(teamATemplateId),
     });
-    expect(ownTemplate!.data).toHaveLength(1);
-    expect(ownTemplate!.data[0].title).toBe('TeamA Doc from Template');
+    expect(ownTemplate?.data).toHaveLength(1);
+    expect(ownTemplate?.data[0].title).toBe('TeamA Doc from Template');
   });
 });
 
@@ -1605,11 +1605,11 @@ test.describe('Find Documents API - Expired Recipient Filter', () => {
     });
 
     const { json } = await findDocuments(request, token, { hasExpiredRecipients: 'true' });
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Expired Recipient Doc');
     expect(titles).not.toContain('Active Recipient Doc');
     expect(titles).not.toContain('No Expiry Doc');
-    expect(json!.count).toBe(1);
+    expect(json?.count).toBe(1);
   });
 
   test('hasExpiredRecipients=false (and omitted) does not filter by expiry', async ({ request }) => {
@@ -1637,10 +1637,10 @@ test.describe('Find Documents API - Expired Recipient Filter', () => {
 
     // "false" must NOT be coerced to true — both docs should be returned.
     const { json: falseJson } = await findDocuments(request, token, { hasExpiredRecipients: 'false' });
-    expect(falseJson!.count).toBe(2);
+    expect(falseJson?.count).toBe(2);
 
     const { json: omittedJson } = await findDocuments(request, token);
-    expect(omittedJson!.count).toBe(2);
+    expect(omittedJson?.count).toBe(2);
   });
 
   test('excludes signed and CC recipients from the expired filter', async ({ request }) => {
@@ -1679,11 +1679,11 @@ test.describe('Find Documents API - Expired Recipient Filter', () => {
     });
 
     const { json } = await findDocuments(request, token, { hasExpiredRecipients: 'true' });
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('Expired Unsigned Signer');
     expect(titles).not.toContain('Expired but Signed');
     expect(titles).not.toContain('Expired but CC');
-    expect(json!.count).toBe(1);
+    expect(json?.count).toBe(1);
   });
 });
 
@@ -1725,10 +1725,10 @@ test.describe('Find Documents API - Adversarial: Cross-Team Expired Recipient Fi
     });
 
     const { json } = await findDocuments(request, tokenA, { hasExpiredRecipients: 'true' });
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('TeamA Expired Doc');
     expect(titles).not.toContain('TeamB Expired Doc');
-    expect(json!.count).toBe(1);
+    expect(json?.count).toBe(1);
   });
 
   test('shared recipient email across teams does not leak the other team expired docs', async ({ request }) => {
@@ -1762,10 +1762,10 @@ test.describe('Find Documents API - Adversarial: Cross-Team Expired Recipient Fi
     });
 
     const { json } = await findDocuments(request, tokenB, { hasExpiredRecipients: 'true' });
-    const titles = json!.data.map((d) => d.title);
+    const titles = json?.data.map((d) => d.title);
     expect(titles).toContain('TeamB Shared-Recipient Expired');
     expect(titles).not.toContain('TeamA Shared-Recipient Expired');
-    expect(json!.count).toBe(1);
+    expect(json?.count).toBe(1);
   });
 
   test('x-team-id spoofing with status=EXPIRED is rejected for a non-member', async ({ page }) => {

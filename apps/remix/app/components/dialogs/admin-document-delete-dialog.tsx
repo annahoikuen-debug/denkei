@@ -47,7 +47,7 @@ export const AdminDocumentDeleteDialog = ({ envelopeId }: AdminDocumentDeleteDia
       });
 
       await navigate('/admin/documents');
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: _(msg`An unknown error occurred`),
         variant: 'destructive',

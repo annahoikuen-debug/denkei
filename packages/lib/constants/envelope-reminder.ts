@@ -24,8 +24,8 @@ export const ZEnvelopeReminderSettings = z.object({
 export type TEnvelopeReminderSettings = z.infer<typeof ZEnvelopeReminderSettings>;
 
 export const DEFAULT_ENVELOPE_REMINDER_SETTINGS: TEnvelopeReminderSettings = {
-  sendAfter: { unit: 'day', amount: 5 },
-  repeatEvery: { unit: 'day', amount: 2 },
+  sendAfter: { unit: 'day', amount: 7 },
+  repeatEvery: { unit: 'day', amount: 7 },
 };
 
 /**

@@ -13,11 +13,11 @@ global.DOMMatrix = DOMMatrix;
 global.Path2D = Path2D;
 Path2D.prototype.toString = () => '[object Path2D]';
 
-Konva.Util['createCanvasElement'] = () => {
+Konva.Util.createCanvasElement = () => {
   const node = new Canvas(300, 300);
   node.gpu = false;
 
-  if (!('style' in node) || !node['style']) {
+  if (!('style' in node) || !node.style) {
     Object.assign(node, { style: {} });
   }
 

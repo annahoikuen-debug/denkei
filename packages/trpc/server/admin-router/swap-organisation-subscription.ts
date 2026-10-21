@@ -110,7 +110,7 @@ export const swapOrganisationSubscriptionRoute = adminProcedure
 
       // Move the subscription record to the target org.
       await tx.subscription.update({
-        where: { id: sourceOrg.subscription!.id },
+        where: { id: sourceOrg.subscription?.id },
         data: { organisationId: targetOrganisationId },
       });
 

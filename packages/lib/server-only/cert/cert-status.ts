@@ -1,9 +1,6 @@
 import { X509Certificate } from 'node:crypto';
-
-import { NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY } from '../../constants/app';
 import { createLocalSigner } from '@documenso/signing/transports/local';
-
-import { NEXT_PRIVATE_SIGNING_TRANSPORT } from '../../constants/app';
+import { NEXT_PRIVATE_SIGNING_TIMESTAMP_AUTHORITY, NEXT_PRIVATE_SIGNING_TRANSPORT } from '../../constants/app';
 
 /**
  * Whether the local P12 opens with the configured passphrase and is in date.

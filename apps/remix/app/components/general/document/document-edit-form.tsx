@@ -302,7 +302,7 @@ export const DocumentEditForm = ({ className, initialDocument, documentRootPath 
       // Clear all field data from localStorage
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith('field_')) {
+        if (key?.startsWith('field_')) {
           localStorage.removeItem(key);
         }
       }

@@ -216,7 +216,7 @@ export const EnvelopeRenderProvider = ({
   const recipientIds = useMemo(() => recipients.map((recipient) => recipient.id).sort(), [recipients]);
 
   const getRecipientColorKey = useCallback(
-    (recipientId: number) => getRecipientColor(recipientIds.findIndex((id) => id === recipientId)),
+    (recipientId: number) => getRecipientColor(recipientIds.indexOf(recipientId)),
     [recipientIds],
   );
 

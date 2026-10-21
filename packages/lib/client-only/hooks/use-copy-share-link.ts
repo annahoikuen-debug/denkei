@@ -39,7 +39,7 @@ export function useCopyShareLink({ onSuccess, onError }: UseCopyShareLinkOptions
       }
 
       onSuccess?.();
-    } catch (e) {
+    } catch (_e) {
       onError?.();
     }
   };

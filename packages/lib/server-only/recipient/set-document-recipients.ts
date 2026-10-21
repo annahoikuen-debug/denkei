@@ -76,7 +76,7 @@ export const setDocumentRecipients = async ({
     throw new Error('Document not found');
   }
 
-  assertEnvelopeMutable(envelope);
+  await assertEnvelopeMutable(envelope);
 
   if (envelope.completedAt) {
     throw new Error('Document already complete');

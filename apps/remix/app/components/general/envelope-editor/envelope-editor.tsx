@@ -87,7 +87,7 @@ export const EnvelopeEditor = () => {
     resetForms,
   } = useCurrentEnvelopeEditor();
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, _setSearchParams] = useSearchParams();
 
   const {
     general: { minimizeLeftSidebar, allowUploadAndRecipientStep, allowAddFieldsStep, allowPreviewStep },

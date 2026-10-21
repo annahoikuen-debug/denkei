@@ -145,20 +145,19 @@ export const FolderMoveDialog = ({ foldersData, folder, isOpen, onOpenChange }: 
                           <Trans>Home</Trans>
                         </Button>
 
-                        {filteredFolders &&
-                          filteredFolders.map((f) => (
-                            <Button
-                              key={f.id}
-                              type="button"
-                              disabled={f.id === folder?.parentId}
-                              variant={field.value === f.id ? 'default' : 'outline'}
-                              className="w-full justify-start"
-                              onClick={() => field.onChange(f.id)}
-                            >
-                              <FolderIcon className="mr-2 h-4 w-4" />
-                              {f.name}
-                            </Button>
-                          ))}
+                        {filteredFolders?.map((f) => (
+                          <Button
+                            key={f.id}
+                            type="button"
+                            disabled={f.id === folder?.parentId}
+                            variant={field.value === f.id ? 'default' : 'outline'}
+                            className="w-full justify-start"
+                            onClick={() => field.onChange(f.id)}
+                          >
+                            <FolderIcon className="mr-2 h-4 w-4" />
+                            {f.name}
+                          </Button>
+                        ))}
                       </div>
                     </FormControl>
                     <FormMessage />

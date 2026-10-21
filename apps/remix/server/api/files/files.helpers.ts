@@ -101,6 +101,24 @@ export const handleEnvelopeItemFileRequest = async (options: HandleEnvelopeItemF
 
 type StaticFileRequestOptions = Extract<HandleEnvelopeItemFileRequestOptions, { version: 'signed' | 'original' }>;
 
+/**
+ * R-02: 完了文書の保管期限ジョブによって PDF 実体が破棄された場合、縮退エラーを返す。
+ * 空文字は破棄済みの哨兵値(purge-envelope-data.ts 参照)。実 PDF は必ず非空。
+ */
+const assertDocumentDataNotPurged = ({ data }: { data: string }) => {
+  if (data !== '') {
+    return;
+  }
+
+  throw new AppError(AppErrorCode.DOCUMENT_DATA_PURGED, {
+    message:
+      'この文書は保管期限を過ぎたため、本文PDFは削除されました。締結証明書・監査ログは完了時に配信されています。監査記録は引き続き本システムで照会できます。',
+    userMessage:
+      'この文書は保管期限を過ぎたため、本文PDFは削除されました。締結証明書・監査ログは完了時に配信されています。監査記録は引き続き本システムで照会できます。',
+    statusCode: 410,
+  });
+};
+
 const handleStaticFileRequest = async ({
   title,
   status,
@@ -110,6 +128,9 @@ const handleStaticFileRequest = async ({
   context: c,
 }: StaticFileRequestOptions) => {
   const documentDataToUse = version === 'signed' ? documentData.data : documentData.initialData;
+
+  // R-02: 保管期限ジョブにより PDF 実体が破棄された文書は日本語 AppError で縮退させる。
+  assertDocumentDataNotPurged({ data: documentDataToUse });
 
   const etag = Buffer.from(sha256(documentDataToUse)).toString('hex');
 
@@ -186,6 +207,9 @@ const handlePendingFileRequest = async ({
       statusCode: 400,
     });
   }
+
+  // R-02: 保管期限ジョブにより PDF 実体が破棄された文書は縮退させる。
+  assertDocumentDataNotPurged({ data: documentData.initialData });
 
   const fields = await prisma.field.findMany({
     where: {

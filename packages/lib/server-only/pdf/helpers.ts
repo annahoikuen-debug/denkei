@@ -17,24 +17,24 @@ export const ensureFontLibrary = () => {
   if (!FontLibrary.has('Caveat')) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     FontLibrary.use({
-      ['Caveat']: [path.join(fontPath, 'caveat.ttf')],
+      Caveat: [path.join(fontPath, 'caveat.ttf')],
     });
   }
 
   if (!FontLibrary.has('Inter')) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     FontLibrary.use({
-      ['Inter']: [path.join(fontPath, 'inter-variablefont_opsz,wght.ttf')],
+      Inter: [path.join(fontPath, 'inter-variablefont_opsz,wght.ttf')],
     });
   }
 
   if (!FontLibrary.has('Noto Sans')) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     FontLibrary.use({
-      ['Noto Sans']: [path.join(fontPath, 'noto-sans.ttf')],
-      ['Noto Sans Japanese']: [path.join(fontPath, 'noto-sans-japanese.ttf')],
-      ['Noto Sans Chinese']: [path.join(fontPath, 'noto-sans-chinese.ttf')],
-      ['Noto Sans Korean']: [path.join(fontPath, 'noto-sans-korean.ttf')],
+      'Noto Sans': [path.join(fontPath, 'noto-sans.ttf')],
+      'Noto Sans Japanese': [path.join(fontPath, 'noto-sans-japanese.ttf')],
+      'Noto Sans Chinese': [path.join(fontPath, 'noto-sans-chinese.ttf')],
+      'Noto Sans Korean': [path.join(fontPath, 'noto-sans-korean.ttf')],
     });
   }
 };

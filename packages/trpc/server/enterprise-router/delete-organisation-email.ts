@@ -28,7 +28,7 @@ export const deleteOrganisationEmailRoute = authenticatedProcedure
         organisation: buildOrganisationWhereQuery({
           organisationId: undefined,
           userId: user.id,
-          roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
+          roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
         }),
       },
     });

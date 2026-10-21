@@ -316,11 +316,11 @@ test.describe('Placeholder-based field creation', () => {
     const signatureField = fields.find((f) => f.type === FieldType.SIGNATURE);
 
     expect(dateField).toBeDefined();
-    expect(dateField!.positionX.toNumber()).toBeCloseTo(10, 1);
-    expect(dateField!.positionY.toNumber()).toBeCloseTo(20, 1);
+    expect(dateField?.positionX.toNumber()).toBeCloseTo(10, 1);
+    expect(dateField?.positionY.toNumber()).toBeCloseTo(20, 1);
 
     expect(signatureField).toBeDefined();
-    expect(signatureField!.positionX.toNumber()).toBeGreaterThan(0);
+    expect(signatureField?.positionX.toNumber()).toBeGreaterThan(0);
   });
 
   test('should create a field only at first occurrence by default', async ({ request }) => {
@@ -436,6 +436,6 @@ test.describe('Placeholder-based field creation', () => {
     });
 
     expect(fields.length).toBeGreaterThan(0);
-    expect(fields.every((field) => field.recipientId === firstRecipient!.id)).toBe(true);
+    expect(fields.every((field) => field.recipientId === firstRecipient?.id)).toBe(true);
   });
 });

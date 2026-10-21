@@ -574,7 +574,7 @@ test('[TEAMS]: template folder can be deleted', async ({ page }) => {
     },
   });
 
-  const template = await seedBlankTemplate(teamOwner, team.id, {
+  const _template = await seedBlankTemplate(teamOwner, team.id, {
     createTemplateOptions: {
       title: 'Team Proposal Template 1',
       folderId: folder.id,

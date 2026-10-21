@@ -90,12 +90,7 @@ export const ZDocumentAccessAuthSchema = z.discriminatedUnion('type', [
   ZDocumentAuthFirebaseEmailSchema,
 ]);
 export const ZDocumentAccessAuthTypesSchema = z
-  .enum([
-    DocumentAuth.ACCOUNT,
-    DocumentAuth.TWO_FACTOR_AUTH,
-    DocumentAuth.EMAIL_OTP,
-    DocumentAuth.FIREBASE_EMAIL,
-  ])
+  .enum([DocumentAuth.ACCOUNT, DocumentAuth.TWO_FACTOR_AUTH, DocumentAuth.EMAIL_OTP, DocumentAuth.FIREBASE_EMAIL])
   .describe('The type of authentication required for the recipient to access the document.');
 
 /**
@@ -127,12 +122,7 @@ export const ZRecipientAccessAuthSchema = z.discriminatedUnion('type', [
   ZDocumentAuthFirebaseEmailSchema,
 ]);
 export const ZRecipientAccessAuthTypesSchema = z
-  .enum([
-    DocumentAuth.ACCOUNT,
-    DocumentAuth.TWO_FACTOR_AUTH,
-    DocumentAuth.EMAIL_OTP,
-    DocumentAuth.FIREBASE_EMAIL,
-  ])
+  .enum([DocumentAuth.ACCOUNT, DocumentAuth.TWO_FACTOR_AUTH, DocumentAuth.EMAIL_OTP, DocumentAuth.FIREBASE_EMAIL])
   .describe('The type of authentication required for the recipient to access the document.');
 
 /**

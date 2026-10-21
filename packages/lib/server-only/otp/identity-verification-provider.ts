@@ -22,45 +22,45 @@ export type IdentityVerificationLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 export type IdentityVerificationProviderType = 'otp' | 'firebase-email' | 'mock';
 
 export type SendVerificationRequest = {
-    recipientId: number;
-    envelopeId: string;
-    email: string;
-    documentName: string;
-    level: IdentityVerificationLevel;
+  recipientId: number;
+  envelopeId: string;
+  email: string;
+  documentName: string;
+  level: IdentityVerificationLevel;
 };
 
 export type SendVerificationResult =
-    | { success: true; expiresAt: Date }
-    | { success: false; reason: 'rate-limited' | 'quota-exceeded-fallback' | 'unsupported' };
+  | { success: true; expiresAt: Date }
+  | { success: false; reason: 'rate-limited' | 'quota-exceeded-fallback' | 'unsupported' };
 
 export type VerifyVerificationRequest = {
-    recipientId: number;
-    code?: string; // OTP 用
-    sessionIdentifier?: string; // Firebase メールリンク検証済みセッション用
+  recipientId: number;
+  code?: string; // OTP 用
+  sessionIdentifier?: string; // Firebase メールリンク検証済みセッション用
 };
 
 export type VerifyVerificationResult = {
-    status: 'success' | 'invalid' | 'expired' | 'locked' | 'consumed' | 'malformed' | 'unknown';
-    level?: IdentityVerificationLevel;
+  status: 'success' | 'invalid' | 'expired' | 'locked' | 'consumed' | 'malformed' | 'unknown';
+  level?: IdentityVerificationLevel;
 };
 
 export interface IIdentityVerificationProvider {
-    readonly type: IdentityVerificationProviderType;
-    readonly level: IdentityVerificationLevel;
+  readonly type: IdentityVerificationProviderType;
+  readonly level: IdentityVerificationLevel;
 
-    sendVerification(request: SendVerificationRequest): Promise<SendVerificationResult>;
-    verify(request: VerifyVerificationRequest): Promise<VerifyVerificationResult>;
-    hasVerifiedSession(request: { recipientId: number }): Promise<boolean>;
+  sendVerification(request: SendVerificationRequest): Promise<SendVerificationResult>;
+  verify(request: VerifyVerificationRequest): Promise<VerifyVerificationResult>;
+  hasVerifiedSession(request: { recipientId: number }): Promise<boolean>;
 }
 
 /**
  * env から現在のプロバイダタイプを取得する。
  */
 export const getIdentityVerificationProviderType = (): IdentityVerificationProviderType => {
-    return match(process.env.NEXT_PRIVATE_IDENTITY_PROVIDER)
-        .with('firebase-email', () => 'firebase-email' as const)
-        .with('mock', () => 'mock' as const)
-        .otherwise(() => 'otp' as const);
+  return match(process.env.NEXT_PRIVATE_IDENTITY_PROVIDER)
+    .with('firebase-email', () => 'firebase-email' as const)
+    .with('mock', () => 'mock' as const)
+    .otherwise(() => 'otp' as const);
 };
 
 /**
@@ -68,55 +68,55 @@ export const getIdentityVerificationProviderType = (): IdentityVerificationProvi
  * firebase-admin SDK の import は遅延読み込み(未導入環境でクラッシュしないよう)。
  */
 export class FirebaseEmailVerificationProvider implements IIdentityVerificationProvider {
-    readonly type = 'firebase-email' as const;
-    readonly level = 'MEDIUM' as const;
+  readonly type = 'firebase-email' as const;
+  readonly level = 'MEDIUM' as const;
 
-    async sendVerification(request: SendVerificationRequest): Promise<SendVerificationResult> {
-        // 遅延 import: firebase-admin が未インストールの環境では発生しない
-        const { buildEmailLink } = await import('./firebase-admin-client');
+  async sendVerification(request: SendVerificationRequest): Promise<SendVerificationResult> {
+    // 遅延 import: firebase-admin が未インストールの環境では発生しない
+    const { buildEmailLink } = await import('./firebase-admin-client');
 
-        const result = await buildEmailLink(request.email);
+    const result = await buildEmailLink(request.email);
 
-        if (!result.success) {
-            // Firebase 送信失敗時はメール OTP へフォールバック(ステップ11)
-            const { issueRecipientOtp } = await import('./recipient-verification');
+    if (!result.success) {
+      // Firebase 送信失敗時はメール OTP へフォールバック(ステップ11)
+      const { issueRecipientOtp } = await import('./recipient-verification');
 
-            const otpResult = await issueRecipientOtp({
-                recipientId: request.recipientId,
-                envelopeId: request.envelopeId,
-            });
+      const otpResult = await issueRecipientOtp({
+        recipientId: request.recipientId,
+        envelopeId: request.envelopeId,
+      });
 
-            if (otpResult.success) {
-                return { success: true, expiresAt: otpResult.expiresAt };
-            }
+      if (otpResult.success) {
+        return { success: true, expiresAt: otpResult.expiresAt };
+      }
 
-            return { success: false, reason: 'rate-limited' };
-        }
-
-        return { success: true, expiresAt: result.expiresAt };
+      return { success: false, reason: 'rate-limited' };
     }
 
-    async verify(request: VerifyVerificationRequest): Promise<VerifyVerificationResult> {
-        if (!request.sessionIdentifier) {
-            return { status: 'malformed' };
-        }
+    return { success: true, expiresAt: result.expiresAt };
+  }
 
-        const { verifyFirebaseSession } = await import('./firebase-admin-client');
-
-        const result = await verifyFirebaseSession(request.sessionIdentifier);
-
-        if (!result.valid) {
-            return { status: 'invalid', level: this.level };
-        }
-
-        return { status: 'success', level: this.level };
+  async verify(request: VerifyVerificationRequest): Promise<VerifyVerificationResult> {
+    if (!request.sessionIdentifier) {
+      return { status: 'malformed' };
     }
 
-    async hasVerifiedSession(request: { recipientId: number }): Promise<boolean> {
-        const { hasVerifiedRecipientOtp } = await import('./recipient-verification');
+    const { verifyFirebaseSession } = await import('./firebase-admin-client');
 
-        return hasVerifiedRecipientOtp({ recipientId: request.recipientId });
+    const result = await verifyFirebaseSession(request.sessionIdentifier);
+
+    if (!result.valid) {
+      return { status: 'invalid', level: this.level };
     }
+
+    return { status: 'success', level: this.level };
+  }
+
+  async hasVerifiedSession(request: { recipientId: number }): Promise<boolean> {
+    const { hasVerifiedRecipientOtp } = await import('./recipient-verification');
+
+    return hasVerifiedRecipientOtp({ recipientId: request.recipientId });
+  }
 }
 
 /**
@@ -124,84 +124,84 @@ export class FirebaseEmailVerificationProvider implements IIdentityVerificationP
  * コード '000000' または任意の sessionIdentifier で成功する。
  */
 export class MockVerificationProvider implements IIdentityVerificationProvider {
-    readonly type = 'mock' as const;
-    readonly level = 'MEDIUM' as const;
+  readonly type = 'mock' as const;
+  readonly level = 'MEDIUM' as const;
 
-    async sendVerification(_request: SendVerificationRequest): Promise<SendVerificationResult> {
-        return { success: true, expiresAt: new Date(Date.now() + 10 * 60 * 1000) };
+  async sendVerification(_request: SendVerificationRequest): Promise<SendVerificationResult> {
+    return { success: true, expiresAt: new Date(Date.now() + 10 * 60 * 1000) };
+  }
+
+  async verify(request: VerifyVerificationRequest): Promise<VerifyVerificationResult> {
+    if (request.sessionIdentifier) {
+      return { status: 'success', level: this.level };
     }
 
-    async verify(request: VerifyVerificationRequest): Promise<VerifyVerificationResult> {
-        if (request.sessionIdentifier) {
-            return { status: 'success', level: this.level };
-        }
-
-        if (request.code === '000000') {
-            return { status: 'success', level: this.level };
-        }
-
-        return { status: 'invalid', level: this.level };
+    if (request.code === '000000') {
+      return { status: 'success', level: this.level };
     }
 
-    // eslint-disable-next-line require-await
-    async hasVerifiedSession(_request: { recipientId: number }): Promise<boolean> {
-        return true; // モックは常に検証済み扱い
-    }
+    return { status: 'invalid', level: this.level };
+  }
+
+  // eslint-disable-next-line require-await
+  async hasVerifiedSession(_request: { recipientId: number }): Promise<boolean> {
+    return true; // モックは常に検証済み扱い
+  }
 }
 
 /**
  * プロバイダファクトリ(env 切替)。
  */
 export const getIdentityVerificationProvider = (
-    type: IdentityVerificationProviderType = getIdentityVerificationProviderType(),
+  type: IdentityVerificationProviderType = getIdentityVerificationProviderType(),
 ): IIdentityVerificationProvider => {
-    return match(type)
-        .with('firebase-email', () => new FirebaseEmailVerificationProvider())
-        .with('mock', () => new MockVerificationProvider())
-        .with('otp', () => new OtpVerificationProvider())
-        .exhaustive();
+  return match(type)
+    .with('firebase-email', () => new FirebaseEmailVerificationProvider())
+    .with('mock', () => new MockVerificationProvider())
+    .with('otp', () => new OtpVerificationProvider())
+    .exhaustive();
 };
 
 /**
  * メールOTP プロバイダ(LOW)。既存 recipient-verification をラップする。
  */
 export class OtpVerificationProvider implements IIdentityVerificationProvider {
-    readonly type = 'otp' as const;
-    readonly level = 'LOW' as const;
+  readonly type = 'otp' as const;
+  readonly level = 'LOW' as const;
 
-    async sendVerification(request: SendVerificationRequest): Promise<SendVerificationResult> {
-        const { issueRecipientOtp } = await import('./recipient-verification');
+  async sendVerification(request: SendVerificationRequest): Promise<SendVerificationResult> {
+    const { issueRecipientOtp } = await import('./recipient-verification');
 
-        const result = await issueRecipientOtp({
-            recipientId: request.recipientId,
-            envelopeId: request.envelopeId,
-        });
+    const result = await issueRecipientOtp({
+      recipientId: request.recipientId,
+      envelopeId: request.envelopeId,
+    });
 
-        if (!result.success) {
-            return { success: false, reason: 'rate-limited' };
-        }
-
-        return { success: true, expiresAt: result.expiresAt };
+    if (!result.success) {
+      return { success: false, reason: 'rate-limited' };
     }
 
-    async verify(request: VerifyVerificationRequest): Promise<VerifyVerificationResult> {
-        const { verifyRecipientOtp } = await import('./recipient-verification');
+    return { success: true, expiresAt: result.expiresAt };
+  }
 
-        if (!request.code) {
-            return { status: 'malformed' };
-        }
+  async verify(request: VerifyVerificationRequest): Promise<VerifyVerificationResult> {
+    const { verifyRecipientOtp } = await import('./recipient-verification');
 
-        const result = await verifyRecipientOtp({
-            recipientId: request.recipientId,
-            inputOtp: request.code,
-        });
-
-        return { ...result, level: this.level };
+    if (!request.code) {
+      return { status: 'malformed' };
     }
 
-    async hasVerifiedSession(request: { recipientId: number }): Promise<boolean> {
-        const { hasVerifiedRecipientOtp } = await import('./recipient-verification');
+    const result = await verifyRecipientOtp({
+      recipientId: request.recipientId,
+      inputOtp: request.code,
+    });
 
-        return hasVerifiedRecipientOtp({ recipientId: request.recipientId });
-    }
+    return { ...result, level: this.level };
+  }
+
+  async hasVerifiedSession(request: { recipientId: number }): Promise<boolean> {
+    const { hasVerifiedRecipientOtp } = await import('./recipient-verification');
+
+    return hasVerifiedRecipientOtp({ recipientId: request.recipientId });
+  }
 }

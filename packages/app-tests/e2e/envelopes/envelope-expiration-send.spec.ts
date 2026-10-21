@@ -281,6 +281,6 @@ test('[ENVELOPE_EXPIRATION]: resending refreshes expiresAt', async ({ page }) =>
     });
 
     expect(updatedRecipient.expiresAt).not.toBeNull();
-    expect(updatedRecipient.expiresAt!.getTime()).toBeGreaterThan(initialExpiresAt.getTime());
+    expect(updatedRecipient.expiresAt?.getTime()).toBeGreaterThan(initialExpiresAt.getTime());
   }).toPass({ timeout: 10_000 });
 });

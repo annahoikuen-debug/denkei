@@ -42,7 +42,7 @@ export const VerifyEmailBanner = ({ email }: VerifyEmailBannerProps) => {
 
       setIsOpen(false);
       setTimeout(() => setIsButtonDisabled(false), RESEND_CONFIRMATION_EMAIL_TIMEOUT);
-    } catch (err) {
+    } catch (_err) {
       setIsButtonDisabled(false);
 
       toast({
@@ -62,7 +62,7 @@ export const VerifyEmailBanner = ({ email }: VerifyEmailBannerProps) => {
     const emailVerificationDialogLastShown = localStorage.getItem('emailVerificationDialogLastShown');
 
     if (emailVerificationDialogLastShown) {
-      const lastShownTimestamp = parseInt(emailVerificationDialogLastShown);
+      const lastShownTimestamp = parseInt(emailVerificationDialogLastShown, 10);
 
       if (Date.now() - lastShownTimestamp < ONE_DAY) {
         return;

@@ -25,38 +25,38 @@ export const SESSION_GRACE_PERIOD_SECONDS = 180;
  * @returns セッション識別子
  */
 export const startSigningSession = async ({
-    recipientId,
-    sessionKey,
-    now = new Date(),
+  recipientId,
+  sessionKey,
+  now = new Date(),
 }: {
-    recipientId: number;
-    /** トークン+デバイス識別子のハッシュ */
-    sessionKey: string;
-    now?: Date;
+  recipientId: number;
+  /** トークン+デバイス識別子のハッシュ */
+  sessionKey: string;
+  now?: Date;
 }): Promise<string> => {
-    const graceCutoff = new Date(now.getTime() - SESSION_GRACE_PERIOD_SECONDS * 1000);
+  const graceCutoff = new Date(now.getTime() - SESSION_GRACE_PERIOD_SECONDS * 1000);
 
-    // 猶予時間を超えた古いセッションを失効(consumedAt 設定)
-    await prisma.recipientVerificationToken.updateMany({
-        where: {
-            recipientId,
-            authType: SIGNING_SESSION_AUTH_TYPE,
-            consumedAt: null,
-            createdAt: { lt: graceCutoff },
-        },
-        data: { consumedAt: now },
-    });
+  // 猶予時間を超えた古いセッションを失効(consumedAt 設定)
+  await prisma.recipientVerificationToken.updateMany({
+    where: {
+      recipientId,
+      authType: SIGNING_SESSION_AUTH_TYPE,
+      consumedAt: null,
+      createdAt: { lt: graceCutoff },
+    },
+    data: { consumedAt: now },
+  });
 
-    const session = await prisma.recipientVerificationToken.create({
-        data: {
-            recipientId,
-            authType: SIGNING_SESSION_AUTH_TYPE,
-            tokenHash: sessionKey,
-            expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // 24時間
-        },
-    });
+  const session = await prisma.recipientVerificationToken.create({
+    data: {
+      recipientId,
+      authType: SIGNING_SESSION_AUTH_TYPE,
+      tokenHash: sessionKey,
+      expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // 24時間
+    },
+  });
 
-    return session.id;
+  return session.id;
 };
 
 /**
@@ -64,26 +64,26 @@ export const startSigningSession = async ({
  * 猶予時間内の同一セッションキーは再開(アクティブ)扱い。
  */
 export const isSigningSessionActive = async ({
-    recipientId,
-    sessionKey,
-    now = new Date(),
+  recipientId,
+  sessionKey,
+  now = new Date(),
 }: {
-    recipientId: number;
-    sessionKey: string;
-    now?: Date;
+  recipientId: number;
+  sessionKey: string;
+  now?: Date;
 }): Promise<boolean> => {
-    const graceCutoff = new Date(now.getTime() - SESSION_GRACE_PERIOD_SECONDS * 1000);
+  const graceCutoff = new Date(now.getTime() - SESSION_GRACE_PERIOD_SECONDS * 1000);
 
-    const activeSession = await prisma.recipientVerificationToken.findFirst({
-        where: {
-            recipientId,
-            authType: SIGNING_SESSION_AUTH_TYPE,
-            tokenHash: sessionKey,
-            consumedAt: null,
-            createdAt: { gte: graceCutoff },
-            expiresAt: { gte: now },
-        },
-    });
+  const activeSession = await prisma.recipientVerificationToken.findFirst({
+    where: {
+      recipientId,
+      authType: SIGNING_SESSION_AUTH_TYPE,
+      tokenHash: sessionKey,
+      consumedAt: null,
+      createdAt: { gte: graceCutoff },
+      expiresAt: { gte: now },
+    },
+  });
 
-    return activeSession !== null;
+  return activeSession !== null;
 };

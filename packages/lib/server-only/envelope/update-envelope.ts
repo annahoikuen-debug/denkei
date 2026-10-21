@@ -79,7 +79,7 @@ export const updateEnvelope = async ({
     });
   }
 
-  assertEnvelopeMutable(envelope);
+  await assertEnvelopeMutable(envelope);
 
   if (meta.signingOrder !== undefined) {
     assertCompatibleSigningOrder({
@@ -201,11 +201,11 @@ export const updateEnvelope = async ({
   const isGlobalActionSame =
     documentGlobalActionAuth === undefined || isDeepEqual(documentGlobalActionAuth, newGlobalActionAuth);
   const isDocumentVisibilitySame = data.visibility === undefined || data.visibility === envelope.visibility;
-  const isFolderSame = data.folderId === undefined || data.folderId === envelope.folderId;
-  const isTemplateTypeSame = data.templateType === undefined || data.templateType === envelope.templateType;
-  const isPublicDescriptionSame =
+  const _isFolderSame = data.folderId === undefined || data.folderId === envelope.folderId;
+  const _isTemplateTypeSame = data.templateType === undefined || data.templateType === envelope.templateType;
+  const _isPublicDescriptionSame =
     data.publicDescription === undefined || data.publicDescription === envelope.publicDescription;
-  const isPublicTitleSame = data.publicTitle === undefined || data.publicTitle === envelope.publicTitle;
+  const _isPublicTitleSame = data.publicTitle === undefined || data.publicTitle === envelope.publicTitle;
 
   const auditLogs: CreateDocumentAuditLogDataResponse[] = [];
 

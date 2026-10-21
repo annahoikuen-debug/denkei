@@ -333,9 +333,9 @@ export const createDocumentFromDirectTemplate = async ({
         derivedRecipientActionAuth,
         signature: isSignatureField
           ? {
-            signatureImageAsBase64,
-            typedSignature,
-          }
+              signatureImageAsBase64,
+              typedSignature,
+            }
           : null,
       };
     }),
@@ -669,8 +669,8 @@ export const createDocumentFromDirectTemplate = async ({
               .exhaustive(),
             fieldSecurity: derivedRecipientActionAuth
               ? {
-                type: derivedRecipientActionAuth,
-              }
+                  type: derivedRecipientActionAuth,
+                }
               : undefined,
           },
         }),

@@ -42,7 +42,7 @@ export const OrganisationBillingBanner = () => {
       window.open(redirectUrl, '_blank');
 
       setIsOpen(false);
-    } catch (err) {
+    } catch (_err) {
       toast({
         title: _(msg`Something went wrong`),
         description: _(

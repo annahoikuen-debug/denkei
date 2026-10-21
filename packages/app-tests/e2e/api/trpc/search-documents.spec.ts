@@ -147,7 +147,7 @@ test.describe('Document Search - Visibility', () => {
 
     expect(adminData).not.toBeNull();
     expect(adminData).toHaveLength(1);
-    expect(adminData![0].title).toBe('Admin Document for Unique Recipient');
+    expect(adminData?.[0].title).toBe('Admin Document for Unique Recipient');
 
     await apiSignout({ page });
 
@@ -200,7 +200,7 @@ test.describe('Document Search - Cross-Team Isolation', () => {
     const { data } = await trpcDocumentSearch(page, 'Unique');
 
     expect(data).not.toBeNull();
-    const titles = data!.map((d) => d.title);
+    const titles = data?.map((d) => d.title);
 
     expect(titles).toContain('Unique Team A Document');
     expect(titles).not.toContain('Unique Team B Document');
@@ -237,7 +237,7 @@ test.describe('Document Search - Cross-Team Isolation', () => {
     const { data } = await trpcDocumentSearch(page, '%');
 
     expect(data).not.toBeNull();
-    expect(data!.map((d) => d.title)).not.toContain('Wildcard Doc B');
+    expect(data?.map((d) => d.title)).not.toContain('Wildcard Doc B');
 
     await apiSignout({ page });
   });
@@ -271,7 +271,7 @@ test.describe('Document Search - Cross-Team Isolation', () => {
     const { data } = await trpcDocumentSearch(page, '_');
 
     expect(data).not.toBeNull();
-    expect(data!.map((d) => d.title)).not.toContain('Underscore B');
+    expect(data?.map((d) => d.title)).not.toContain('Underscore B');
 
     await apiSignout({ page });
   });
@@ -293,11 +293,11 @@ test.describe('Document Search - Recipient', () => {
     const { data } = await trpcDocumentSearch(page, 'Recipient Search Test');
 
     expect(data).not.toBeNull();
-    expect(data!.length).toBeGreaterThanOrEqual(1);
+    expect(data?.length).toBeGreaterThanOrEqual(1);
 
-    const result = data!.find((d) => d.title === 'Recipient Search Test Doc');
+    const result = data?.find((d) => d.title === 'Recipient Search Test Doc');
     expect(result).toBeDefined();
-    expect(result!.path).toMatch(/^\/sign\/.+/);
+    expect(result?.path).toMatch(/^\/sign\/.+/);
 
     await apiSignout({ page });
   });
@@ -327,12 +327,12 @@ test.describe('Document Search - Token Masking', () => {
     const { data } = await trpcDocumentSearch(page, 'Token Leakage Test');
 
     expect(data).not.toBeNull();
-    expect(data!.length).toBeGreaterThanOrEqual(1);
+    expect(data?.length).toBeGreaterThanOrEqual(1);
 
-    const result = data!.find((d) => d.title === 'Token Leakage Test Document');
+    const result = data?.find((d) => d.title === 'Token Leakage Test Document');
     expect(result).toBeDefined();
-    expect(result!.value).not.toContain(signingToken);
-    expect(result!.path).not.toContain('/sign/');
+    expect(result?.value).not.toContain(signingToken);
+    expect(result?.path).not.toContain('/sign/');
 
     await apiSignout({ page });
 
@@ -342,12 +342,12 @@ test.describe('Document Search - Token Masking', () => {
     const { data: recipientData } = await trpcDocumentSearch(page, 'Token Leakage Test');
 
     expect(recipientData).not.toBeNull();
-    expect(recipientData!.length).toBeGreaterThanOrEqual(1);
+    expect(recipientData?.length).toBeGreaterThanOrEqual(1);
 
-    const recipientResult = recipientData!.find((d) => d.title === 'Token Leakage Test Document');
+    const recipientResult = recipientData?.find((d) => d.title === 'Token Leakage Test Document');
     expect(recipientResult).toBeDefined();
-    expect(recipientResult!.path).toBe(`/sign/${signingToken}`);
-    expect(recipientResult!.value).not.toContain(signingToken);
+    expect(recipientResult?.path).toBe(`/sign/${signingToken}`);
+    expect(recipientResult?.value).not.toContain(signingToken);
 
     await apiSignout({ page });
   });
@@ -371,12 +371,12 @@ test.describe('Document Search - Token Masking', () => {
     const { data } = await trpcDocumentSearch(page, 'Multi Recipient Token');
 
     expect(data).not.toBeNull();
-    const result = data!.find((d) => d.title === 'Multi Recipient Token Test');
+    const result = data?.find((d) => d.title === 'Multi Recipient Token Test');
     expect(result).toBeDefined();
 
     for (const r of recipients) {
-      expect(result!.value).not.toContain(r.token);
-      expect(result!.path).not.toContain(r.token);
+      expect(result?.value).not.toContain(r.token);
+      expect(result?.path).not.toContain(r.token);
     }
 
     await apiSignout({ page });
@@ -408,7 +408,7 @@ test.describe('Document Search - Filtering', () => {
 
     expect(data).not.toBeNull();
     expect(data).toHaveLength(1);
-    expect(data![0].title).toBe('Active Deletable Document');
+    expect(data?.[0].title).toBe('Active Deletable Document');
 
     await apiSignout({ page });
   });
@@ -445,7 +445,7 @@ test.describe('Document Search - Filtering', () => {
 
     expect(data).not.toBeNull();
     expect(data).toHaveLength(1);
-    expect(data![0].title).toBe('ExternalId Test Doc');
+    expect(data?.[0].title).toBe('ExternalId Test Doc');
 
     await apiSignout({ page });
   });

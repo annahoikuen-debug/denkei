@@ -115,7 +115,7 @@ export const adminFindDocuments = async ({ query, page = 1, perPage = 10 }: Admi
   }
 
   if (query) {
-    const isQueryAnInteger = !isNaN(parseInt(query));
+    const isQueryAnInteger = !Number.isNaN(parseInt(query, 10));
 
     if (isQueryAnInteger) {
       termFilters = {

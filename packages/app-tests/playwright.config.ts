@@ -1,7 +1,7 @@
+import os from 'node:os';
+import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
-import os from 'os';
-import path from 'path';
 
 function calculateWorkers() {
   const total = os.cpus().length;

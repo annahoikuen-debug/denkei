@@ -13,7 +13,7 @@ export const legacyServiceAccountEmail = () => {
     const { hostname } = new URL(process.env.NEXT_PUBLIC_WEBAPP_URL || 'http://localhost:3000');
 
     return `serviceaccount@${hostname}`;
-  } catch (error) {
+  } catch (_error) {
     return LEGACY_SERVICE_ACCOUNT_EMAIL;
   }
 };

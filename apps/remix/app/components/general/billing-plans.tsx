@@ -51,7 +51,7 @@ export const BillingPlans = ({ plans }: BillingPlansProps) => {
     const prices = [];
 
     for (const plan of Object.values(plans)) {
-      if (plan[interval] && plan[interval].isVisibleInApp) {
+      if (plan[interval]?.isVisibleInApp) {
         prices.push({
           ...plan[interval],
           claim: plan.id,
@@ -88,7 +88,7 @@ export const BillingPlans = ({ plans }: BillingPlansProps) => {
                 <CardTitle>{price.product.name}</CardTitle>
 
                 <div className="mt-2 font-medium text-lg text-muted-foreground">
-                  {price.friendlyPrice + ' '}
+                  {`${price.friendlyPrice} `}
                   <span className="text-xs">
                     {interval === 'monthlyPrice' ? <Trans>per month</Trans> : <Trans>per year</Trans>}
                   </span>

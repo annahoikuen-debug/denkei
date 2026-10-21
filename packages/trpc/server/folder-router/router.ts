@@ -174,7 +174,7 @@ export const folderRouter = router({
             folderId: parentId,
             type,
           });
-        } catch (error) {
+        } catch (_error) {
           throw new AppError(AppErrorCode.NOT_FOUND, {
             message: 'Parent folder not found',
           });

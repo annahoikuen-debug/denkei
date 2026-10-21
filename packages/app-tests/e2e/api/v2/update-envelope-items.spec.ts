@@ -279,7 +279,7 @@ test.describe('Update envelope items', () => {
 
     expect(auditLog).not.toBeNull();
 
-    const auditData = auditLog!.data as Record<string, unknown>;
+    const auditData = auditLog?.data as Record<string, unknown>;
 
     expect(auditData.envelopeItemId).toBe(envelopeItem.id);
 

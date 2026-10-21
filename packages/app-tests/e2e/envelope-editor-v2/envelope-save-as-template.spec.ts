@@ -204,16 +204,16 @@ test.describe('document editor', () => {
 
     // CRITICAL: Verify the secondaryId uses the template_ prefix, not document_.
     // This confirms incrementTemplateId was called, not incrementDocumentId.
-    expect(createdTemplate!.secondaryId).toMatch(/^template_\d+$/);
-    expect(createdTemplate!.type).toBe(EnvelopeType.TEMPLATE);
+    expect(createdTemplate?.secondaryId).toMatch(/^template_\d+$/);
+    expect(createdTemplate?.type).toBe(EnvelopeType.TEMPLATE);
 
     // Verify recipients were included.
-    expect(createdTemplate!.recipients.length).toBe(1);
-    expect(createdTemplate!.recipients[0].email).toBe(surface.userEmail);
+    expect(createdTemplate?.recipients.length).toBe(1);
+    expect(createdTemplate?.recipients[0].email).toBe(surface.userEmail);
 
     // Verify fields were included.
-    expect(createdTemplate!.recipients[0].fields.length).toBe(1);
-    expect(createdTemplate!.recipients[0].fields[0].type).toBe(FieldType.SIGNATURE);
+    expect(createdTemplate?.recipients[0].fields.length).toBe(1);
+    expect(createdTemplate?.recipients[0].fields[0].type).toBe(FieldType.SIGNATURE);
   });
 
   test('save document as template without recipients', async ({ page }) => {
@@ -264,10 +264,10 @@ test.describe('document editor', () => {
     expect(createdTemplate).toBeDefined();
 
     // CRITICAL: Verify the secondaryId uses the template_ prefix.
-    expect(createdTemplate!.secondaryId).toMatch(/^template_\d+$/);
+    expect(createdTemplate?.secondaryId).toMatch(/^template_\d+$/);
 
     // Verify no recipients were included.
-    expect(createdTemplate!.recipients.length).toBe(0);
+    expect(createdTemplate?.recipients.length).toBe(0);
   });
 
   test('save document as template without fields but with recipients', async ({ page }) => {
@@ -321,14 +321,14 @@ test.describe('document editor', () => {
     expect(createdTemplate).toBeDefined();
 
     // CRITICAL: Verify the secondaryId uses the template_ prefix.
-    expect(createdTemplate!.secondaryId).toMatch(/^template_\d+$/);
+    expect(createdTemplate?.secondaryId).toMatch(/^template_\d+$/);
 
     // Verify recipients were included.
-    expect(createdTemplate!.recipients.length).toBe(1);
-    expect(createdTemplate!.recipients[0].email).toBe(recipientEmail);
+    expect(createdTemplate?.recipients.length).toBe(1);
+    expect(createdTemplate?.recipients[0].email).toBe(recipientEmail);
 
     // Verify no fields were included.
-    expect(createdTemplate!.recipients[0].fields.length).toBe(0);
+    expect(createdTemplate?.recipients[0].fields.length).toBe(0);
   });
 });
 
@@ -383,12 +383,12 @@ test.describe('documents table', () => {
     expect(createdTemplate).toBeDefined();
 
     // CRITICAL: Verify the secondaryId uses the template_ prefix.
-    expect(createdTemplate!.secondaryId).toMatch(/^template_\d+$/);
-    expect(createdTemplate!.type).toBe(EnvelopeType.TEMPLATE);
+    expect(createdTemplate?.secondaryId).toMatch(/^template_\d+$/);
+    expect(createdTemplate?.type).toBe(EnvelopeType.TEMPLATE);
 
     // Verify recipients and fields were included (defaults are both checked).
-    expect(createdTemplate!.recipients.length).toBe(1);
-    expect(createdTemplate!.recipients[0].fields.length).toBe(1);
+    expect(createdTemplate?.recipients.length).toBe(1);
+    expect(createdTemplate?.recipients[0].fields.length).toBe(1);
   });
 });
 
@@ -436,15 +436,15 @@ test.describe('document index page', () => {
     expect(createdTemplate).toBeDefined();
 
     // CRITICAL: Verify the secondaryId uses the template_ prefix.
-    expect(createdTemplate!.secondaryId).toMatch(/^template_\d+$/);
-    expect(createdTemplate!.type).toBe(EnvelopeType.TEMPLATE);
+    expect(createdTemplate?.secondaryId).toMatch(/^template_\d+$/);
+    expect(createdTemplate?.type).toBe(EnvelopeType.TEMPLATE);
   });
 });
 
 test.describe('legacy ID correctness', () => {
   test('save as template uses template counter, not document counter', async ({ page }) => {
     // Record the current counter values before the operation.
-    const [documentCounterBefore, templateCounterBefore] = await Promise.all([
+    const [_documentCounterBefore, templateCounterBefore] = await Promise.all([
       prisma.counter.findUnique({ where: { id: 'document' } }),
       prisma.counter.findUnique({ where: { id: 'template' } }),
     ]);
@@ -461,14 +461,14 @@ test.describe('legacy ID correctness', () => {
     await expect(page).toHaveURL(/\/templates\/.*\/edit/);
 
     // Record the counter values after the operation.
-    const [documentCounterAfter, templateCounterAfter] = await Promise.all([
+    const [_documentCounterAfter, templateCounterAfter] = await Promise.all([
       prisma.counter.findUnique({ where: { id: 'document' } }),
       prisma.counter.findUnique({ where: { id: 'template' } }),
     ]);
 
     // The template counter MUST have incremented (at least once - could be more due to
     // the seedBlankDocument call in openDocumentEnvelopeEditor seeding other templates).
-    expect(templateCounterAfter!.value).toBeGreaterThan(templateCounterBefore!.value);
+    expect(templateCounterAfter?.value).toBeGreaterThan(templateCounterBefore?.value);
 
     // Verify the created template's secondaryId matches the template counter.
     const createdTemplate = await prisma.envelope.findFirst({
@@ -481,7 +481,7 @@ test.describe('legacy ID correctness', () => {
     });
 
     expect(createdTemplate).not.toBeNull();
-    expect(createdTemplate!.secondaryId).toBe(`template_${templateCounterAfter!.value}`);
-    expect(createdTemplate!.secondaryId).not.toMatch(/^document_/);
+    expect(createdTemplate?.secondaryId).toBe(`template_${templateCounterAfter?.value}`);
+    expect(createdTemplate?.secondaryId).not.toMatch(/^document_/);
   });
 });

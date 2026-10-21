@@ -104,7 +104,7 @@ const AdminUserPage = ({ user }: { user: TGetUserResponse }) => {
         description: _(msg`Your profile has been updated.`),
         duration: 5000,
       });
-    } catch (e) {
+    } catch (_e) {
       toast({
         title: _(msg`Error`),
         description: _(msg`An error occurred while updating your profile.`),
@@ -228,8 +228,8 @@ const AdminUserPage = ({ user }: { user: TGetUserResponse }) => {
       </Accordion>
 
       <div className="mt-16 flex flex-col gap-4">
-        {user && user.twoFactorEnabled && <AdminUserResetTwoFactorDialog user={user} />}
-        {user && user.disabled && <AdminUserEnableDialog userToEnable={user} />}
+        {user?.twoFactorEnabled && <AdminUserResetTwoFactorDialog user={user} />}
+        {user?.disabled && <AdminUserEnableDialog userToEnable={user} />}
         {user && !user.disabled && <AdminUserDisableDialog userToDisable={user} />}
         {user && <AdminUserDeleteDialog user={user} />}
       </div>

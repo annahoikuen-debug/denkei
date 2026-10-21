@@ -62,7 +62,7 @@ const ZNumberFieldFormSchema = ZNumberFieldMeta.pick({
       // A read-only field must have a value greater than 0
       if (data.readOnly && data.value !== undefined && data.value !== '') {
         const numberValue = parseFloat(data.value);
-        return !isNaN(numberValue) && numberValue > 0;
+        return !Number.isNaN(numberValue) && numberValue > 0;
       }
       return !data.readOnly || (data.value !== undefined && data.value !== '');
     },

@@ -165,7 +165,7 @@ export const EditorFieldRadioForm = ({
             </div>
 
             <ul className="space-y-2">
-              {(formValues.values || []).map((value, index) => (
+              {(formValues.values || []).map((_value, index) => (
                 <li key={`radio-value-${index}`} className="flex flex-row items-center gap-2">
                   <FormField
                     control={form.control}

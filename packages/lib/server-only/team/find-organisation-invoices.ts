@@ -16,7 +16,7 @@ export const findOrganisationInvoices = async ({ userId, teamId }: FindTeamInvoi
         some: {
           userId,
           role: {
-            in: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+            in: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
           },
         },
       },

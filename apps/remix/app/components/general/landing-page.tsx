@@ -1,3 +1,4 @@
+import { PLANS } from '@documenso/lib/constants/plans';
 import { buildCounterpartyPrintHtml } from '@documenso/lib/universal/counterparty-guide';
 import { generateElectronicSealDataUrl } from '@documenso/lib/universal/seal-image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@documenso/ui/primitives/accordion';
@@ -35,7 +36,7 @@ export function LandingPage() {
 
   const [sealName, setSealName] = useState('佐藤');
   const [sealColor, setSealColor] = useState<'vermilion' | 'black' | 'navy'>('vermilion');
-  const [isAnnual, setIsAnnual] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(true);
   const [monthlyContracts, setMonthlyContracts] = useState<number>(30);
   const [includeRegisteredMail, setIncludeRegisteredMail] = useState<boolean>(false);
 
@@ -67,9 +68,9 @@ export function LandingPage() {
       return 0;
     }
     if (monthlyContracts <= 100) {
-      return 2980 * 12; // 35,760
+      return PLANS.STANDARD.monthlyPriceJpy * 12;
     }
-    return 4980 * 12; // 59,760
+    return PLANS.BUSINESS.monthlyPriceJpy * 12;
   }, [monthlyContracts]);
 
   const annualSavings = Math.max(0, annualPaperCost - denkeiAnnualCost);
@@ -91,8 +92,14 @@ export function LandingPage() {
     return `驚異の年間【約${Math.round(annualSavings / 10000)}万円】削減＆【約${annualHoursSaved}時間】の時短！ 経営効率が一変するでござる！`;
   }, [monthlyContracts, annualSavings, annualHoursSaved]);
 
-  const standardPrice = isAnnual ? '2,480' : '2,980';
-  const businessPrice = isAnnual ? '3,980' : '4,980';
+  const formatJpy = (amount: number) => amount.toLocaleString('ja-JP');
+
+  const standardPrice = isAnnual
+    ? formatJpy(Math.round(PLANS.STANDARD.annualPriceJpy / 12))
+    : formatJpy(PLANS.STANDARD.monthlyPriceJpy);
+  const businessPrice = isAnnual
+    ? formatJpy(Math.round(PLANS.BUSINESS.annualPriceJpy / 12))
+    : formatJpy(PLANS.BUSINESS.monthlyPriceJpy);
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased selection:bg-red-500/20 selection:text-red-900 dark:selection:text-red-100">
@@ -1191,13 +1198,18 @@ export function LandingPage() {
                   <span className="font-bold text-muted-foreground text-xs">（税込）/ 月</span>
                 </div>
                 <div className="mt-1 font-semibold text-red-600 text-xs">
-                  {isAnnual ? '年額一括 ¥29,760（実質2ヶ月無料・月100件/月）' : '月100件まで定額込み（月額2,980円）'}
+                  {isAnnual
+                    ? `年額一括 ¥${formatJpy(PLANS.STANDARD.annualPriceJpy)}（実質2ヶ月無料・月120件/月）`
+                    : '月100件まで定額込み（月額2,980円）'}
                 </div>
 
                 <div className="mt-6 flex-1 space-y-2.5 font-bold text-sm">
                   <div className="flex items-center gap-2 text-red-600">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0" />{' '}
-                    {isAnnual ? '月100件まで送信可能（年払いは2ヶ月実質無料）' : '月100件まで送信可能'}
+                    {isAnnual ? '月120件まで送信可能（年払いは2ヶ月実質無料）' : '月100件まで送信可能'}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> チームメンバー3名まで
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-red-600" /> 電帳法 事務処理規程キット
@@ -1237,7 +1249,9 @@ export function LandingPage() {
                   <span className="font-bold text-muted-foreground text-xs">（税込）/ 月</span>
                 </div>
                 <div className="mt-1 font-semibold text-foreground/80 text-xs">
-                  {isAnnual ? '年額一括 ¥49,800（実質2ヶ月無料・無制限）' : '大量送信・チーム運用'}
+                  {isAnnual
+                    ? `年額一括 ¥${formatJpy(PLANS.BUSINESS.annualPriceJpy)}（実質2ヶ月無料・無制限）`
+                    : '大量送信・チーム運用'}
                 </div>
 
                 <div className="mt-6 flex-1 space-y-2 font-bold text-sm">
@@ -1307,7 +1321,8 @@ export function LandingPage() {
                 Q. 月100件を超えた場合はどうなりますか？
               </AccordionTrigger>
               <AccordionContent className="pb-5 text-base text-muted-foreground leading-relaxed">
-                勝手に追加課金されることはありません。制限がかかる安全設計ですので、必要に応じて無制限プラン（月額4,980円）にいつでもアップグレードできます。
+                勝手に追加課金されることはありません。制限がかかる安全設計ですので、必要に応じて無制限プラン（月額
+                {formatJpy(PLANS.BUSINESS.monthlyPriceJpy)}円）にいつでもアップグレードできます。
               </AccordionContent>
             </AccordionItem>
 
@@ -1421,9 +1436,17 @@ export function LandingPage() {
           </div>
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-4">
             <div>© 2026 デンケイ (Denkei). 電子帳簿保存法第3条・第4条準拠 / インボイス制度対応</div>
-            <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
-              利用規約
-            </Link>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
+                利用規約
+              </Link>
+              <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">
+                プライバシーポリシー
+              </Link>
+              <Link to="/tokushoho" className="underline underline-offset-2 hover:text-foreground">
+                特定商取引法に基づく表記
+              </Link>
+            </div>
           </div>
         </div>
       </footer>

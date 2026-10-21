@@ -282,7 +282,7 @@ export const EnvelopeSignerCompleteDialog = ({
    */
   const handleDirectTemplateCompleteClick = async (
     nextSigner?: { name: string; email: string },
-    accessAuthOptions?: TRecipientAccessAuth,
+    _accessAuthOptions?: TRecipientAccessAuth,
     recipientDetails?: { name: string; email: string },
   ) => {
     try {

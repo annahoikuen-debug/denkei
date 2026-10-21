@@ -104,7 +104,7 @@ export const findDocumentAuditLogs = async ({
 
   if (parsedData.length > perPage) {
     const nextItem = parsedData.pop();
-    nextCursor = nextItem!.id;
+    nextCursor = nextItem?.id;
   }
 
   return {

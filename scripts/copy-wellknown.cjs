@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-const path = require('path');
-const fs = require('fs');
+const path = require('node:path');
+const fs = require('node:fs');
 
 const wellKnownPath = path.join(__dirname, '../.well-known');
 

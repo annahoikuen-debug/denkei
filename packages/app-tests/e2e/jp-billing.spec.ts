@@ -20,8 +20,10 @@ test.describe('[JP] Billing & Stripe Integration', () => {
     expect(PLANS.STANDARD.monthlyDocumentLimit).toBe(100);
 
     // BUSINESS プランの価格・機能定義
-    expect(PLANS.BUSINESS.monthlyPriceJpy).toBe(4980);
+    expect(PLANS.BUSINESS.monthlyPriceJpy).toBe(6980);
     expect(PLANS.BUSINESS.monthlyDocumentLimit).toBeNull(); // 無制限
+    expect(PLANS.BUSINESS.maxMembers).toBeNull(); // メンバー無制限
+    expect(PLANS.STANDARD.maxMembers).toBe(3);
   });
 
   test('upgrades team from FREE to STANDARD upon subscription activation', async () => {
@@ -37,8 +39,8 @@ test.describe('[JP] Billing & Stripe Integration', () => {
     await prisma.subscription.create({
       data: {
         organisationId: team.organisationId,
-        customerId: 'cus_test_' + Date.now(),
-        planId: 'sub_standard_' + Date.now(),
+        customerId: `cus_test_${Date.now()}`,
+        planId: `sub_standard_${Date.now()}`,
         priceId: standardPriceId,
         status: SubscriptionStatus.ACTIVE,
         periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -59,8 +61,8 @@ test.describe('[JP] Billing & Stripe Integration', () => {
     await prisma.subscription.create({
       data: {
         organisationId: team.organisationId,
-        customerId: 'cus_business_' + Date.now(),
-        planId: 'sub_business_' + Date.now(),
+        customerId: `cus_business_${Date.now()}`,
+        planId: `sub_business_${Date.now()}`,
         priceId: 'price_business_test_456',
         status: SubscriptionStatus.ACTIVE,
         periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),

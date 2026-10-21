@@ -2,7 +2,7 @@ import { prisma } from '@documenso/prisma';
 
 import { DOCUMENT_AUDIT_LOG_TYPE, DOCUMENT_EMAIL_TYPE } from '../../types/document-audit-logs';
 import { parseDocumentAuditLogData } from '../../utils/document-audit-logs';
-import { verifyAuditLogHashChain, type AuditLogHashChainEntry } from '../document-audit-log-hash';
+import { type AuditLogHashChainEntry, verifyAuditLogHashChain } from '../document-audit-log-hash';
 
 export type GetDocumentCertificateAuditLogsOptions = {
   envelopeId: string;

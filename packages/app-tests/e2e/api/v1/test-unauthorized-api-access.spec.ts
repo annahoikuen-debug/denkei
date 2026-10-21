@@ -93,7 +93,7 @@ test.describe('Document Access API V1', () => {
         },
       );
 
-      const res = await resB.json();
+      const _res = await resB.json();
 
       expect(resB.ok()).toBeFalsy();
       expect(resB.status()).toBe(404);
@@ -386,7 +386,7 @@ test.describe('Document Access API V1', () => {
       });
 
       const patchRes = await request.patch(
-        `${WEBAPP_BASE_URL}/api/v1/documents/${mapSecondaryIdToDocumentId(documentA.secondaryId)}/recipients/${recipient!.id}`,
+        `${WEBAPP_BASE_URL}/api/v1/documents/${mapSecondaryIdToDocumentId(documentA.secondaryId)}/recipients/${recipient?.id}`,
         {
           headers: { Authorization: `Bearer ${tokenB}` },
           data: {
@@ -427,7 +427,7 @@ test.describe('Document Access API V1', () => {
       });
 
       const patchRes = await request.patch(
-        `${WEBAPP_BASE_URL}/api/v1/documents/${mapSecondaryIdToDocumentId(documentA.secondaryId)}/recipients/${recipient!.id}`,
+        `${WEBAPP_BASE_URL}/api/v1/documents/${mapSecondaryIdToDocumentId(documentA.secondaryId)}/recipients/${recipient?.id}`,
         {
           headers: { Authorization: `Bearer ${tokenA}` },
           data: {
@@ -472,7 +472,7 @@ test.describe('Document Access API V1', () => {
       });
 
       const deleteRes = await request.delete(
-        `${WEBAPP_BASE_URL}/api/v1/documents/${mapSecondaryIdToDocumentId(documentA.secondaryId)}/recipients/${recipient!.id}`,
+        `${WEBAPP_BASE_URL}/api/v1/documents/${mapSecondaryIdToDocumentId(documentA.secondaryId)}/recipients/${recipient?.id}`,
         {
           headers: { Authorization: `Bearer ${tokenB}` },
           data: {},
@@ -504,7 +504,7 @@ test.describe('Document Access API V1', () => {
       });
 
       const deleteRes = await request.delete(
-        `${WEBAPP_BASE_URL}/api/v1/documents/${mapSecondaryIdToDocumentId(documentA.secondaryId)}/recipients/${recipient!.id}`,
+        `${WEBAPP_BASE_URL}/api/v1/documents/${mapSecondaryIdToDocumentId(documentA.secondaryId)}/recipients/${recipient?.id}`,
         {
           headers: { Authorization: `Bearer ${tokenA}` },
           data: {},
@@ -544,7 +544,7 @@ test.describe('Document Access API V1', () => {
         {
           headers: { Authorization: `Bearer ${tokenB}` },
           data: {
-            recipientId: documentRecipient!.id,
+            recipientId: documentRecipient?.id,
             type: 'SIGNATURE',
             pageNumber: 1,
             pageX: 1,
@@ -584,7 +584,7 @@ test.describe('Document Access API V1', () => {
         {
           headers: { Authorization: `Bearer ${tokenA}` },
           data: {
-            recipientId: documentRecipient!.id,
+            recipientId: documentRecipient?.id,
             type: 'SIGNATURE',
             pageNumber: 1,
             pageX: 1,
@@ -724,7 +724,7 @@ test.describe('Document Access API V1', () => {
         data: {
           envelopeId: documentA.id,
           envelopeItemId: firstEnvelopeItem.id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: FieldType.TEXT,
           page: 1,
           positionX: 5,
@@ -745,7 +745,7 @@ test.describe('Document Access API V1', () => {
         {
           headers: { Authorization: `Bearer ${tokenB}` },
           data: {
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: FieldType.TEXT,
             pageNumber: 1,
             pageX: 99,
@@ -788,7 +788,7 @@ test.describe('Document Access API V1', () => {
         data: {
           envelopeId: documentA.id,
           envelopeItemId: firstEnvelopeItem.id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: FieldType.TEXT,
           page: 1,
           positionX: 5,
@@ -809,7 +809,7 @@ test.describe('Document Access API V1', () => {
         {
           headers: { Authorization: `Bearer ${tokenA}` },
           data: {
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: FieldType.TEXT,
             pageNumber: 1,
             pageX: 99,
@@ -856,7 +856,7 @@ test.describe('Document Access API V1', () => {
         data: {
           envelopeId: documentA.id,
           envelopeItemId: firstEnvelopeItem.id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: FieldType.NUMBER,
           page: 1,
           positionX: 5,
@@ -909,7 +909,7 @@ test.describe('Document Access API V1', () => {
         data: {
           envelopeId: documentA.id,
           envelopeItemId: firstEnvelopeItem.id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: FieldType.NUMBER,
           page: 1,
           positionX: 5,

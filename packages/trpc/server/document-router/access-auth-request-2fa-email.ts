@@ -29,7 +29,7 @@ export const accessAuthRequest2FAEmailRoute = procedure
 
       assertRateLimit(rateLimitResult);
 
-      const user = ctx.user;
+      const _user = ctx.user;
 
       // Get document and recipient by token
       const envelope = await prisma.envelope.findFirst({

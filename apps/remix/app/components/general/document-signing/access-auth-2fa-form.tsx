@@ -70,7 +70,7 @@ export const AccessAuth2FAForm = ({ onSubmit, token, error }: AccessAuth2FAFormP
         setMillisecondsRemaining(result.expiresAt.valueOf() - Date.now());
 
         setStep('code-input');
-      } catch (error) {
+      } catch (_error) {
         toast({
           title: _(msg`An error occurred`),
           description: _(
@@ -120,7 +120,7 @@ export const AccessAuth2FAForm = ({ onSubmit, token, error }: AccessAuth2FAFormP
 
       setExpiresAt(result.expiresAt);
       setMillisecondsRemaining(result.expiresAt.valueOf() - Date.now());
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: _(msg`An error occurred`),
         description: _(

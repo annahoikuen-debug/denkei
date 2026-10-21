@@ -147,8 +147,8 @@ async function handleV1Loader({ params, request }: Route.LoaderArgs) {
   const allRecipients =
     recipient.role === RecipientRole.ASSISTANT
       ? await getRecipientsForAssistant({
-        token,
-      })
+          token,
+        })
       : [];
 
   fireAndForget(async () => {

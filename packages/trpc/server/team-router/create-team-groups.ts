@@ -28,7 +28,7 @@ export const createTeamGroupsRoute = authenticatedProcedure
       where: buildTeamWhereQuery({
         teamId,
         userId: user.id,
-        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
       }),
       include: {
         organisation: {

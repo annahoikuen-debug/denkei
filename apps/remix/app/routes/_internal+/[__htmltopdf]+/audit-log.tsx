@@ -35,7 +35,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const rawDocumentId = decryptSecondaryData(d);
 
-  if (!rawDocumentId || isNaN(Number(rawDocumentId))) {
+  if (!rawDocumentId || Number.isNaN(Number(rawDocumentId))) {
     throw redirect('/');
   }
 

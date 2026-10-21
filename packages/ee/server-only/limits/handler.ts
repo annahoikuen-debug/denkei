@@ -12,7 +12,7 @@ export const limitsHandler = async (req: Request) => {
 
     let teamId: number | null = null;
 
-    if (typeof rawTeamId === 'string' && !isNaN(parseInt(rawTeamId, 10))) {
+    if (typeof rawTeamId === 'string' && !Number.isNaN(parseInt(rawTeamId, 10))) {
       teamId = parseInt(rawTeamId, 10);
     }
 

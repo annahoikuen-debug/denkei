@@ -33,7 +33,7 @@ export const WebhookDeleteDialog = ({ webhook, children }: WebhookDeleteDialogPr
   const { _ } = useLingui();
   const { toast } = useToast();
 
-  const team = useCurrentTeam();
+  const _team = useCurrentTeam();
 
   const [open, setOpen] = useState(false);
 
@@ -67,7 +67,7 @@ export const WebhookDeleteDialog = ({ webhook, children }: WebhookDeleteDialogPr
       });
 
       setOpen(false);
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: _(msg`An unknown error occurred`),
         description: _(msg`We encountered an unknown error while attempting to delete it. Please try again later.`),

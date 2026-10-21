@@ -6,9 +6,9 @@ import type { JobDefinition } from '../../client/_internal/job';
  * フェーズ2 ステップ5: OTP 送信メールジョブ定義
  */
 const SEND_OTP_EMAIL_JOB_DEFINITION_SCHEMA = z.object({
-    recipientId: z.number(),
-    envelopeId: z.string(),
-    otpCode: z.string().regex(/^\d{6}$/),
+  recipientId: z.number(),
+  envelopeId: z.string(),
+  otpCode: z.string().regex(/^\d{6}$/),
 });
 
 export const SEND_OTP_EMAIL_JOB_DEFINITION_ID = 'send.otp-email';
@@ -27,7 +27,4 @@ export const SEND_OTP_EMAIL_JOB_DEFINITION = {
     const handler = await import('./send-otp-email.handler');
     await handler.run({ payload, io });
   },
-} as const satisfies JobDefinition<
-  typeof SEND_OTP_EMAIL_JOB_DEFINITION_ID,
-  TSendOtpEmailJobDefinition
->;
+} as const satisfies JobDefinition<typeof SEND_OTP_EMAIL_JOB_DEFINITION_ID, TSendOtpEmailJobDefinition>;

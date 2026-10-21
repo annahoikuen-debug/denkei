@@ -29,7 +29,7 @@ export const createOrganisationEmailRoute = authenticatedProcedure
         organisation: buildOrganisationWhereQuery({
           organisationId: undefined,
           userId: user.id,
-          roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
+          roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
         }),
       },
     });
@@ -40,7 +40,7 @@ export const createOrganisationEmailRoute = authenticatedProcedure
       });
     }
 
-    const allowedEmailSuffix = '@' + emailDomain.domain;
+    const allowedEmailSuffix = `@${emailDomain.domain}`;
 
     if (!email.endsWith(allowedEmailSuffix)) {
       throw new AppError(AppErrorCode.INVALID_BODY, {

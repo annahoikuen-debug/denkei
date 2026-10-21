@@ -12,6 +12,7 @@ import { nanoid } from 'nanoid';
 import { createElement } from 'react';
 
 import { getI18nInstance } from '../../client-only/providers/i18n-server';
+import { canInviteOrganisationMembers, PLANS, resolvePlanIdFromOrganisation } from '../../constants/plans';
 import { generateDatabaseId } from '../../universal/id';
 import { buildOrganisationWhereQuery } from '../../utils/organisations';
 import { renderEmailWithI18N } from '../../utils/render-email-with-i18n';
@@ -38,7 +39,7 @@ export const createOrganisationMemberInvites = async ({
     where: buildOrganisationWhereQuery({
       organisationId,
       userId,
-      roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
+      roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
     }),
     include: {
       members: {
@@ -57,6 +58,8 @@ export const createOrganisationMemberInvites = async ({
         },
       },
       organisationGlobalSettings: true,
+      subscription: true,
+      organisationClaim: true,
     },
   });
 
@@ -96,6 +99,24 @@ export const createOrganisationMemberInvites = async ({
   if (unauthorizedRoleAccess) {
     throw new AppError(AppErrorCode.UNAUTHORIZED, {
       message: 'User does not have permission to set high level roles',
+    });
+  }
+
+  const planId = resolvePlanIdFromOrganisation(organisation);
+  const inviteCheck = canInviteOrganisationMembers({
+    plan: planId,
+    currentMemberCount: organisation.members.length,
+    pendingInviteCount: organisation.invites.length,
+    newInviteCount: usersToInvite.length,
+  });
+
+  if (!inviteCheck.allowed) {
+    const limitLabel = inviteCheck.limit === null ? '無制限' : `${inviteCheck.limit}名`;
+    const userMessage = `現在のプラン（${PLANS[planId].label}）のメンバー上限（${limitLabel}）に達しました。ビジネスプランへのアップグレードでメンバーを無制限に追加できます。`;
+
+    throw new AppError(AppErrorCode.LIMIT_EXCEEDED, {
+      message: userMessage,
+      userMessage,
     });
   }
 

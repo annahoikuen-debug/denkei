@@ -58,11 +58,13 @@ export default function EmbeddingAuthoringTemplateCreatePage() {
 
       const fields = data.fields;
 
+      const documentDataPayload = configuration.documentData;
+
       const documentData = await putPdfFile(
         {
-          arrayBuffer: async () => Promise.resolve(configuration.documentData!.data.buffer),
-          name: configuration.documentData.name,
-          type: configuration.documentData.type,
+          arrayBuffer: async () => Promise.resolve(documentDataPayload.data.buffer),
+          name: documentDataPayload.name,
+          type: documentDataPayload.type,
         },
         { presignToken },
       );

@@ -1,5 +1,5 @@
+import crypto from 'node:crypto';
 import { compareSync as bcryptCompareSync, hashSync as bcryptHashSync } from '@node-rs/bcrypt';
-import crypto from 'crypto';
 
 import { SALT_ROUNDS } from '../../constants/auth';
 

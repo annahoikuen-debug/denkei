@@ -129,7 +129,7 @@ test('[WEBHOOKS]: delete webhook', async ({ page }) => {
   const webhookUrl = `https://example.com/webhook-${Date.now()}`;
 
   // Create a webhook via seeding
-  const webhook = await seedWebhook({
+  const _webhook = await seedWebhook({
     webhookUrl,
     eventTriggers: [WebhookTriggerEvents.DOCUMENT_CREATED],
     userId: user.id,

@@ -64,7 +64,7 @@ test('[RECIPIENT]: a member cannot read a field of a restricted document', async
 
   test.skip(!field, 'No field seeded on completed document');
 
-  const res = await request.get(`${API_BASE_URL}/envelope/field/${field!.id}`, {
+  const res = await request.get(`${API_BASE_URL}/envelope/field/${field?.id}`, {
     headers: { Authorization: `Bearer ${memberToken}` },
   });
 

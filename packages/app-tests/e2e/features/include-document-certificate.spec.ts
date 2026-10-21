@@ -59,7 +59,8 @@ test.describe('Signing Certificate Tests', () => {
 
     await page.waitForTimeout(1000);
 
-    await page.getByRole('button', { name: 'Sign' }).click({ force: true });
+    // 完了確認ダイアログのボタンは DocumentMeta.language に依存する(ja: 合意して電子認印を押印する / en: Sign)。
+    await page.getByRole('button', { name: /Sign|合意して電子認印を押印する/ }).click({ force: true });
     await page.waitForURL(`/sign/${recipient.token}/complete`);
 
     await page.waitForTimeout(10000);
@@ -102,7 +103,9 @@ test.describe('Signing Certificate Tests', () => {
     // Load the PDF and check number of pages
     const pdfDoc = await PDF.load(new Uint8Array(completedDocumentData));
 
-    expect(pdfDoc.getPageCount()).toBe(originalPdf.getPageCount() + 1); // Original + Certificate
+    // R-03: 既定で監査ログPDFも同梱されるため、完了PDFは「元文書 + 締結証明書 + 監査ログ(ページ数可変)」。
+    // 証明書が同梱されたことの検証は元文書より 1 ページ以上増加で判定する。
+    expect(pdfDoc.getPageCount()).toBeGreaterThanOrEqual(originalPdf.getPageCount() + 1);
   });
 
   test('team document with signing certificate enabled should include certificate', async ({ page }) => {
@@ -164,7 +167,8 @@ test.describe('Signing Certificate Tests', () => {
     }
 
     await page.getByRole('button', { name: 'Complete' }).click();
-    await page.getByRole('button', { name: 'Sign' }).click();
+    // 完了確認ダイアログのボタンは DocumentMeta.language に依存する(ja: 合意して電子認印を押印する / en: Sign)。
+    await page.getByRole('button', { name: /Sign|合意して電子認印を押印する/ }).click();
     await page.waitForURL(`/sign/${recipient.token}/complete`);
 
     await expect(async () => {
@@ -205,7 +209,9 @@ test.describe('Signing Certificate Tests', () => {
     // Load the PDF and check number of pages
     const completedPdf = await PDF.load(new Uint8Array(completedDocumentData));
 
-    expect(completedPdf.getPageCount()).toBe(originalPdf.getPageCount() + 1); // Original + Certificate
+    // R-03: 既定で監査ログPDFも同梱されるため、完了PDFは「元文書 + 締結証明書 + 監査ログ(ページ数可変)」。
+    // 証明書が同梱されたことの検証は元文書より 1 ページ以上増加で判定する。
+    expect(completedPdf.getPageCount()).toBeGreaterThanOrEqual(originalPdf.getPageCount() + 1);
   });
 
   test('team document with signing certificate disabled should not include certificate', async ({ page }) => {
@@ -232,6 +238,8 @@ test.describe('Signing Certificate Tests', () => {
       },
       data: {
         includeSigningCertificate: false,
+        // R-03: 監査ログPDFの既定同梱をオフにしないと「証明書なし=ページ数増加なし」を検証できない
+        includeAuditLog: false,
       },
     });
 
@@ -267,7 +275,8 @@ test.describe('Signing Certificate Tests', () => {
     }
 
     await page.getByRole('button', { name: 'Complete' }).click();
-    await page.getByRole('button', { name: 'Sign' }).click();
+    // 完了確認ダイアログのボタンは DocumentMeta.language に依存する(ja: 合意して電子認印を押印する / en: Sign)。
+    await page.getByRole('button', { name: /Sign|合意して電子認印を押印する/ }).click();
     await page.waitForURL(`/sign/${recipient.token}/complete`);
 
     await expect(async () => {
@@ -304,6 +313,7 @@ test.describe('Signing Certificate Tests', () => {
     // Load the PDF and check number of pages
     const completedPdf = await PDF.load(new Uint8Array(completedDocumentData));
 
+    // includeSigningCertificate=false + includeAuditLog=false のため、証明書・監査ログは同梱されない
     expect(completedPdf.getPageCount()).toBe(originalPdf.getPageCount());
   });
 

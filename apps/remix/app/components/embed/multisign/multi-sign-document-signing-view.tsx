@@ -141,11 +141,15 @@ export const MultiSignDocumentSigningView = ({
   };
 
   const onDocumentComplete = async () => {
+    if (!document) {
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
       const result = await completeDocumentWithToken({
-        documentId: document!.id,
+        documentId: document.id,
         token,
       });
 
@@ -166,7 +170,7 @@ export const MultiSignDocumentSigningView = ({
 
       onDocumentCompleted?.({
         token,
-        documentId: document!.id,
+        documentId: document.id,
         recipientId,
       });
     } catch (err) {

@@ -33,7 +33,7 @@ export const createSubscriptionRoute = authenticatedProcedure
       where: buildOrganisationWhereQuery({
         organisationId,
         userId,
-        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_BILLING'],
+        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_BILLING,
       }),
       include: {
         subscription: true,

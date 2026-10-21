@@ -1,9 +1,9 @@
-import { prisma } from '@documenso/prisma';
 import { computeDashboardStatus } from '@documenso/lib/universal/dashboard-progress';
+import { prisma } from '@documenso/prisma';
 import { seedDocuments, seedDraftDocument } from '@documenso/prisma/seed/documents';
 import { seedUser } from '@documenso/prisma/seed/users';
 import { expect, test } from '@playwright/test';
-import { DocumentStatus, EnvelopeType, FieldType } from '@prisma/client';
+import { DocumentStatus, EnvelopeType } from '@prisma/client';
 
 import { apiSignin } from './fixtures/authentication';
 
@@ -15,49 +15,49 @@ import { apiSignin } from './fixtures/authentication';
  *  ここでは実データとの統合を確認)。
  */
 test.describe('[JP] Dashboard', () => {
-    test('classifies seeded documents into dashboard columns', async ({ page }) => {
-        const { user, team } = await seedUser({ isPersonalOrganisation: true });
+  test('classifies seeded documents into dashboard columns', async ({ page }) => {
+    const { user, team } = await seedUser({ isPersonalOrganisation: true });
 
-        // DRAFT(承認待ち)を作成
-        await seedDraftDocument(user, team.id, []);
+    // DRAFT(承認待ち)を作成
+    await seedDraftDocument(user, team.id, []);
 
-        // PENDING(署名中)を作成
-        const { document } = await seedDocuments([
-            {
-                sender: user,
-                teamId: team.id,
-                recipients: ['signer@example.com'],
-                type: DocumentStatus.PENDING,
-                documentOptions: {
-                    internalVersion: 2,
-                },
-            },
-        ]);
+    // PENDING(署名中)を作成
+    const { document } = await seedDocuments([
+      {
+        sender: user,
+        teamId: team.id,
+        recipients: ['signer@example.com'],
+        type: DocumentStatus.PENDING,
+        documentOptions: {
+          internalVersion: 2,
+        },
+      },
+    ]);
 
-        const envelopes = await prisma.envelope.findMany({
-            where: { teamId: team.id, type: EnvelopeType.DOCUMENT },
-            include: { recipients: true },
-        });
-
-        const classifications = envelopes.map((envelope) =>
-            computeDashboardStatus({
-                status: envelope.status,
-                sentAt: envelope.sentAt,
-                completedAt: envelope.completedAt,
-                hasExpiredRecipient: envelope.recipients.some((r) => r.expired !== null),
-            }),
-        );
-
-        // 承認待ち(DRAFT)と署名中(PENDING)が少なくとも1件ずつ分類される
-        expect(classifications).toContain('awaiting-approval');
-        expect(classifications).toContain('in-progress');
+    const envelopes = await prisma.envelope.findMany({
+      where: { teamId: team.id, type: EnvelopeType.DOCUMENT },
+      include: { recipients: true },
     });
 
-    test('dashboard page loads without errors', async ({ page }) => {
-        const { user, team } = await seedUser({ isPersonalOrganisation: true });
+    const classifications = envelopes.map((envelope) =>
+      computeDashboardStatus({
+        status: envelope.status,
+        sentAt: envelope.sentAt,
+        completedAt: envelope.completedAt,
+        hasExpiredRecipient: envelope.recipients.some((r) => r.expired !== null),
+      }),
+    );
 
-        await apiSignin({ page, email: user.email, redirectPath: `/t/${team.url}/documents` });
+    // 承認待ち(DRAFT)と署名中(PENDING)が少なくとも1件ずつ分類される
+    expect(classifications).toContain('awaiting-approval');
+    expect(classifications).toContain('in-progress');
+  });
 
-        await expect(page.locator('table, [data-testid="documents-table"], main')).toBeVisible();
-    });
+  test('dashboard page loads without errors', async ({ page }) => {
+    const { user, team } = await seedUser({ isPersonalOrganisation: true });
+
+    await apiSignin({ page, email: user.email, redirectPath: `/t/${team.url}/documents` });
+
+    await expect(page.locator('table, [data-testid="documents-table"], main')).toBeVisible();
+  });
 });

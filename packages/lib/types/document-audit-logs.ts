@@ -32,6 +32,7 @@ export const ZDocumentAuditLogTypeSchema = z.enum([
   'DOCUMENT_CREATED', // When the document is created.
   'DOCUMENT_DELETED', // When the document is soft deleted.
   'DOCUMENT_CANCELLED', // When a privileged member cancels the document.
+  'DOCUMENT_DATA_PURGED', // When the retained PDF payload/signature images are purged by the retention job.
   'DOCUMENT_FIELDS_AUTO_INSERTED', // When a field is auto inserted during send due to default values (radio/dropdown/checkbox).
   'DOCUMENT_FIELD_INSERTED', // When a field is inserted (signed/approved/etc) by a recipient.
   'DOCUMENT_FIELD_UNINSERTED', // When a field is uninserted by a recipient.
@@ -831,6 +832,18 @@ export const ZDocumentAuditLogBaseSchema = z.object({
   ipAddress: z.string().optional().nullable(),
 });
 
+/**
+ * Event: The retention job purged the PDF payload and signature images of a
+ * completed envelope. Audit logs, metadata and recipients are retained.
+ */
+export const ZDocumentAuditLogEventDocumentDataPurgedSchema = z.object({
+  type: z.literal(DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DATA_PURGED),
+  data: z.object({
+    purgedDocumentDataIds: z.array(z.string()),
+    purgedSignatureCount: z.number(),
+  }),
+});
+
 export const ZDocumentAuditLogSchema = ZDocumentAuditLogBaseSchema.and(
   z.union([
     ZDocumentAuditLogEventEnvelopeItemCreatedSchema,
@@ -842,6 +855,7 @@ export const ZDocumentAuditLogSchema = ZDocumentAuditLogBaseSchema.and(
     ZDocumentAuditLogEventDocumentCreatedSchema,
     ZDocumentAuditLogEventDocumentDeletedSchema,
     ZDocumentAuditLogEventDocumentCancelledSchema,
+    ZDocumentAuditLogEventDocumentDataPurgedSchema,
     ZDocumentAuditLogEventDocumentMovedToTeamSchema,
     ZDocumentAuditLogEventDocumentDelegatedOwnerCreatedSchema,
     ZDocumentAuditLogEventDocumentFieldsAutoInsertedSchema,

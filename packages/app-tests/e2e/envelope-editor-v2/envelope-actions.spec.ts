@@ -268,8 +268,8 @@ test.describe('document editor', () => {
     });
 
     expect(auditLog).not.toBeNull();
-    expect((auditLog!.data as Record<string, unknown>).isResending).toBe(true);
-    expect((auditLog!.data as Record<string, unknown>).recipientEmail).toBe(recipientEmail);
+    expect((auditLog?.data as Record<string, unknown>).isResending).toBe(true);
+    expect((auditLog?.data as Record<string, unknown>).recipientEmail).toBe(recipientEmail);
   });
 
   test('duplicate document', async ({ page }) => {
@@ -484,7 +484,7 @@ test.describe('template editor', () => {
     });
 
     expect(directLink).not.toBeNull();
-    expect(directLink!.enabled).toBe(true);
+    expect(directLink?.enabled).toBe(true);
   });
 
   test('duplicate template', async ({ page }) => {

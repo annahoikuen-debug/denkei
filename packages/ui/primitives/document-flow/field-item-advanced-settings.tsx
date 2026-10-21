@@ -206,7 +206,7 @@ export const FieldAdvancedSettings = forwardRef<HTMLDivElement, FieldAdvancedSet
 
           return {
             ...prevState,
-            [key]: isNaN(parsedValue) ? undefined : parsedValue,
+            [key]: Number.isNaN(parsedValue) ? undefined : parsedValue,
           };
         } else {
           return {

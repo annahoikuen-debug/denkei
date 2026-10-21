@@ -29,7 +29,7 @@ export const run = async ({
             some: {
               group: {
                 organisationRole: {
-                  in: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
+                  in: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
                 },
               },
             },

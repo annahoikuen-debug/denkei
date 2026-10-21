@@ -24,7 +24,7 @@ export const deleteTeam = async ({ userId, teamId }: DeleteTeamOptions) => {
     where: buildTeamWhereQuery({
       teamId,
       userId,
-      roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['DELETE_TEAM'],
+      roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.DELETE_TEAM,
     }),
     include: {
       organisation: {

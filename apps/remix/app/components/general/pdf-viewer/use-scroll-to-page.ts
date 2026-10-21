@@ -25,7 +25,7 @@ export const useScrollToPage = (contentRef: RefObject<HTMLElement | null>, scrol
           if (raw) {
             const pageNumber = parseInt(raw, 10);
 
-            if (!isNaN(pageNumber) && pageNumber >= 1) {
+            if (!Number.isNaN(pageNumber) && pageNumber >= 1) {
               // Pages are 1-indexed, virtual list items are 0-indexed.
               scrollToItem(pageNumber - 1);
             }

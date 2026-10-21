@@ -42,7 +42,7 @@ export const updateTeam = async ({ userId, teamId, data }: UpdateTeamOptions): P
       where: buildTeamWhereQuery({
         teamId,
         userId,
-        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
       }),
       data: {
         url: data.url,

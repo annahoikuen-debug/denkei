@@ -135,7 +135,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
           const result = ZFieldMetaSchema.safeParse(field.fieldMeta);
 
           if (!result.success) {
-            throw new Error('Field meta parsing failed for field ' + field.id);
+            throw new Error(`Field meta parsing failed for field ${field.id}`);
           }
 
           parsedMetaOrNull = result.data;
@@ -179,7 +179,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
           fields: parsedMetaFields,
         },
       };
-    } catch (err) {
+    } catch (_err) {
       return {
         status: 404,
         body: {
@@ -271,7 +271,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
         status: 200,
         body: { downloadUrl: url },
       };
-    } catch (err) {
+    } catch (_err) {
       return {
         status: 500,
         body: {
@@ -336,7 +336,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
           completedAt: deletedDocument.completedAt,
         },
       };
-    } catch (err) {
+    } catch (_err) {
       return {
         status: 404,
         body: {
@@ -473,7 +473,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
           })),
         },
       };
-    } catch (err) {
+    } catch (_err) {
       return {
         status: 404,
         body: {
@@ -586,7 +586,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
           template: fullTemplate,
         },
       };
-    } catch (err) {
+    } catch (_err) {
       return {
         status: 404,
         body: {
@@ -630,7 +630,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
           updatedAt: deletedTemplate.updatedAt,
         },
       };
-    } catch (err) {
+    } catch (_err) {
       return {
         status: 404,
         body: {
@@ -1066,7 +1066,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
           message: 'Document resend successfully initiated',
         },
       };
-    } catch (err) {
+    } catch (_err) {
       return {
         status: 500,
         body: {
@@ -1174,7 +1174,7 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
           signingUrl: `${NEXT_PUBLIC_WEBAPP_URL()}/sign/${newRecipient.token}`,
         },
       };
-    } catch (err) {
+    } catch (_err) {
       return {
         status: 500,
         body: {

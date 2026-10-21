@@ -103,11 +103,7 @@ export const DocumentReadOnlyFields = ({
               field={field}
               key={field.id}
               readonly={true}
-              color={
-                showRecipientColors
-                  ? getRecipientColorStyles(recipientIds.findIndex((id) => id === field.recipientId))
-                  : undefined
-              }
+              color={showRecipientColors ? getRecipientColorStyles(recipientIds.indexOf(field.recipientId)) : undefined}
             >
               {showRecipientTooltip && (
                 <div className="absolute -top-3 -right-3">

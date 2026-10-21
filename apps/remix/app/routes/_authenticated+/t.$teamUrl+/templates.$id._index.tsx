@@ -15,11 +15,10 @@ import { Trans } from '@lingui/react/macro';
 import { DocumentSigningOrder, SigningStatus } from '@prisma/client';
 import { ChevronLeft, LucideEdit } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
-
+import { TemplateAcroFormDetectDialog } from '~/components/dialogs/template-acroform-detect-dialog';
 import { TemplateBulkSendDialog } from '~/components/dialogs/template-bulk-send-dialog';
 import { TemplateDirectLinkDialog } from '~/components/dialogs/template-direct-link-dialog';
 import { TemplateMergeVariableDialog } from '~/components/dialogs/template-merge-variable-dialog';
-import { TemplateAcroFormDetectDialog } from '~/components/dialogs/template-acroform-detect-dialog';
 import { TemplateUseDialog } from '~/components/dialogs/template-use-dialog';
 import { EnvelopeRendererFileSelector } from '~/components/general/envelope-editor/envelope-file-selector';
 import { EnvelopeGenericPageRenderer } from '~/components/general/envelope-editor/envelope-generic-page-renderer';
@@ -109,10 +108,10 @@ export default function TemplatePage({ params }: Route.ComponentProps) {
 
   const mockedDocumentMeta = envelope.documentMeta
     ? {
-      ...envelope.documentMeta,
-      signingOrder: envelope.documentMeta.signingOrder || DocumentSigningOrder.SEQUENTIAL,
-      documentId: 0,
-    }
+        ...envelope.documentMeta,
+        signingOrder: envelope.documentMeta.signingOrder || DocumentSigningOrder.SEQUENTIAL,
+        documentId: 0,
+      }
     : undefined;
 
   const isMultiEnvelopeItem = envelope.envelopeItems.length > 1 && envelope.internalVersion === 2;

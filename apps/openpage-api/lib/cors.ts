@@ -1,7 +1,7 @@
 /**
  * Apply the public statistics API's wildcard CORS policy, without credentials.
  */
-export default async function cors(req: Request, res: Response): Promise<Response> {
+export default function cors(req: Request, res: Response): Promise<Response> {
   const { headers } = res;
   headers.set('Access-Control-Allow-Origin', '*');
 

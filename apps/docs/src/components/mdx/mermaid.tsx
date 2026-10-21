@@ -62,5 +62,5 @@ const MermaidContent = ({ chart }: { chart: string }) => {
     return null;
   }
 
-  return <div ref={containerRef} dangerouslySetInnerHTML={{ __html: svg }} />;
+  return <div ref={containerRef} dangerouslySetInnerHTML={{ __html: svg }} />; // biome-ignore lint/security/noDangerouslySetInnerHtml: Mermaid SVG is sanitized by mermaid library
 };

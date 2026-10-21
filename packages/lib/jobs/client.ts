@@ -25,6 +25,7 @@ import { BULK_SEND_TEMPLATE_JOB_DEFINITION } from './definitions/internal/bulk-s
 import { CANCEL_ORGANISATION_SUBSCRIPTION_JOB_DEFINITION } from './definitions/internal/cancel-organisation-subscription';
 import { CLEANUP_AUTH_HANDOFFS_JOB_DEFINITION } from './definitions/internal/cleanup-auth-handoffs';
 import { CLEANUP_RATE_LIMITS_JOB_DEFINITION } from './definitions/internal/cleanup-rate-limits';
+import { ENVELOPE_RETENTION_SWEEP_JOB_DEFINITION } from './definitions/internal/envelope-retention-sweep';
 import { EXECUTE_WEBHOOK_JOB_DEFINITION } from './definitions/internal/execute-webhook';
 import { EXPIRE_RECIPIENTS_SWEEP_JOB_DEFINITION } from './definitions/internal/expire-recipients-sweep';
 import { PROCESS_RECIPIENT_EXPIRED_JOB_DEFINITION } from './definitions/internal/process-recipient-expired';
@@ -70,6 +71,7 @@ export const jobsClient = new JobClient([
   PROCESS_SIGNING_REMINDER_JOB_DEFINITION,
   CLEANUP_RATE_LIMITS_JOB_DEFINITION,
   CLEANUP_AUTH_HANDOFFS_JOB_DEFINITION,
+  ENVELOPE_RETENTION_SWEEP_JOB_DEFINITION,
   SYNC_EMAIL_DOMAINS_JOB_DEFINITION,
   ADMIN_DELETE_ORGANISATION_JOB_DEFINITION,
   ALERT_ORGANISATION_SEAT_DRIFT_JOB_DEFINITION,

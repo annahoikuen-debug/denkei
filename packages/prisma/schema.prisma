@@ -1020,7 +1020,8 @@ model OrganisationGlobalSettings {
   documentLanguage          String             @default("en")
   includeSenderDetails      Boolean            @default(true)
   includeSigningCertificate Boolean            @default(true)
-  includeAuditLog           Boolean            @default(false)
+  // 既定で監査ログPDFを完了文書に同梱する(R-03)。利用者側の電帳法保存義務を自己完結させるため。
+  includeAuditLog           Boolean            @default(true)
   documentTimezone          String? // Nullable to allow using local timezones if not set.
   documentDateFormat        String             @default("yyyy-MM-dd hh:mm a")
   delegateDocumentOwnership Boolean            @default(false)

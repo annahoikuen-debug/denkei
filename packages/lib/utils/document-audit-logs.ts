@@ -371,6 +371,17 @@ export const formatDocumentAuditLogAction = (i18n: I18n, auditLog: TDocumentAudi
       you: msg`You cancelled the document`,
       user: msg`${user} cancelled the document`,
     }))
+    .with({ type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DATA_PURGED }, () => {
+      const message = msg({
+        message: `The document PDF was removed because the retention period expired. Audit records are retained`,
+        context: `Audit log format`,
+      });
+      return {
+        anonymous: message,
+        you: message,
+        user: message,
+      };
+    })
     .with({ type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELDS_AUTO_INSERTED }, () => ({
       anonymous: msg({
         message: `System auto inserted fields`,

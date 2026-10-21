@@ -34,7 +34,7 @@ const toAddressUrl = (address: string) => (address.includes(':') ? `http://[${ad
  * Empty or unset = no bypasses (safe default).
  */
 const webhookSSRFBypassHosts = (): Set<string> => {
-  const raw = process.env['NEXT_PRIVATE_WEBHOOK_SSRF_BYPASS_HOSTS'] ?? '';
+  const raw = process.env.NEXT_PRIVATE_WEBHOOK_SSRF_BYPASS_HOSTS ?? '';
 
   const hosts = new Set<string>();
 

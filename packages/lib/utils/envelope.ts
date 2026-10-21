@@ -209,7 +209,7 @@ export const mapSecondaryIdToDocumentId = (secondaryId: string) => {
     });
   }
 
-  return parseInt(parsed.data.split('_')[1]);
+  return parseInt(parsed.data.split('_')[1], 10);
 };
 
 /**
@@ -229,7 +229,7 @@ export const mapSecondaryIdToTemplateId = (secondaryId: string) => {
     });
   }
 
-  return parseInt(parsed.data.split('_')[1]);
+  return parseInt(parsed.data.split('_')[1], 10);
 };
 
 export type EnvelopeItemPermissions = {

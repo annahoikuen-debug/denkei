@@ -79,6 +79,13 @@ export enum AppErrorCode {
   MISSING_SIGNATURE_FIELD = 'MISSING_SIGNATURE_FIELD',
 
   /**
+   * The envelope's PDF payload was purged by the retention job
+   * (`NEXT_PRIVATE_ENVELOPE_RETENTION_DAYS`). Audit logs and metadata are
+   * retained, but the document bytes are no longer retrievable.
+   */
+  DOCUMENT_DATA_PURGED = 'DOCUMENT_DATA_PURGED',
+
+  /**
    * CSC (Cloud Signature Consortium) error codes. See the CSC QES V1 spec
    * for the recovery taxonomy.
    */
@@ -129,6 +136,7 @@ export const genericErrorCodeToTrpcErrorCodeMap: Record<string, { code: string; 
   [AppErrorCode.ENVELOPE_TSP_LOCKED]: { code: 'BAD_REQUEST', status: 400 },
   [AppErrorCode.SENDER_DISABLED]: { code: 'FORBIDDEN', status: 403 },
   [AppErrorCode.MISSING_SIGNATURE_FIELD]: { code: 'BAD_REQUEST', status: 400 },
+  [AppErrorCode.DOCUMENT_DATA_PURGED]: { code: 'BAD_REQUEST', status: 410 },
   [AppErrorCode.RECIPIENT_HAS_UNSIGNED_FIELDS]: { code: 'BAD_REQUEST', status: 400 },
   [AppErrorCode.RECIPIENT_OUT_OF_TURN]: { code: 'BAD_REQUEST', status: 400 },
   [AppErrorCode.CSC_INSTANCE_MODE_MISMATCH]: { code: 'BAD_REQUEST', status: 400 },
@@ -323,7 +331,7 @@ export class AppError extends Error {
   }
 
   static toRestAPIError(err: unknown): {
-    status: 400 | 401 | 403 | 404 | 500 | 501;
+    status: 400 | 401 | 403 | 404 | 410 | 500 | 501;
     body: { message: string };
   } {
     const error = AppError.parseError(err);
@@ -352,6 +360,8 @@ export class AppError extends Error {
       .with(AppErrorCode.UNAUTHORIZED, () => 401 as const)
       .with(AppErrorCode.FORBIDDEN, AppErrorCode.SENDER_DISABLED, AppErrorCode.CSC_UNLICENSED, () => 403 as const)
       .with(AppErrorCode.NOT_FOUND, () => 404 as const)
+      // 保管期限により PDF 実体が破棄された文書(R-01)。恒久的に取得不可であることを示す。
+      .with(AppErrorCode.DOCUMENT_DATA_PURGED, () => 410 as const)
       .with(AppErrorCode.NOT_IMPLEMENTED, () => 501 as const)
       .otherwise(() => 500 as const);
 

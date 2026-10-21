@@ -18,7 +18,7 @@ const CustomTooltip = ({
   label,
   tooltip,
 }: TooltipProps<ValueType, NameType> & { tooltip?: string }) => {
-  if (active && payload && payload.length) {
+  if (active && payload?.length) {
     return (
       <div className="z-100 w-60 space-y-1 rounded-md border border-solid bg-white p-2 px-3">
         <p className="">{label}</p>

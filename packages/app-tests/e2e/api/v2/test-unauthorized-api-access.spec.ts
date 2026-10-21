@@ -303,7 +303,7 @@ test.describe('Document API V2', () => {
         headers: { Authorization: `Bearer ${tokenB}` },
         data: {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
-          recipients: [recipient!.id],
+          recipients: [recipient?.id],
         },
       });
 
@@ -352,7 +352,7 @@ test.describe('Document API V2', () => {
         headers: { Authorization: `Bearer ${tokenA}` },
         data: {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
-          recipients: [recipient!.id],
+          recipients: [recipient?.id],
         },
       });
 
@@ -404,7 +404,7 @@ test.describe('Document API V2', () => {
         data: {
           envelopeId: doc.id,
           envelopeItemId: doc.envelopeItems[0].id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: 'TEXT',
           page: 1,
           positionX: 1,
@@ -478,7 +478,7 @@ test.describe('Document API V2', () => {
         data: {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
           field: {
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: 'TEXT',
             pageNumber: 791.77,
             pageX: 7845.22,
@@ -508,7 +508,7 @@ test.describe('Document API V2', () => {
         data: {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
           field: {
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: 'TEXT',
             pageNumber: 791.77,
             pageX: 7845.22,
@@ -541,7 +541,7 @@ test.describe('Document API V2', () => {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
           fields: [
             {
-              recipientId: recipient!.id,
+              recipientId: recipient?.id,
               type: 'TEXT',
               pageNumber: 791.77,
               pageX: 7845.22,
@@ -551,7 +551,7 @@ test.describe('Document API V2', () => {
               fieldMeta: { type: 'text', label: 'First test field' },
             },
             {
-              recipientId: recipient!.id,
+              recipientId: recipient?.id,
               type: 'TEXT',
               pageNumber: 791.77,
               pageX: 845.22,
@@ -583,7 +583,7 @@ test.describe('Document API V2', () => {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
           fields: [
             {
-              recipientId: recipient!.id,
+              recipientId: recipient?.id,
               type: 'TEXT',
               pageNumber: 791.77,
               pageX: 7845.22,
@@ -593,7 +593,7 @@ test.describe('Document API V2', () => {
               fieldMeta: { type: 'text', label: 'First test field' },
             },
             {
-              recipientId: recipient!.id,
+              recipientId: recipient?.id,
               type: 'TEXT',
               pageNumber: 791.77,
               pageX: 845.22,
@@ -625,7 +625,7 @@ test.describe('Document API V2', () => {
         data: {
           envelopeId: doc.id,
           envelopeItemId: doc.envelopeItems[0].id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: 'TEXT',
           page: 1,
           positionX: 1,
@@ -667,7 +667,7 @@ test.describe('Document API V2', () => {
         data: {
           envelopeId: doc.id,
           envelopeItemId: doc.envelopeItems[0].id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: 'TEXT',
           page: 1,
           positionX: 1,
@@ -712,7 +712,7 @@ test.describe('Document API V2', () => {
           {
             envelopeId: doc.id,
             envelopeItemId: doc.envelopeItems[0].id,
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: FieldType.TEXT,
             page: 1,
             positionX: 1,
@@ -726,7 +726,7 @@ test.describe('Document API V2', () => {
           {
             envelopeId: doc.id,
             envelopeItemId: doc.envelopeItems[0].id,
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: FieldType.NUMBER,
             page: 1,
             positionX: 1,
@@ -777,7 +777,7 @@ test.describe('Document API V2', () => {
           {
             envelopeId: doc.id,
             envelopeItemId: doc.envelopeItems[0].id,
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: FieldType.TEXT,
             page: 1,
             positionX: 1,
@@ -791,7 +791,7 @@ test.describe('Document API V2', () => {
           {
             envelopeId: doc.id,
             envelopeItemId: doc.envelopeItems[0].id,
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: FieldType.NUMBER,
             page: 1,
             positionX: 1,
@@ -843,7 +843,7 @@ test.describe('Document API V2', () => {
         data: {
           envelopeId: doc.id,
           envelopeItemId: doc.envelopeItems[0].id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: FieldType.TEXT,
           page: 1,
           positionX: 1,
@@ -878,7 +878,7 @@ test.describe('Document API V2', () => {
         data: {
           envelopeId: doc.id,
           envelopeItemId: doc.envelopeItems[0].id,
-          recipientId: recipient!.id,
+          recipientId: recipient?.id,
           type: FieldType.TEXT,
           page: 1,
           positionX: 1,
@@ -1529,7 +1529,7 @@ test.describe('Document API V2', () => {
         where: { envelopeId: doc.id },
       });
 
-      const res = await request.get(`${WEBAPP_BASE_URL}/api/v2-beta/document/recipient/${recipient!.id}`, {
+      const res = await request.get(`${WEBAPP_BASE_URL}/api/v2-beta/document/recipient/${recipient?.id}`, {
         headers: { Authorization: `Bearer ${tokenB}` },
       });
 
@@ -1546,7 +1546,7 @@ test.describe('Document API V2', () => {
         where: { envelopeId: doc.id },
       });
 
-      const res = await request.get(`${WEBAPP_BASE_URL}/api/v2-beta/document/recipient/${recipient!.id}`, {
+      const res = await request.get(`${WEBAPP_BASE_URL}/api/v2-beta/document/recipient/${recipient?.id}`, {
         headers: { Authorization: `Bearer ${tokenA}` },
       });
 
@@ -1664,7 +1664,7 @@ test.describe('Document API V2', () => {
         data: {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
           recipient: {
-            id: recipient!.id,
+            id: recipient?.id,
             name: 'Updated recipient',
           },
         },
@@ -1688,7 +1688,7 @@ test.describe('Document API V2', () => {
         data: {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
           recipient: {
-            id: recipient!.id,
+            id: recipient?.id,
             name: 'Updated recipient',
           },
         },
@@ -1726,11 +1726,11 @@ test.describe('Document API V2', () => {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
           recipients: [
             {
-              id: firstDocumentRecipient!.id,
+              id: firstDocumentRecipient?.id,
               name: 'Updated first recipient',
             },
             {
-              id: secondDocumentRecipient!.id,
+              id: secondDocumentRecipient?.id,
               name: 'Updated second recipient',
             },
           ],
@@ -1767,11 +1767,11 @@ test.describe('Document API V2', () => {
           documentId: mapSecondaryIdToDocumentId(doc.secondaryId),
           recipients: [
             {
-              id: firstDocumentRecipient!.id,
+              id: firstDocumentRecipient?.id,
               name: 'Updated first recipient',
             },
             {
-              id: secondDocumentRecipient!.id,
+              id: secondDocumentRecipient?.id,
               name: 'Updated second recipient',
             },
           ],
@@ -1795,7 +1795,7 @@ test.describe('Document API V2', () => {
 
       const res = await request.post(`${WEBAPP_BASE_URL}/api/v2-beta/document/recipient/delete`, {
         headers: { Authorization: `Bearer ${tokenB}` },
-        data: { recipientId: recipient!.id },
+        data: { recipientId: recipient?.id },
       });
 
       expect(res.ok()).toBeFalsy();
@@ -1813,7 +1813,7 @@ test.describe('Document API V2', () => {
 
       const res = await request.post(`${WEBAPP_BASE_URL}/api/v2-beta/document/recipient/delete`, {
         headers: { Authorization: `Bearer ${tokenA}` },
-        data: { recipientId: recipient!.id },
+        data: { recipientId: recipient?.id },
       });
 
       expect(res.ok()).toBeTruthy();
@@ -3702,7 +3702,7 @@ test.describe('Document API V2', () => {
           headers: { Authorization: `Bearer ${tokenB}` },
           data: {
             envelopeId: doc.id,
-            recipients: [recipient!.id],
+            recipients: [recipient?.id],
           },
         });
 
@@ -3751,7 +3751,7 @@ test.describe('Document API V2', () => {
           headers: { Authorization: `Bearer ${tokenA}` },
           data: {
             envelopeId: doc.id,
-            recipients: [recipient!.id],
+            recipients: [recipient?.id],
           },
         });
 
@@ -3777,7 +3777,7 @@ test.describe('Document API V2', () => {
           data: {
             envelopeId: doc.id,
             envelopeItemId: doc.envelopeItems[0].id,
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: 'TEXT',
             page: 1,
             positionX: 1,
@@ -3852,7 +3852,7 @@ test.describe('Document API V2', () => {
             envelopeId: doc.id,
             data: [
               {
-                recipientId: recipient!.id,
+                recipientId: recipient?.id,
                 envelopeItemId: doc.envelopeItems[0].id,
                 type: 'TEXT',
                 page: 791.77,
@@ -3863,7 +3863,7 @@ test.describe('Document API V2', () => {
                 fieldMeta: { type: 'text', label: 'First test field' },
               },
               {
-                recipientId: recipient!.id,
+                recipientId: recipient?.id,
                 envelopeItemId: doc.envelopeItems[0].id,
                 type: 'TEXT',
                 page: 791.77,
@@ -3896,7 +3896,7 @@ test.describe('Document API V2', () => {
             envelopeId: doc.id,
             data: [
               {
-                recipientId: recipient!.id,
+                recipientId: recipient?.id,
                 envelopeItemId: doc.envelopeItems[0].id,
                 type: 'TEXT',
                 page: 791.77,
@@ -3907,7 +3907,7 @@ test.describe('Document API V2', () => {
                 fieldMeta: { type: 'text', label: 'First test field' },
               },
               {
-                recipientId: recipient!.id,
+                recipientId: recipient?.id,
                 envelopeItemId: doc.envelopeItems[0].id,
                 type: 'TEXT',
                 page: 791.77,
@@ -3941,7 +3941,7 @@ test.describe('Document API V2', () => {
             {
               envelopeId: doc.id,
               envelopeItemId: doc.envelopeItems[0].id,
-              recipientId: recipient!.id,
+              recipientId: recipient?.id,
               type: FieldType.TEXT,
               page: 1,
               positionX: 1,
@@ -3955,7 +3955,7 @@ test.describe('Document API V2', () => {
             {
               envelopeId: doc.id,
               envelopeItemId: doc.envelopeItems[0].id,
-              recipientId: recipient!.id,
+              recipientId: recipient?.id,
               type: FieldType.NUMBER,
               page: 1,
               positionX: 1,
@@ -4006,7 +4006,7 @@ test.describe('Document API V2', () => {
             {
               envelopeId: doc.id,
               envelopeItemId: doc.envelopeItems[0].id,
-              recipientId: recipient!.id,
+              recipientId: recipient?.id,
               type: FieldType.TEXT,
               page: 1,
               positionX: 1,
@@ -4020,7 +4020,7 @@ test.describe('Document API V2', () => {
             {
               envelopeId: doc.id,
               envelopeItemId: doc.envelopeItems[0].id,
-              recipientId: recipient!.id,
+              recipientId: recipient?.id,
               type: FieldType.NUMBER,
               page: 1,
               positionX: 1,
@@ -4072,7 +4072,7 @@ test.describe('Document API V2', () => {
           data: {
             envelopeId: doc.id,
             envelopeItemId: doc.envelopeItems[0].id,
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: FieldType.TEXT,
             page: 1,
             positionX: 1,
@@ -4107,7 +4107,7 @@ test.describe('Document API V2', () => {
           data: {
             envelopeId: doc.id,
             envelopeItemId: doc.envelopeItems[0].id,
-            recipientId: recipient!.id,
+            recipientId: recipient?.id,
             type: FieldType.TEXT,
             page: 1,
             positionX: 1,
@@ -4140,7 +4140,7 @@ test.describe('Document API V2', () => {
           where: { envelopeId: doc.id },
         });
 
-        const res = await request.get(`${WEBAPP_BASE_URL}/api/v2-beta/envelope/recipient/${recipient!.id}`, {
+        const res = await request.get(`${WEBAPP_BASE_URL}/api/v2-beta/envelope/recipient/${recipient?.id}`, {
           headers: { Authorization: `Bearer ${tokenB}` },
         });
 
@@ -4157,7 +4157,7 @@ test.describe('Document API V2', () => {
           where: { envelopeId: doc.id },
         });
 
-        const res = await request.get(`${WEBAPP_BASE_URL}/api/v2-beta/envelope/recipient/${recipient!.id}`, {
+        const res = await request.get(`${WEBAPP_BASE_URL}/api/v2-beta/envelope/recipient/${recipient?.id}`, {
           headers: { Authorization: `Bearer ${tokenA}` },
         });
 
@@ -4247,11 +4247,11 @@ test.describe('Document API V2', () => {
             envelopeId: doc.id,
             data: [
               {
-                id: firstDocumentRecipient!.id,
+                id: firstDocumentRecipient?.id,
                 name: 'Updated first recipient',
               },
               {
-                id: secondDocumentRecipient!.id,
+                id: secondDocumentRecipient?.id,
                 name: 'Updated second recipient',
               },
             ],
@@ -4288,11 +4288,11 @@ test.describe('Document API V2', () => {
             envelopeId: doc.id,
             data: [
               {
-                id: firstDocumentRecipient!.id,
+                id: firstDocumentRecipient?.id,
                 name: 'Updated first recipient',
               },
               {
-                id: secondDocumentRecipient!.id,
+                id: secondDocumentRecipient?.id,
                 name: 'Updated second recipient',
               },
             ],
@@ -4316,7 +4316,7 @@ test.describe('Document API V2', () => {
 
         const res = await request.post(`${WEBAPP_BASE_URL}/api/v2-beta/envelope/recipient/delete`, {
           headers: { Authorization: `Bearer ${tokenB}` },
-          data: { recipientId: recipient!.id },
+          data: { recipientId: recipient?.id },
         });
 
         expect(res.ok()).toBeFalsy();
@@ -4334,7 +4334,7 @@ test.describe('Document API V2', () => {
 
         const res = await request.post(`${WEBAPP_BASE_URL}/api/v2-beta/envelope/recipient/delete`, {
           headers: { Authorization: `Bearer ${tokenA}` },
-          data: { recipientId: recipient!.id },
+          data: { recipientId: recipient?.id },
         });
 
         expect(res.ok()).toBeTruthy();

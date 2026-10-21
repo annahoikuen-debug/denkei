@@ -478,7 +478,7 @@ export const FIELD_META_TEST_FIELDS: FieldTestData[] = [
   },
 ] as const;
 
-export const formatFieldMetaTestFields = FIELD_META_TEST_FIELDS.map((field, index) => {
+export const formatFieldMetaTestFields = FIELD_META_TEST_FIELDS.map((field, _index) => {
   return {
     ...field,
   };

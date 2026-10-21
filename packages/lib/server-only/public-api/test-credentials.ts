@@ -13,7 +13,7 @@ export const testCredentialsHandler = async (req: Request) => {
     return Response.json({
       name: result.team?.name ?? result.user.name,
     });
-  } catch (err) {
+  } catch (_err) {
     return Response.json(
       {
         message: 'Internal Server Error',

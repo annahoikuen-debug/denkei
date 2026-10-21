@@ -167,7 +167,7 @@ export const EnvelopeEditorUploadPage = () => {
           envelopeItemId: isEmbedded ? `${PRESIGNED_ENVELOPE_ITEM_ID_PREFIX}${nanoid()}` : null,
           title: file.name,
           file,
-          isUploading: isEmbedded ? false : true,
+          isUploading: !isEmbedded,
           isReplacing: false,
           // Clone the buffer so it can be read multiple times (File.arrayBuffer() consumes the stream once)
           data: isEmbedded ? new Uint8Array((await file.arrayBuffer()).slice(0)) : null,

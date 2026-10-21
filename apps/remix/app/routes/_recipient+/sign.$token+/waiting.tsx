@@ -63,7 +63,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     }
   }
 
-  const documentPathForEditing = isOwnerOrTeamMember && team ? formatDocumentsPath(team.url) + '/' + document.id : null;
+  const documentPathForEditing = isOwnerOrTeamMember && team ? `${formatDocumentsPath(team.url)}/${document.id}` : null;
 
   const branding = await loadRecipientBrandingByTeamId({ teamId: document.teamId });
 

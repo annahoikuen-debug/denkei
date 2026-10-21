@@ -237,7 +237,7 @@ export const DocumentSigningNumberField = ({ field, onSignField, onUnsignField }
 
   if (parsedFieldMeta?.label) {
     fieldDisplayName =
-      parsedFieldMeta.label.length > 20 ? parsedFieldMeta.label.substring(0, 20) + '...' : parsedFieldMeta.label;
+      parsedFieldMeta.label.length > 20 ? `${parsedFieldMeta.label.substring(0, 20)}...` : parsedFieldMeta.label;
   }
 
   const userInputHasErrors = Object.values(errors).some((error) => error.length > 0);

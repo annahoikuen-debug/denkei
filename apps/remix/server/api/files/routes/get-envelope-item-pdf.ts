@@ -1,4 +1,5 @@
 import { getOptionalNonEmbedSession } from '@documenso/auth/server/lib/session/embed-session-restrictions';
+import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
 import { verifyEmbeddingPresignToken } from '@documenso/lib/server-only/embedding-presign/verify-embedding-presign-token';
 import type { DocumentDataVersion } from '@documenso/lib/types/document';
 import { sha256 } from '@documenso/lib/universal/crypto';
@@ -90,12 +91,22 @@ route.get(
       return c.json({ error: 'Not found' }, 404);
     }
 
-    return await handleEnvelopeItemPdfRequest({
-      c,
-      envelopeItem,
-      version,
-      cacheStrategy: 'private',
-    });
+    try {
+      return await handleEnvelopeItemPdfRequest({
+        c,
+        envelopeItem,
+        version,
+        cacheStrategy: 'private',
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        const { status, body } = AppError.toRestAPIError(error);
+
+        return c.json({ error: body.message, code: error.code }, status);
+      }
+
+      throw error;
+    }
   },
 );
 
@@ -125,6 +136,17 @@ export const handleEnvelopeItemPdfRequest = async ({
   // Determine which PDF data to use based on version requested.
   const documentDataToUse =
     version === 'current' ? envelopeItem.documentData.data : envelopeItem.documentData.initialData;
+
+  // R-02: 保管期限ジョブにより PDF 実体が破棄された文書は縮退させる。
+  if (documentDataToUse === '') {
+    throw new AppError(AppErrorCode.DOCUMENT_DATA_PURGED, {
+      message:
+        'この文書は保管期限を過ぎたため、本文PDFは削除されました。締結証明書・監査ログは完了時に配信されています。監査記録は引き続き本システムで照会できます。',
+      userMessage:
+        'この文書は保管期限を過ぎたため、本文PDFは削除されました。締結証明書・監査ログは完了時に配信されています。監査記録は引き続き本システムで照会できます。',
+      statusCode: 410,
+    });
+  }
 
   const etag = Buffer.from(sha256(documentDataToUse)).toString('hex');
 

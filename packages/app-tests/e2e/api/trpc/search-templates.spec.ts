@@ -136,7 +136,7 @@ test.describe('Template Search - Cross-Team Isolation', () => {
     const { data } = await trpcTemplateSearch(page, 'Unique');
 
     expect(data).not.toBeNull();
-    const titles = data!.map((d) => d.title);
+    const titles = data?.map((d) => d.title);
 
     expect(titles).toContain('Unique Team A Template');
     expect(titles).not.toContain('Unique Team B Template');
@@ -161,7 +161,7 @@ test.describe('Template Search - Cross-Team Isolation', () => {
     const { data } = await trpcTemplateSearch(page, '%');
 
     expect(data).not.toBeNull();
-    expect(data!.map((d) => d.title)).not.toContain('Wildcard Tpl B');
+    expect(data?.map((d) => d.title)).not.toContain('Wildcard Tpl B');
 
     await apiSignout({ page });
   });
@@ -197,7 +197,7 @@ test.describe('Template Search - Recipient Email', () => {
 
     expect(adminData).not.toBeNull();
     expect(adminData).toHaveLength(1);
-    expect(adminData![0].title).toBe('Template with Unique Recipient');
+    expect(adminData?.[0].title).toBe('Template with Unique Recipient');
 
     await apiSignout({ page });
 
@@ -238,7 +238,7 @@ test.describe('Template Search - Filtering', () => {
 
     expect(data).not.toBeNull();
     expect(data).toHaveLength(1);
-    expect(data![0].title).toBe('Active Findable Template');
+    expect(data?.[0].title).toBe('Active Findable Template');
 
     await apiSignout({ page });
   });

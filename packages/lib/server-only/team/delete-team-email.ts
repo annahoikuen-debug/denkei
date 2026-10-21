@@ -37,7 +37,7 @@ export const deleteTeamEmail = async ({ userId, userEmail, teamId }: DeleteTeamE
         buildTeamWhereQuery({
           teamId,
           userId,
-          roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
+          roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
         }),
         {
           id: teamId,
@@ -96,7 +96,7 @@ export const deleteTeamEmail = async ({ userId, userEmail, teamId }: DeleteTeamE
       html,
       text,
     });
-  } catch (e) {
+  } catch (_e) {
     // Todo: Teams - Alert us.
     // We don't want to prevent a user from revoking access because an email could not be sent.
   }

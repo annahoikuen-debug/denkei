@@ -25,7 +25,7 @@ export const deleteOrganisationRoute = authenticatedProcedure
       where: buildOrganisationWhereQuery({
         organisationId,
         userId: user.id,
-        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['DELETE_ORGANISATION'],
+        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.DELETE_ORGANISATION,
       }),
       select: {
         id: true,

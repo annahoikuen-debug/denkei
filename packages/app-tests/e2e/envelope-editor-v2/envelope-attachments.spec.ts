@@ -124,8 +124,8 @@ const assertAttachmentsInDatabase = async ({
     const found = envelope.envelopeAttachments.find((a) => a.label === expected.label);
 
     expect(found).toBeDefined();
-    expect(found!.data).toBe(expected.url);
-    expect(found!.type).toBe('link');
+    expect(found?.data).toBe(expected.url);
+    expect(found?.type).toBe('link');
   }
 
   if (deletedLabel) {

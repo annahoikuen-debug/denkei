@@ -34,7 +34,7 @@ export const updateOrganisationMemberRoute = authenticatedProcedure
       where: buildOrganisationWhereQuery({
         organisationId,
         userId,
-        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
+        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
       }),
       include: {
         groups: {

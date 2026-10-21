@@ -475,7 +475,7 @@ const assertAllFieldTypesPersistedInDatabase = async ({
   const meta = (type: FieldType): Record<string, unknown> => {
     const field = fieldsByType.get(type);
     expect(field).toBeDefined();
-    const fieldMeta = field!.fieldMeta;
+    const fieldMeta = field?.fieldMeta;
     expect(typeof fieldMeta).toBe('object');
     expect(fieldMeta).not.toBeNull();
     return fieldMeta as Record<string, unknown>;
