@@ -155,7 +155,7 @@ docker compose -f docker/compose.standalone.yml logs -f app
 | サービス | URL | 説明 |
 |---------|-----|------|
 | メインアプリ | http://localhost:3000 | デンケイ本体 |
-| 公式ランディングページ | http://localhost:3000/lp | 六つ道具・コスト診断シミュレーター |
+| 公式ランディングページ | http://localhost:3000/lp | 七つ道具・コスト診断シミュレーター |
 | データベース | コンテナ内:5432 | PostgreSQL（ホストへポート公開なし。`docker compose -f docker/compose.standalone.yml exec db psql -U denkei denkei` で接続） |
 
 ---
@@ -247,17 +247,6 @@ docker compose -f docker/production/compose.yml up -d
 | `NEXT_PRIVATE_UPLOAD_BUCKET` | S3バケット名 | - |
 | `NEXT_PUBLIC_DOCUMENT_SIZE_UPLOAD_LIMIT` | アップロード制限MB | `10`（スタンドアロン構成プリセット） |
 
-### 文書保管期限（R-01・ストレージ最小化）
-
-| 変数 | 説明 | デフォルト |
-|------|------|-----------|
-| `NEXT_PRIVATE_ENVELOPE_RETENTION_DAYS` | 完了文書の保管期限（日）。期限切れの完了文書の本文PDFと署名画像を日次ジョブで自動削除。**0=無効**（永久保存、上流互換動作） | `0` |
-
-- 推奨値は 30〜90 日。締結完了時に締結証明書・監査ログ付きの完成PDFが全員へ配信されるため、電帳法の保存義務は利用者側で自己完結できます。
-- 削除対象: 本文PDF（元文書・署名済み）・署名画像。保持対象: 監査ログ（ハッシュチェーン）・文書メタデータ・宛先情報。
-- 削除後の文書は監査記録の照会のみ可能です（ダウンロード時は「保管期限を過ぎたため本文PDFは削除されました」というエラーになります）。
-- 利用規約向けの文面は `assets/compliance/retention-policy-template.md` を参照してください。**有効化の前に規約への反映が必要です。**
-
 ### 電子署名
 
 | 変数 | 説明 | デフォルト |
@@ -303,11 +292,11 @@ docker compose -f docker/production/compose.yml up -d
 
 ### プラン定義（`packages/lib/constants/plans.ts`）
 
-| プラン | 月額(税抜) | 月次送信上限 | メンバー上限 | 主な機能 |
-|-------|-----------|------------|------------|---------|
-| 無料(FREE) | 0円 | 3件 | 1名 | 基本署名フロー |
-| 中小応援スタンダード(STANDARD) | 2,980円 | 100件（年払いは120件） | 3名 | Firebaseメール認証・テンプレート共有 |
-| ビジネス(BUSINESS) | 6,980円 | 無制限 | 無制限 | ＋承認フロー・CSV一括送信 |
+| プラン | 月額(税抜) | 月次送信上限 | 主な機能 |
+|-------|-----------|------------|---------|
+| 無料(FREE) | 0円 | 3件 | 基本署名フロー |
+| 中小応援スタンダード(STANDARD) | 2,980円 | 100件 | Firebaseメール認証・テンプレート共有 |
+| ビジネス(BUSINESS) | 4,980円 | 無制限 | ＋承認フロー・CSV一括送信 |
 
 - タイムスタンプ(RFC3161)は全プランで外部TSAを使用しません。電帳法対応はWORMストレージ＋監査ログ（SHA-256ハッシュチェーン）で実現します。
 - 取引先の本人確認はメールOTP(LOW)とFirebase Authenticationメール認証(MEDIUM)のみで、SMS認証は提供しません。
@@ -322,12 +311,12 @@ docker compose -f docker/production/compose.yml up -d
 | `NEXT_PRIVATE_STRIPE_WEBHOOK_SECRET` | Stripe Webhookシークレット | - |
 | `NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD` | STANDARDプラン（月額2,980円）のStripe Price ID | - |
 | `NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD_ANNUAL` | STANDARDプラン（年額29,760円・一括実質2ヶ月無料）のStripe Price ID | - |
-| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS` | BUSINESSプラン（月額6,980円）のStripe Price ID | - |
-| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS_ANNUAL` | BUSINESSプラン（年額69,800円・一括実質2ヶ月無料）のStripe Price ID | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS` | BUSINESSプラン（月額4,980円）のStripe Price ID | - |
+| `NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS_ANNUAL` | BUSINESSプラン（年額49,800円・一括実質2ヶ月無料）のStripe Price ID | - |
 
 Stripe ダッシュボードで以下を設定してください：
 
-1. 製品とプラン価格を作成（STANDARD月額: 2,980円/月、STANDARD年額: 29,760円/年、BUSINESS月額: 6,980円/月、BUSINESS年額: 69,800円/年、チケット: 1,980円/5,800円、JPY）
+1. 製品とプラン価格を作成（STANDARD月額: 2,980円/月、STANDARD年額: 29,760円/年、BUSINESS月額: 4,980円/月、BUSINESS年額: 49,800円/年、JPY）
 2. Price ID を `.env` の対応変数に設定
 3. Webhook エンドポイントを `https://<ホスト>/api/webhooks/stripe` に設定し、イベント `customer.subscription.updated`, `invoice.paid` などを購読
 
@@ -398,7 +387,7 @@ Webhook 受信後、`packages/ee/server-only/stripe/` でプラン即時昇格�
 | セクション | 内容 | 実装ファイル |
 |-----------|------|-------------|
 | ヒーロー | キャッチコピー、3大要約、CTAボタン | `apps/remix/app/components/general/landing-page.tsx` |
-| 六つ道具 | 電子認印、事務処理規程キット、WORM監査ログ、メールOTP、インボイス適格請求書、月額定額 | 同上 |
+| 七つ道具 | 電子認印、事務処理規程キット、WORM監査ログ、メールOTP、インボイス適格請求書、月額定額、コスト診断シミュレーター | 同上 |
 | 電子認印10秒体験 | 苗字入力・印影色選択・電子印影プレビュー | 同上 |
 | コスト診断シミュレーター | 月間契約書件数による年間コスト削減額・削減時間試算 | 同上 |
 | 料金プラン | FREE/STANDARD/BUSINESS の3プラン比較・コスト比較表 | 同上 |
@@ -507,63 +496,13 @@ volumes:
 - 電子署名法第3条により、本番環境では `gcloud-hsm`（Google Cloud KMS）の使用が推奨されます。
 - `local`（P12）を本番で使用する場合は `NEXT_PRIVATE_SIGNING_ALLOW_LOCAL_IN_PRODUCTION=true` の明示的なオプトインが必要です。
 
-### Google Cloud HSM への移行（R-10・本番推奨構成）
-
-P12 は「単一鍵の漏洩=全文書への影響」という構造的リスクがあります。本番では以下の手順で Google Cloud HSM に移行してください（コード改修は不要、設定のみ）。
-
-**GCP 側の準備：**
-
-1. Cloud KMS で key ring と鍵を作成（署名用。`EC_SIGN_P256_SHA256` または RSA2048/SHA256。**破棄不可（prevent destroy）を設定**）
-2. リージョンは `asia-northeast1`（個人情報保護法第28条対応・国内リージョン推奨）
-3. 自社の組織証明書（PEM）を用意。秘密鍵は KMS にのみ存在し、証明書は環境変数で渡します
-4. サービスアカウントを作成し `roles/cloudkms.signerVerifier` を付与、JSON キーを発行
-
-**`.env` の設定：**
-
-```bash
-NEXT_PRIVATE_SIGNING_TRANSPORT="gcloud-hsm"
-NEXT_PRIVATE_SIGNING_GCLOUD_HSM_KEY_PATH="projects/<project>/locations/asia-northeast1/keyRings/<ring>/cryptoKeys/<key>/cryptoKeyVersions/1"
-NEXT_PRIVATE_SIGNING_GCLOUD_HSM_PUBLIC_CRT_FILE_CONTENTS="<組織証明書PEMのbase64>"
-NEXT_PRIVATE_SIGNING_GCLOUD_APPLICATION_CREDENTIALS_CONTENTS="<サービスアカウントJSONのbase64>"
-```
-
-**移行手順（ダウンタイム最小）：**
-
-1. staging で HSM 構成を検証（下記スモークテスト）
-2. 署名待ち（PENDING）文書が 0 件の時間帯を選択
-3. `.env` の `NEXT_PRIVATE_SIGNING_TRANSPORT` を `local` → `gcloud-hsm` に変更して再起動
-4. `/api/health` の `checks.certificate` が `ok` であることを確認
-5. テスト文書 1 件を署名し、Adobe Acrobat 等で署名者・改ざん検知を確認
-6. ロールバック: `.env` を元に戻して再起動のみ（過去文書は署名済みのため互換性問題なし）
-
-**スモークテスト：**
-
-| 確認項目 | 方法 | 合格条件 |
-|---------|------|---------|
-| 証明書状態 | `GET /api/health` の `checks.certificate` | `ok` |
-| 署名生成 | staging でテスト文書を完了まで進める | 署名済みPDFが生成される |
-| 改ざん検知 | 完成PDFを Acrobat で検証 | 署名有効・変更検知 OK |
-| 誤設定時の挙動 | 鍵パスを誤った状態で起動 | 起動は継続し、`/api/health` の `certificate` が `error`（サイレント障害にならない） |
-
-### P12 を使い続ける場合の暫定運用（R-11・HSM 移行まで）
-
-HSM 移行完了まで P12 を使う場合は以下を厳守してください：
-
-- `/opt/documenso/cert.p12` は所有者のみ読み取り可能（`chmod 600`）にし、**アプリコンテナ以外から参照させない**
-- 有効期限を年間運用予定表（§17.1 の「毎年6月15日: APIキー・証明書点検」）に登録
-- 鍵の紛失・漏洩時は証明書を失効させ、新証明書で再発行。過去文書の検証には旧証明書の公開鍵を保持しておく
-- P12 とパスフレーズは **同じ媒体に保存しない**（パスフレーズは `.env`、P12 はファイルシステム）
-- HSM 移行後は本項を「旧構成」として注記し、P12 を削除する
-
 ### 証明書状態確認
 
-起動後、以下で証明書・DB の状態を確認できます：
+起動後、以下で証明書状態を確認できます：
 
 ```
-http://<ホスト>:3000/api/health
+http://<ホスト>:3000/api/certificate-status
 ```
-
-応答例：`{"status":"ok","checks":{"database":"ok","certificate":"ok"}}`。`certificate` が `warning` の場合は証明書未設定、`error` は証明書読み込み失敗です。
 
 ---
 
@@ -588,7 +527,6 @@ npm run prisma:migrate-deploy
 |----------------|------|
 | `20261015000000_ja_default_document_meta` | `DocumentMeta.language` の既定を `'ja'`、`timezone` の既定を `'Asia/Tokyo'` に変更 |
 | `20261016000001_add_audit_log_worm_trigger` | `DocumentAuditLog` に WORM 保護トリガーを追加（UPDATE/DELETE禁止） |
-| `20261020000000_default_include_audit_log` | `OrganisationGlobalSettings.includeAuditLog` の既定を `true` に変更し、既存行も `true` に更新（R-03: 完了文書への監査ログPDF既定同梱） |
 
 ### データベースGUI（Prisma Studio）
 
@@ -611,23 +549,6 @@ npm run prisma:seed
 ```bash
 npx prisma generate
 ```
-
-### 完了文書の保管期限ジョブ（R-01）
-
-`NEXT_PRIVATE_ENVELOPE_RETENTION_DAYS` を 1 以上に設定すると、毎日 UTC 19:00（JST 4:00）に
-`internal.envelope-retention-sweep` ジョブが実行され、期限切れの完了文書から PDF 実体と署名画像を削除します。
-
-| 項目 | 動作 |
-|------|------|
-| 実行タイミング | 日次（cron `0 19 * * *` = UTC 19:00 / JST 04:00） |
-| 対象 | COMPLETED で完了から N 日経過した文書（1 回あたり最大 100 件、残りは翌日以降に処理） |
-| 削除 | 本文PDF（元文書・署名済み）・署名画像。S3 利用時は実体も削除 |
-| 保持 | 監査ログ（`DOCUMENT_DATA_PURGED` を追記しハッシュチェーンを継続）・メタデータ・宛先情報 |
-| 無効化 | `0`（既定）を設定 |
-
-- ジョブの動作確認はアプリログに `[JOBS]: Registered cron job internal.envelope-retention-sweep` が出力されていることを確認してください。
-- 有効化の手順: 規約・ポリシーの反映（`assets/compliance/retention-policy-template.md`）→ staging で動作確認 → 本番 `.env` に設定 → 再起動。
-- 期限切れ文書のダウンロードは HTTP 410 と日本語メッセージ（「保管期限を過ぎたため本文PDFは削除されました」）で縮退します。
 
 ---
 
@@ -661,66 +582,12 @@ docker run --rm \
 
 ### バックアップ戦略
 
-**推奨: 暗号化バックアップスクリプト（R-09）**
-
-バックアップには個人情報（契約PDF・氏名・メールアドレス）が含まれるため、**平文での保存は禁止**です。`scripts/backup-denkei.sh` を使用してください：
-
-```bash
-# .env と同じリポジトリで実行。パスフレーズはファイルから読み込む（シェル履歴に残さない）
-BACKUP_PASSPHRASE=$(cat /etc/denkei/backup-passphrase) \
-    ./scripts/backup-denkei.sh
-
-# cron 例（毎日 3:30）
-# 30 3 * * * cd /opt/denkei/denkei && BACKUP_PASSPHRASE=$(cat /etc/denkei/backup-passphrase) ./scripts/backup-denkei.sh >> /var/log/denkei-backup.log 2>&1
-```
-
-| 項目 | 既定 | 説明 |
-|------|------|------|
-| 保存先 | `/var/backups/denkei` | `BACKUP_DIR` で変更可。可能ならオフサイト（R2/S3）にもミラー |
-| 暗号化 | AES-256-CBC (PBKDF2) | 平文をディスクに置かずパイプラインで暗号化 |
-| 世代数 | 14 | `BACKUP_KEEP_GENERATIONS` で変更可。**世代数は最小限に**（バックアップ自体がPIIの塊のため） |
-| 整合性 | SHA-256 + 復号検証 | スクリプトが自動で実施 |
-
-### リストア（暗号化バックアップから）
-
-```bash
-openssl enc -d -aes-256-cbc -pbkdf2 -pass pass:"$BACKUP_PASSPHRASE" \
-    -in denkei_backup_20261020_033000.sql.gz.enc \
-  | gunzip \
-  | docker compose -f docker/compose.standalone.yml exec -T db \
-      psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
-```
-
-### 従来手法（非推奨・検証用）
-
-検証や一時的なダンプ用途で `pg_dump` を直接使う場合は、出力ファイルの取り扱いに注意してください（使用後は速やかに削除）：
-
-```bash
-# スタンドアロン構成のDBコンテナからバックアップ
-docker compose -f docker/compose.standalone.yml exec db \
-    pg_dump -U denkei denkei > backup_$(date +%Y%m%d).sql
-```
-
-### ボリュームバックアップ（スタンドアロン）
-
-DB内包ストレージ利用時はDBバックアップで代替可能です。ボリュームバックアップは**署名証明書（P12）のオフライン保管用途に限定**してください：
-
-```bash
-docker run --rm \
-    -v denkei_data:/source:ro \
-    -v $(pwd):/backup \
-    alpine tar czf /backup/denkei_data_backup.tar.gz -C /source .
-```
-
-### バックアップ運用の要点
-
 | 項目 | 推奨頻度 | 方法 |
 |------|---------|------|
-| データベース（暗号化） | 毎日 | `scripts/backup-denkei.sh` + cron |
-| オフサイトミラー | 毎週 | R2/S3 への暗号化ファイルのアップロード |
-| 設定ファイル (.env) | 変更時 | 秘密管理サービス（Gitにはコミットしない） |
-| 署名証明書 (P12) | 作成時 | オフライン安全保管（§9 参照） |
-| リストア訓練 | 年1回（11月） | §17 の年間予定表に従い、別コンテナで復元検証 |
+| データベース | 毎日 | pg_dump + オフサイト保存 |
+| ボリュームデータ | 毎週 | Docker ボリュームバックアップ |
+| 設定ファイル (.env) | 変更時 | Git 管理または秘密管理サービス |
+| 署名証明書 (P12) | 作成時 | オフライン安全保管 |
 
 ---
 
@@ -795,17 +662,6 @@ docker compose -f docker/compose.standalone.yml logs -f app
 - ディスク使用量（アップロードファイル）
 - Stripe Webhook 受信エラー
 
-### サーバ時刻同期（NTP）の確認（R-07）
-
-外部TSAを使用しない構成では、監査ログ・締結証明書の時刻はサーバ時計に依存します。以下を定期確認してください（年間予定表の 6 月点検に含めます）：
-
-```bash
-timedatectl        # NTP synchronized: yes を確認
-timedatectl status | grep -i synchronized
-```
-
-`synchronized: no` の場合は `systemd-timesyncd` / `chronyd` を有効化してください。時刻の大幅なずれは署名時刻の証明力を損ないます。
-
 ---
 
 ## 14. トラブルシューティング
@@ -842,13 +698,9 @@ docker compose -f docker/compose.standalone.yml logs app | grep -i error
 - [ ] `.env` ファイルのパーミッションを `600` など制限済み
 - [ ] 本番環境で HTTPS を使用済み（リバースプロキシ等）
 - [ ] データベースへのアクセスを内部ネットワークに制限済み
-- [ ] `POSTGRES_PASSWORD` を強固な値に設定済み（compose は未設定時に起動しない）
-- [ ] 署名証明書（P12）を安全な場所に保管済み（本番は `gcloud-hsm` への移行を検討、§9 参照）
-- [ ] バックアップスケジュールを設定済み（**暗号化必須**、`scripts/backup-denkei.sh`、§11 参照）
+- [ ] 署名証明書（P12）を安全な場所に保管済み
+- [ ] バックアップスケジュールを設定済み
 - [ ] 不要なサインアップ方法を無効化済み（`NEXT_PUBLIC_DISABLE_*`）
-- [ ] 自社専用運用の場合、`NEXT_PUBLIC_DISABLE_SIGNUP=true` または `NEXT_PRIVATE_ALLOWED_SIGNUP_DOMAINS` で新規登録を制限済み（R-06）
-- [ ] テレメトリが無効化されていること（`DOCUMENSO_DISABLE_TELEMETRY=true`、compose 既定、R-05）
-- [ ] 完了文書の保管期限ポリシーを決定済み（`NEXT_PRIVATE_ENVELOPE_RETENTION_DAYS`、R-01。有効化前に規約反映、`assets/compliance/retention-policy-template.md`）
 - [ ] 電子署名法・電子帳簿保存法への対応状況を確認済み（`LEGAL_BASIS_JP.md` 参照）
 - [ ] Stripe Webhook シークレットを適切に設定済み（課金有効時）
 - [ ] Stripe Price ID を `.env` に設定済み（課金有効時）
@@ -970,8 +822,6 @@ Googleカレンダーやタスク管理アプリ（Todoist, Notion等）に以�
 | `LEGAL_BASIS_JP.md` | 日本法における法的根拠 |
 | `SECURITY.md` | セキュリティポリシー |
 | `docker/README.md` | Docker セットアップ詳細 |
-| `assets/compliance/retention-policy-template.md` | 文書保管・削除ポリシーの規約文面テンプレート（R-04） |
-| `docs/plans/recommended-minimal-risk-implementation-plan.md` | 推奨構成（保管最小化・リスク低減）実装計画書 |
 | `docs/plans/remaining-tasks-implementation-plan.md` | 実装進捗マスタープラン |
 | `docs/plans/saas-launch-architecture-guide.md` | 0円・極小コストSaaS公開＆運用設計ガイド |
 | `docs/plans/smb-growth-hands-off-implementation-plan.md` | 顧客満足・手離れ・販売促進 36ステップ詳細実装計画書 |
