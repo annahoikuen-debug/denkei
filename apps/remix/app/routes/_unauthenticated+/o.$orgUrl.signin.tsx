@@ -112,7 +112,7 @@ export default function OrganisationSignIn({ loaderData }: Route.ComponentProps)
       await authClient.oidc.org.signIn({
         orgUrl,
       });
-    } catch (_err) {
+    } catch (err) {
       toast({
         title: t`An unknown error occurred`,
         description: t`We encountered an unknown error while attempting to sign you In. Please try again later.`,

@@ -37,7 +37,7 @@ const ZDropdownFieldFormSchema = z.object({
         if (!seen.has(key)) {
           seen.set(key, []);
         }
-        seen.get(key)?.push(index);
+        seen.get(key)!.push(index);
       });
 
       for (const [key, indices] of seen) {
@@ -206,7 +206,7 @@ export const EditorFieldDropdownForm = ({
             </div>
 
             <ul className="space-y-2">
-              {(formValues.values || []).map((_value, index) => (
+              {(formValues.values || []).map((value, index) => (
                 <li key={`dropdown-value-${index}`} className="flex flex-row gap-2">
                   <FormField
                     control={form.control}

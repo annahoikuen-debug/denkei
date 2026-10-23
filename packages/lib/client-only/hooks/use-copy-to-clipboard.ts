@@ -39,7 +39,7 @@ export function useCopyToClipboard(): [CopiedValue, CopyFn] {
   const handleClipboardApiCopy = async (value: CopyValue, blobType = 'text/plain') => {
     try {
       await navigator.clipboard.write([new ClipboardItem({ [blobType]: value })]);
-    } catch (_e) {
+    } catch (e) {
       // Fallback attempt.
       await handleWriteTextCopy(value);
     }

@@ -64,8 +64,8 @@ function initPosthog() {
             }
           }
 
-          if (event.$set_once && typeof event.$set_once.$initial_current_url === 'string') {
-            event.$set_once.$initial_current_url = redactTokensFromUrl(event.$set_once.$initial_current_url);
+          if (event.$set_once && typeof event.$set_once['$initial_current_url'] === 'string') {
+            event.$set_once['$initial_current_url'] = redactTokensFromUrl(event.$set_once['$initial_current_url']);
           }
 
           return event;

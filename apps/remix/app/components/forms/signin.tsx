@@ -284,7 +284,7 @@ export const SignInForm = ({
       await authClient.google.signIn({
         redirectPath,
       });
-    } catch (_err) {
+    } catch (err) {
       toast({
         title: _(msg`An unknown error occurred`),
         description: _(msg`We encountered an unknown error while attempting to sign you In. Please try again later.`),
@@ -298,7 +298,7 @@ export const SignInForm = ({
       await authClient.microsoft.signIn({
         redirectPath,
       });
-    } catch (_err) {
+    } catch (err) {
       toast({
         title: _(msg`An unknown error occurred`),
         description: _(msg`We encountered an unknown error while attempting to sign you In. Please try again later.`),
@@ -312,7 +312,7 @@ export const SignInForm = ({
       await authClient.oidc.signIn({
         redirectPath,
       });
-    } catch (_err) {
+    } catch (err) {
       toast({
         title: _(msg`An unknown error occurred`),
         description: _(msg`We encountered an unknown error while attempting to sign you In. Please try again later.`),

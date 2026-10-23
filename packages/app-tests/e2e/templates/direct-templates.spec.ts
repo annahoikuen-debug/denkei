@@ -15,10 +15,10 @@ import { apiSignin } from '../fixtures/authentication';
 import { signSignaturePad } from '../fixtures/signature';
 
 // Duped from `packages/lib/utils/teams.ts` due to errors when importing that file.
-const _formatDocumentsPath = (teamUrl: string) => `/t/${teamUrl}/documents`;
+const formatDocumentsPath = (teamUrl: string) => `/t/${teamUrl}/documents`;
 const formatTemplatesPath = (teamUrl: string) => `/t/${teamUrl}/templates`;
 
-const _nanoid = customAlphabet('1234567890abcdef', 10);
+const nanoid = customAlphabet('1234567890abcdef', 10);
 
 const expectSigningRequestJobForRecipient = async (recipientId: number) => {
   const job = await prisma.backgroundJob.findFirst({

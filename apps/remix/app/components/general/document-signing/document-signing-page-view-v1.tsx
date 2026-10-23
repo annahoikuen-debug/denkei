@@ -85,7 +85,7 @@ export const DocumentSigningPageViewV1 = ({
 
   const { derivedRecipientAccessAuth, user: authUser } = useRequiredDocumentSigningAuthContext();
 
-  const _hasAuthenticator = authUser?.twoFactorEnabled
+  const hasAuthenticator = authUser?.twoFactorEnabled
     ? authUser.twoFactorEnabled && authUser.email === recipient.email
     : false;
 

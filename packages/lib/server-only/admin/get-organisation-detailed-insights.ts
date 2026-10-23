@@ -81,6 +81,7 @@ export async function getOrganisationDetailedInsights({
       createdAtFrom = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
       break;
     }
+    case 'allTime':
     default:
       createdAtFrom = null;
       break;

@@ -4,6 +4,7 @@ import { Point } from './point';
 
 export class Canvas {
   private readonly $canvas: HTMLCanvasElement;
+  private readonly $offscreenCanvas: HTMLCanvasElement;
 
   private currentCanvasWidth = 0;
   private currentCanvasHeight = 0;

@@ -724,8 +724,10 @@ export const EnvelopeEditorFieldsPageRenderer = ({ pageData }: { pageData: PageR
             selectedFieldFormId={selectedKonvaFieldGroups.map((field) => field.id())}
             style={{
               position: 'absolute',
-              top: `${interactiveTransformer.current.y() + interactiveTransformer.current.getClientRect().height + 5}px`,
-              left: `${interactiveTransformer.current.x() + interactiveTransformer.current.getClientRect().width / 2}px`,
+              top:
+                interactiveTransformer.current.y() + interactiveTransformer.current.getClientRect().height + 5 + 'px',
+              left:
+                interactiveTransformer.current.x() + interactiveTransformer.current.getClientRect().width / 2 + 'px',
               transform: 'translateX(-50%)',
               gap: '8px',
               pointerEvents: 'auto',
@@ -738,8 +740,8 @@ export const EnvelopeEditorFieldsPageRenderer = ({ pageData }: { pageData: PageR
         <div
           style={{
             position: 'absolute',
-            top: `${pendingFieldCreation.y() * scale + pendingFieldCreation.getClientRect().height + 5}px`,
-            left: `${pendingFieldCreation.x() * scale + pendingFieldCreation.getClientRect().width / 2}px`,
+            top: pendingFieldCreation.y() * scale + pendingFieldCreation.getClientRect().height + 5 + 'px',
+            left: pendingFieldCreation.x() * scale + pendingFieldCreation.getClientRect().width / 2 + 'px',
             transform: 'translateX(-50%)',
             zIndex: 50,
           }}

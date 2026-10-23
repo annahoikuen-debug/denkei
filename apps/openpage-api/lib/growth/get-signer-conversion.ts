@@ -13,14 +13,7 @@ export const getSignerConversionMonthly = async (type: 'count' | 'cumulative' = 
       fn
         .sum(fn.count('Recipient.email').distinct())
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-        .over((ob) =>
-          ob.orderBy(
-            fn('DATE_TRUNC', [sql.lit('MONTH'), 'User.createdAt']) as unknown as import('kysely').ExpressionOrFactory<
-              string,
-              never
-            >,
-          ),
-        )
+        .over((ob) => ob.orderBy(fn('DATE_TRUNC', [sql.lit('MONTH'), 'User.createdAt']) as any))
         .as('cume_count'),
     ])
     .where('Recipient.signedAt', 'is not', null)

@@ -1,4 +1,3 @@
-import crypto from 'node:crypto';
 import { mailer } from '@documenso/email/mailer';
 import { OrganisationAccountLinkConfirmationTemplate } from '@documenso/email/templates/organisation-account-link-confirmation';
 import { getI18nInstance } from '@documenso/lib/client-only/providers/i18n-server';
@@ -11,6 +10,7 @@ import type { TOrganisationAccountLinkMetadata } from '@documenso/lib/types/orga
 import { renderEmailWithI18N } from '@documenso/lib/utils/render-email-with-i18n';
 import { prisma } from '@documenso/prisma';
 import { msg } from '@lingui/core/macro';
+import crypto from 'crypto';
 import { DateTime } from 'luxon';
 import { createElement } from 'react';
 

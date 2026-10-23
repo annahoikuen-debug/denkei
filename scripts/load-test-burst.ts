@@ -40,7 +40,7 @@ async function runBurstLoadTest() {
       const taskStart = Date.now();
       try {
         const envelopeId = `env_burst_${Date.now()}_${docIndex + 1}_${Math.random().toString(36).slice(2, 8)}`;
-        const _envelope = await prisma.envelope.create({
+        const envelope = await prisma.envelope.create({
           data: {
             id: envelopeId,
             secondaryId: `sec_burst_${docIndex + 1}_${Date.now()}`,

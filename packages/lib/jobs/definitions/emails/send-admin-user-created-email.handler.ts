@@ -1,8 +1,8 @@
-import crypto from 'node:crypto';
 import { mailer } from '@documenso/email/mailer';
 import { AdminUserCreatedTemplate } from '@documenso/email/templates/admin-user-created';
 import { prisma } from '@documenso/prisma';
 import { msg } from '@lingui/core/macro';
+import crypto from 'crypto';
 import { createElement } from 'react';
 import { getI18nInstance } from '../../../client-only/providers/i18n-server';
 import { NEXT_PUBLIC_WEBAPP_URL } from '../../../constants/app';

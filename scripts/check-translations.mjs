@@ -121,44 +121,15 @@ const untranslated = entries.filter((e) => {
   return e.msgstr.trim() === '';
 });
 
-// ブランド名チェック: ja 翻訳 (msgstr) 内に上流ブランド名 "Documenso" が混入していないか検査する。
-// 大文字始まりの "Documenso" のみ検出し、実在ドメイン (app.documenso.com 等・小文字) は対象外とする。
-const BRAND_VIOLATION_PATTERN = /Documenso/;
-
-const brandViolations = entries.filter((e) => {
-  if (e.msgid === '') {
-    return false;
-  }
-
-  if (BRAND_VIOLATION_PATTERN.test(e.msgstr)) {
-    return true;
-  }
-
-  return e.plurals.some((str) => BRAND_VIOLATION_PATTERN.test(str));
-});
-
-if (untranslated.length === 0 && brandViolations.length === 0) {
-  console.log('[check-translations] ja 翻訳漏れ 0 件・ブランド名混入 0 件です ✅');
+if (untranslated.length === 0) {
+  console.log('[check-translations] ja 翻訳漏れは 0 件です ✅');
   process.exit(0);
 }
 
-if (untranslated.length > 0) {
-  console.log(`[check-translations] ja 未訳エントリが ${untranslated.length} 件あります:`);
+console.log(`[check-translations] ja 未訳エントリが ${untranslated.length} 件あります:`);
 
-  for (const entry of untranslated) {
-    console.log(`  - msgid: ${JSON.stringify(entry.msgid)}`);
-  }
-}
-
-if (brandViolations.length > 0) {
-  console.log(
-    `[check-translations] ja msgstr に上流ブランド名 "Documenso" が混入しています (${brandViolations.length} 件):`,
-  );
-
-  for (const entry of brandViolations) {
-    console.log(`  - msgid: ${JSON.stringify(entry.msgid)}`);
-    console.log(`    msgstr: ${JSON.stringify(entry.msgstr)}`);
-  }
+for (const entry of untranslated) {
+  console.log(`  - msgid: ${JSON.stringify(entry.msgid)}`);
 }
 
 if (LIST_ONLY) {

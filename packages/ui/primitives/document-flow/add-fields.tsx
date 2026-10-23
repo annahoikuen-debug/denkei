@@ -495,7 +495,7 @@ export const AddFieldsFormPartial = ({
     );
   }, [recipients]);
 
-  const _recipientsByRole = useMemo(() => {
+  const recipientsByRole = useMemo(() => {
     const recipientsByRole: Record<RecipientRole, TRecipientLite[]> = {
       CC: [],
       VIEWER: [],

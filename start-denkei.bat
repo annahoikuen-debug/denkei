@@ -42,6 +42,8 @@ if not exist .env (
     set "GEN_SECRET_2=!GEN_SECRET_2:-=!"
     for /f %%a in ('powershell -NoProfile -Command "[string][guid]::NewGuid()"') do set "GEN_SECRET_3=%%a"
     set "GEN_SECRET_3=!GEN_SECRET_3:-=!"
+    for /f %%a in ('powershell -NoProfile -Command "[string][guid]::NewGuid()"') do set "GEN_SECRET_4=%%a"
+    set "GEN_SECRET_4=!GEN_SECRET_4:-=!"
     echo NEXTAUTH_SECRET=!GEN_SECRET_1!>> .env
     echo NEXT_PRIVATE_ENCRYPTION_KEY=!GEN_SECRET_2!>> .env
     echo NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY=!GEN_SECRET_3!>> .env
@@ -52,6 +54,12 @@ if not exist .env (
     echo NEXT_PRIVATE_SIGNING_TRANSPORT=local >> .env
     echo NEXT_PUBLIC_UPLOAD_TRANSPORT=database >> .env
     echo NEXT_PRIVATE_SMTP_TRANSPORT=smtp-auth >> .env
+    rem docker/compose.standalone.yml requires these (no insecure fallbacks).
+    echo POSTGRES_USER=denkei>> .env
+    echo POSTGRES_PASSWORD=!GEN_SECRET_4!>> .env
+    echo POSTGRES_DB=denkei>> .env
+    rem Disable anonymous telemetry (third-party transmission zero).
+    echo DOCUMENSO_DISABLE_TELEMETRY=true>> .env
     echo [INFO] .env file created.
     echo.
 )

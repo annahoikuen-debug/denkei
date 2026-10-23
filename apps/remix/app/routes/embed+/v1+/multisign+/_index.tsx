@@ -115,10 +115,10 @@ export default function MultisignPage() {
   const [selectedDocument, setSelectedDocument] = useState<(typeof envelopes)[number]['document'] | null>(null);
 
   // Additional state for embed functionality
-  const [_hasFinishedInit, setHasFinishedInit] = useState(false);
+  const [hasFinishedInit, setHasFinishedInit] = useState(false);
   const [isNameLocked, setIsNameLocked] = useState(false);
-  const [_allowDocumentRejection, setAllowDocumentRejection] = useState(false);
-  const [_showOtherRecipientsCompletedFields, setShowOtherRecipientsCompletedFields] = useState(false);
+  const [allowDocumentRejection, setAllowDocumentRejection] = useState(false);
+  const [showOtherRecipientsCompletedFields, setShowOtherRecipientsCompletedFields] = useState(false);
   const [embedFullName, setEmbedFullName] = useState('');
 
   // Check if all documents are completed

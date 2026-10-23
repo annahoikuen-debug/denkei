@@ -83,6 +83,6 @@ a@example.com,田中,太郎,"株式会社A, 営業部",1000`;
 
     const result = parseBulkSendCsv({ csvContent: csv, variables });
 
-    expect(result.rows[0].values.取引先名).toBe('株式会社A, 営業部');
+    expect(result.rows[0].values['取引先名']).toBe('株式会社A, 営業部');
   });
 });

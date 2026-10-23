@@ -12,8 +12,6 @@
  * 6. 書類の交付を受ける事業者の氏名又は名称
  */
 
-import { PLANS } from '../constants/plans';
-
 export const INVOICE_REGISTRATION_NUMBER_REGEX = /^T\d{13}$/;
 
 /**
@@ -86,7 +84,7 @@ export const generateAnnualQualifiedInvoiceHtml = ({
   annualPeriod,
   customerName,
   planId = 'STANDARD',
-  amountJpy = planId === 'BUSINESS' ? PLANS.BUSINESS.annualPriceJpy : PLANS.STANDARD.annualPriceJpy,
+  amountJpy = planId === 'BUSINESS' ? 49800 : 29760,
   isReceipt = true,
 }: AnnualQualifiedInvoiceProps): string => {
   const planLabel = planId === 'BUSINESS' ? 'ビジネスプラン' : 'スタンダードプラン';

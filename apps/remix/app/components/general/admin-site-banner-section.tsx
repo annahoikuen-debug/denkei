@@ -76,7 +76,7 @@ export const AdminSiteBannerSection = ({ banner }: AdminSiteBannerSectionProps) 
       });
 
       await revalidate();
-    } catch (_err) {
+    } catch (err) {
       toast({
         title: _(msg`An unknown error occurred`),
         variant: 'destructive',

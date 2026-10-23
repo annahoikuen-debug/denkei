@@ -69,10 +69,10 @@ test.describe('Find Envelopes API - Basic', () => {
 
   test('should return empty results when no envelopes exist', async ({ request }) => {
     const { json } = await findEnvelopes(request, tokenA);
-    expect(json?.data).toHaveLength(0);
-    expect(json?.count).toBe(0);
-    expect(json?.currentPage).toBe(1);
-    expect(json?.totalPages).toBe(0);
+    expect(json!.data).toHaveLength(0);
+    expect(json!.count).toBe(0);
+    expect(json!.currentPage).toBe(1);
+    expect(json!.totalPages).toBe(0);
   });
 
   test('should return only envelopes owned by the user and not the other user', async ({ request }) => {
@@ -84,12 +84,12 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json: jsonA } = await findEnvelopes(request, tokenA);
-    expect(jsonA?.data).toHaveLength(1);
-    expect(jsonA?.data[0].title).toBe('UserA Doc');
+    expect(jsonA!.data).toHaveLength(1);
+    expect(jsonA!.data[0].title).toBe('UserA Doc');
 
     const { json: jsonB } = await findEnvelopes(request, tokenB);
-    expect(jsonB?.data).toHaveLength(1);
-    expect(jsonB?.data[0].title).toBe('UserB Doc');
+    expect(jsonB!.data).toHaveLength(1);
+    expect(jsonB!.data[0].title).toBe('UserB Doc');
   });
 
   test('should NOT leak envelopes between unrelated users', async ({ request }) => {
@@ -104,11 +104,11 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenB);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).not.toContain('Secret A1');
     expect(titles).not.toContain('Secret A2');
     expect(titles).toContain('Secret B1');
-    expect(json?.count).toBe(1);
+    expect(json!.count).toBe(1);
   });
 
   test('should filter by status correctly', async ({ request }) => {
@@ -124,17 +124,17 @@ test.describe('Find Envelopes API - Basic', () => {
 
     // DRAFT only
     const { json: draftJson } = await findEnvelopes(request, tokenA, { status: 'DRAFT' });
-    expect(draftJson?.data.every((d) => d.status === DocumentStatus.DRAFT)).toBe(true);
-    expect(draftJson?.data.some((d) => d.title === 'Draft Doc')).toBe(true);
-    expect(draftJson?.data.some((d) => d.title === 'Pending Doc')).toBe(false);
+    expect(draftJson!.data.every((d) => d.status === DocumentStatus.DRAFT)).toBe(true);
+    expect(draftJson!.data.some((d) => d.title === 'Draft Doc')).toBe(true);
+    expect(draftJson!.data.some((d) => d.title === 'Pending Doc')).toBe(false);
 
     // PENDING only
     const { json: pendingJson } = await findEnvelopes(request, tokenA, { status: 'PENDING' });
-    expect(pendingJson?.data.every((d) => d.status === DocumentStatus.PENDING)).toBe(true);
+    expect(pendingJson!.data.every((d) => d.status === DocumentStatus.PENDING)).toBe(true);
 
     // COMPLETED only
     const { json: completedJson } = await findEnvelopes(request, tokenA, { status: 'COMPLETED' });
-    expect(completedJson?.data.every((d) => d.status === DocumentStatus.COMPLETED)).toBe(true);
+    expect(completedJson!.data.every((d) => d.status === DocumentStatus.COMPLETED)).toBe(true);
   });
 
   test('should filter by type (DOCUMENT vs TEMPLATE)', async ({ request }) => {
@@ -146,14 +146,14 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json: docJson } = await findEnvelopes(request, tokenA, { type: 'DOCUMENT' });
-    expect(docJson?.data.every((d) => d.type === EnvelopeType.DOCUMENT)).toBe(true);
-    expect(docJson?.data.some((d) => d.title === 'A Document')).toBe(true);
-    expect(docJson?.data.some((d) => d.title === 'A Template')).toBe(false);
+    expect(docJson!.data.every((d) => d.type === EnvelopeType.DOCUMENT)).toBe(true);
+    expect(docJson!.data.some((d) => d.title === 'A Document')).toBe(true);
+    expect(docJson!.data.some((d) => d.title === 'A Template')).toBe(false);
 
     const { json: templateJson } = await findEnvelopes(request, tokenA, { type: 'TEMPLATE' });
-    expect(templateJson?.data.every((d) => d.type === EnvelopeType.TEMPLATE)).toBe(true);
-    expect(templateJson?.data.some((d) => d.title === 'A Template')).toBe(true);
-    expect(templateJson?.data.some((d) => d.title === 'A Document')).toBe(false);
+    expect(templateJson!.data.every((d) => d.type === EnvelopeType.TEMPLATE)).toBe(true);
+    expect(templateJson!.data.some((d) => d.title === 'A Template')).toBe(true);
+    expect(templateJson!.data.some((d) => d.title === 'A Document')).toBe(false);
   });
 
   test('should paginate correctly', async ({ request }) => {
@@ -168,24 +168,24 @@ test.describe('Find Envelopes API - Basic', () => {
       page: '1',
       perPage: '2',
     });
-    expect(page1?.data).toHaveLength(2);
-    expect(page1?.count).toBe(5);
-    expect(page1?.totalPages).toBe(3);
-    expect(page1?.currentPage).toBe(1);
+    expect(page1!.data).toHaveLength(2);
+    expect(page1!.count).toBe(5);
+    expect(page1!.totalPages).toBe(3);
+    expect(page1!.currentPage).toBe(1);
 
     const { json: page3 } = await findEnvelopes(request, tokenA, {
       page: '3',
       perPage: '2',
     });
-    expect(page3?.data).toHaveLength(1);
-    expect(page3?.currentPage).toBe(3);
+    expect(page3!.data).toHaveLength(1);
+    expect(page3!.currentPage).toBe(3);
 
     // Page beyond total
     const { json: pageBeyond } = await findEnvelopes(request, tokenA, {
       page: '10',
       perPage: '2',
     });
-    expect(pageBeyond?.data).toHaveLength(0);
+    expect(pageBeyond!.data).toHaveLength(0);
   });
 
   test('should search by title', async ({ request }) => {
@@ -197,8 +197,8 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenA, { query: 'Budget' });
-    expect(json?.data).toHaveLength(1);
-    expect(json?.data[0].title).toBe('Annual Budget Report');
+    expect(json!.data).toHaveLength(1);
+    expect(json!.data[0].title).toBe('Annual Budget Report');
   });
 
   test('should search by externalId', async ({ request }) => {
@@ -210,8 +210,8 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenA, { query: 'abc-123' });
-    expect(json?.data).toHaveLength(1);
-    expect(json?.data[0].title).toBe('External Doc');
+    expect(json!.data).toHaveLength(1);
+    expect(json!.data[0].title).toBe('External Doc');
   });
 
   test('should search by recipient email and name', async ({ request }) => {
@@ -228,15 +228,15 @@ test.describe('Find Envelopes API - Basic', () => {
     const { json: emailSearch } = await findEnvelopes(request, tokenA, {
       query: recipientUser.email,
     });
-    expect(emailSearch?.data).toHaveLength(1);
-    expect(emailSearch?.data[0].title).toBe('Doc with Specific Recipient');
+    expect(emailSearch!.data).toHaveLength(1);
+    expect(emailSearch!.data[0].title).toBe('Doc with Specific Recipient');
 
     // Search by recipient name
     if (recipientUser.name) {
       const { json: nameSearch } = await findEnvelopes(request, tokenA, {
         query: recipientUser.name,
       });
-      expect(nameSearch?.data.some((d) => d.title === 'Doc with Specific Recipient')).toBe(true);
+      expect(nameSearch!.data.some((d) => d.title === 'Doc with Specific Recipient')).toBe(true);
     }
   });
 
@@ -246,8 +246,8 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenA, { query: 'uppercase title' });
-    expect(json?.data).toHaveLength(1);
-    expect(json?.data[0].title).toBe('UPPERCASE TITLE');
+    expect(json!.data).toHaveLength(1);
+    expect(json!.data[0].title).toBe('UPPERCASE TITLE');
   });
 
   test('should order by createdAt descending by default', async ({ request }) => {
@@ -262,9 +262,9 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenA);
-    expect(json?.data).toHaveLength(2);
-    expect(json?.data[0].title).toBe('Second Created');
-    expect(json?.data[1].title).toBe('First Created');
+    expect(json!.data).toHaveLength(2);
+    expect(json!.data[0].title).toBe('Second Created');
+    expect(json!.data[1].title).toBe('First Created');
   });
 
   test('should support ascending order', async ({ request }) => {
@@ -282,8 +282,8 @@ test.describe('Find Envelopes API - Basic', () => {
       orderByColumn: 'createdAt',
       orderByDirection: 'asc',
     });
-    expect(json?.data[0].title).toBe('First Created');
-    expect(json?.data[1].title).toBe('Second Created');
+    expect(json!.data[0].title).toBe('First Created');
+    expect(json!.data[1].title).toBe('Second Created');
   });
 
   test('should filter by folderId and show root-level when no folderId', async ({ request }) => {
@@ -305,14 +305,14 @@ test.describe('Find Envelopes API - Basic', () => {
 
     // No folderId → root-level only (folderId: null)
     const { json: rootJson } = await findEnvelopes(request, tokenA);
-    const rootTitles = rootJson?.data.map((d) => d.title);
+    const rootTitles = rootJson!.data.map((d) => d.title);
     expect(rootTitles).toContain('At Root');
     expect(rootTitles).not.toContain('In Folder');
 
     // With folderId → only docs in that folder
     const { json: folderJson } = await findEnvelopes(request, tokenA, { folderId: folder.id });
-    expect(folderJson?.data).toHaveLength(1);
-    expect(folderJson?.data[0].title).toBe('In Folder');
+    expect(folderJson!.data).toHaveLength(1);
+    expect(folderJson!.data[0].title).toBe('In Folder');
   });
 
   test('should not return deleted envelopes', async ({ request }) => {
@@ -330,7 +330,7 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenA);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('Active Doc');
     expect(titles).not.toContain('Deleted Doc');
   });
@@ -341,13 +341,13 @@ test.describe('Find Envelopes API - Basic', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenA);
-    const envelope = json?.data[0];
+    const envelope = json!.data[0];
 
     // Pagination fields
-    expect(json?.count).toBeGreaterThan(0);
-    expect(json?.currentPage).toBe(1);
-    expect(json?.perPage).toBe(10);
-    expect(json?.totalPages).toBeGreaterThan(0);
+    expect(json!.count).toBeGreaterThan(0);
+    expect(json!.currentPage).toBe(1);
+    expect(json!.perPage).toBe(10);
+    expect(json!.totalPages).toBeGreaterThan(0);
 
     // Envelope fields
     expect(envelope.id).toBeDefined();
@@ -396,11 +396,11 @@ test.describe('Find Envelopes API - Token Masking', () => {
     });
 
     const { json } = await findEnvelopes(request, token);
-    const doc = json?.data.find((d) => d.title === 'Owner Token Test');
+    const doc = json!.data.find((d) => d.title === 'Owner Token Test');
     expect(doc).toBeDefined();
-    expect(doc?.recipients.length).toBeGreaterThan(0);
+    expect(doc!.recipients.length).toBeGreaterThan(0);
     // Owner sees actual token values (non-empty)
-    doc?.recipients.forEach((r) => {
+    doc!.recipients.forEach((r) => {
       expect(r.token).not.toBe('');
     });
   });
@@ -422,11 +422,11 @@ test.describe('Find Envelopes API - Token Masking', () => {
     });
 
     const { json } = await findEnvelopes(request, memberToken);
-    const doc = json?.data.find((d) => d.title === 'Masked Token Test');
+    const doc = json!.data.find((d) => d.title === 'Masked Token Test');
     expect(doc).toBeDefined();
-    expect(doc?.recipients.length).toBeGreaterThan(0);
+    expect(doc!.recipients.length).toBeGreaterThan(0);
     // Non-owner should see masked tokens (empty string)
-    doc?.recipients.forEach((r) => {
+    doc!.recipients.forEach((r) => {
       expect(r.token).toBe('');
     });
   });
@@ -467,7 +467,7 @@ test.describe('Find Envelopes API - Team Context', () => {
     });
 
     const { json } = await findEnvelopes(request, memberToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('Team Doc by Owner');
     expect(titles).toContain('Team Doc by Member');
     expect(titles).not.toContain('Member Personal Doc');
@@ -492,7 +492,7 @@ test.describe('Find Envelopes API - Team Context', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenX);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('TeamX Doc');
     expect(titles).not.toContain('TeamY Doc');
   });
@@ -513,7 +513,7 @@ test.describe('Find Envelopes API - Team Context', () => {
     });
 
     const { json } = await findEnvelopes(request, outsiderToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).not.toContain('Team Secret Doc');
   });
 
@@ -542,7 +542,7 @@ test.describe('Find Envelopes API - Team Context', () => {
     });
 
     const { json } = await findEnvelopes(request, adminToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('Admin Vis');
     expect(titles).toContain('Manager Vis');
     expect(titles).toContain('Everyone Vis');
@@ -576,7 +576,7 @@ test.describe('Find Envelopes API - Team Context', () => {
     });
 
     const { json } = await findEnvelopes(request, managerToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).not.toContain('Admin Only');
     expect(titles).toContain('Manager Visible');
     expect(titles).toContain('Everyone Visible');
@@ -617,7 +617,7 @@ test.describe('Find Envelopes API - Team Context', () => {
     });
 
     const { json } = await findEnvelopes(request, managerToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     // Manager should see their own ADMIN doc (owner override)
     expect(titles).toContain('Manager Own ADMIN Doc');
     // Manager should NOT see admin's ADMIN doc (visibility restricted)
@@ -652,7 +652,7 @@ test.describe('Find Envelopes API - Team Context', () => {
     });
 
     const { json } = await findEnvelopes(request, managerToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     // Unlike findDocuments (UI), the API does not let recipient status bypass visibility
     expect(titles).not.toContain('ADMIN Doc With Manager Recipient');
     expect(titles).not.toContain('ADMIN Doc Without Manager');
@@ -693,7 +693,7 @@ test.describe('Find Envelopes API - Team Email', () => {
     });
 
     const { json } = await findEnvelopes(request, token);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('Regular Team Doc');
     expect(titles).toContain('Received by Team Email');
     expect(titles).not.toContain('External Noise Doc');
@@ -721,7 +721,7 @@ test.describe('Find Envelopes API - Team Email', () => {
     });
 
     const { json } = await findEnvelopes(request, tokenA);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('TeamA Doc');
     expect(titles).not.toContain('TeamB External Doc');
   });
@@ -766,7 +766,7 @@ test.describe('Find Envelopes API - Team Email', () => {
     });
 
     const { json } = await findEnvelopes(request, managerToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
 
     // Team email recipient filter bypasses visibility — both docs visible
     expect(titles).toContain('External EVERYONE to Team Email');
@@ -905,13 +905,13 @@ test.describe('Find Envelopes API - Adversarial: Cross-Team folderId', () => {
 
     // UserA tries teamB's folderId — should return empty
     const { json } = await findEnvelopes(request, tokenA, { folderId: folderB.id });
-    expect(json?.data).toHaveLength(0);
-    expect(json?.count).toBe(0);
+    expect(json!.data).toHaveLength(0);
+    expect(json!.count).toBe(0);
 
     // Positive control: own folderId works
     const { json: ownFolder } = await findEnvelopes(request, tokenA, { folderId: folderA.id });
-    expect(ownFolder?.data).toHaveLength(1);
-    expect(ownFolder?.data[0].title).toBe('TeamA Folder Env');
+    expect(ownFolder!.data).toHaveLength(1);
+    expect(ownFolder!.data[0].title).toBe('TeamA Folder Env');
   });
 
   test('cross-team folderId via session/tRPC should also return empty', async ({ page }) => {
@@ -972,15 +972,15 @@ test.describe('Find Envelopes API - Adversarial: Cross-Team templateId', () => {
     const { json } = await findEnvelopes(request, tokenA, {
       templateId: String(fakeTemplateId),
     });
-    expect(json?.data).toHaveLength(0);
-    expect(json?.count).toBe(0);
+    expect(json!.data).toHaveLength(0);
+    expect(json!.count).toBe(0);
 
     // Positive control: own templateId works
     const { json: ownTemplate } = await findEnvelopes(request, tokenA, {
       templateId: String(ownTemplateId),
     });
-    expect(ownTemplate?.data).toHaveLength(1);
-    expect(ownTemplate?.data[0].title).toBe('TeamA Template Env');
+    expect(ownTemplate!.data).toHaveLength(1);
+    expect(ownTemplate!.data[0].title).toBe('TeamA Template Env');
   });
 });
 
@@ -1011,7 +1011,7 @@ test.describe('Find Envelopes API - Cross-User Isolation', () => {
     });
 
     const { json } = await findEnvelopes(request, teamToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('Team Env');
     expect(titles).not.toContain('Outsider Personal Env');
   });
@@ -1049,7 +1049,7 @@ test.describe('Find Envelopes API - Cross-User Isolation', () => {
     });
 
     const { json } = await findEnvelopes(request, personalToken);
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('Member Personal Env');
     // Org team doc should NOT appear in personal context
     expect(titles).not.toContain('Member Org Team Env');
@@ -1084,10 +1084,10 @@ test.describe('Find Envelopes API - Expired Recipient Filter', () => {
       type: EnvelopeType.DOCUMENT,
       hasExpiredRecipients: 'true',
     });
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('Expired Envelope');
     expect(titles).not.toContain('Active Envelope');
-    expect(json?.count).toBe(1);
+    expect(json!.count).toBe(1);
   });
 });
 
@@ -1128,10 +1128,10 @@ test.describe('Find Envelopes API - Adversarial: Cross-Team Expired Recipient Fi
       type: EnvelopeType.DOCUMENT,
       hasExpiredRecipients: 'true',
     });
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('TeamA Expired Envelope');
     expect(titles).not.toContain('TeamB Expired Envelope');
-    expect(json?.count).toBe(1);
+    expect(json!.count).toBe(1);
   });
 
   test('shared recipient email across teams does not leak the other team expired envelopes', async ({ request }) => {
@@ -1166,9 +1166,9 @@ test.describe('Find Envelopes API - Adversarial: Cross-Team Expired Recipient Fi
       type: EnvelopeType.DOCUMENT,
       hasExpiredRecipients: 'true',
     });
-    const titles = json?.data.map((d) => d.title);
+    const titles = json!.data.map((d) => d.title);
     expect(titles).toContain('TeamB Shared Expired Envelope');
     expect(titles).not.toContain('TeamA Shared Expired Envelope');
-    expect(json?.count).toBe(1);
+    expect(json!.count).toBe(1);
   });
 });

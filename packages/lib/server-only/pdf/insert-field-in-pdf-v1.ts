@@ -672,7 +672,7 @@ const setTextFieldFontSize = (textField: PDFTextField, font: PDFFont, fontSize: 
 
   try {
     textField.setFontSize(fontSize);
-  } catch (_err) {
+  } catch (err) {
     let da = textField.acroField.getDefaultAppearance() ?? '';
 
     da += `\n ${setFontAndSize(font.name, fontSize)}`;

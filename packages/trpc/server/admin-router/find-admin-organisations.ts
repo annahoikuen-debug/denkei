@@ -73,7 +73,7 @@ export const findAdminOrganisations = async ({
     };
   }
 
-  if (query?.startsWith('claim:')) {
+  if (query && query.startsWith('claim:')) {
     whereClause = {
       organisationClaim: {
         originalSubscriptionClaimId: {
@@ -84,7 +84,7 @@ export const findAdminOrganisations = async ({
     };
   }
 
-  if (query?.startsWith('org_')) {
+  if (query && query.startsWith('org_')) {
     whereClause = {
       OR: [
         {

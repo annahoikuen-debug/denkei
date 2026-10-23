@@ -47,7 +47,7 @@ export const AccountDeleteDialog = ({ className }: AccountDeleteDialogProps) => 
       });
 
       return await authClient.signOut();
-    } catch (_err) {
+    } catch (err) {
       toast({
         title: _(msg`An unknown error occurred`),
         variant: 'destructive',

@@ -130,7 +130,8 @@ RUN rm -rf \
     node_modules/esbuild \
     node_modules/@esbuild \
     node_modules/.bin/esbuild \
-    node_modules/.bin/email
+    node_modules/.bin/email \
+    && find node_modules -type f \( -name '*.d.ts' -o -name '*.d.mts' -o -name '*.js.map' -o -name '*.mjs.map' -o -name '*.md' -o -name 'CHANGELOG*' \) -delete
 
 # Automatically leverage output traces to reduce image size
 # https://nodejs.org/docs/advanced-features/output-file-tracing
@@ -143,6 +144,7 @@ COPY --from=installer --chown=nodejs:nodejs /app/packages/prisma/migrations ./pa
 
 # Generate the prisma client again, this time only targeting the client generator
 RUN npx prisma generate --schema ./packages/prisma/schema.prisma --generator client \
+    && rm -rf /home/nodejs/.npm /home/nodejs/.cache \
     && npm cache clean --force
 
 

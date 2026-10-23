@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { extractDocumentAuthMethods } from '@documenso/lib/utils/document-auth';
 import { prisma } from '@documenso/prisma';
 import { seedTeam, seedTeamMember } from '@documenso/prisma/seed/teams';
@@ -6,10 +5,11 @@ import { seedBlankTemplate } from '@documenso/prisma/seed/templates';
 import { seedUser } from '@documenso/prisma/seed/users';
 import { expect, test } from '@playwright/test';
 import { DocumentDataType, TeamMemberRole } from '@prisma/client';
+import path from 'path';
 
 import { apiSignin } from '../fixtures/authentication';
 
-const _EXAMPLE_PDF_PATH = path.join(__dirname, '../../../../assets/example.pdf');
+const EXAMPLE_PDF_PATH = path.join(__dirname, '../../../../assets/example.pdf');
 const FIELD_ALIGNMENT_TEST_PDF_PATH = path.join(__dirname, '../../../../assets/field-font-alignment.pdf');
 
 /**

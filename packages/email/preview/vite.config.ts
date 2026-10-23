@@ -32,7 +32,7 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
-          src: `${path.join(__dirname, '../static')}/*`,
+          src: path.join(__dirname, '../static') + '/*',
           dest: 'static',
         },
       ],

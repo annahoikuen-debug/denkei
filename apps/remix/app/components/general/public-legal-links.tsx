@@ -1,6 +1,12 @@
-import { NEXT_PUBLIC_IMPRINT_URL } from '@documenso/lib/constants/app';
+import {
+  NEXT_PUBLIC_IMPRINT_URL,
+  NEXT_PUBLIC_PRIVACY_POLICY_URL,
+  NEXT_PUBLIC_TERMS_OF_SERVICE_URL,
+} from '@documenso/lib/constants/app';
 import { cn } from '@documenso/ui/lib/utils';
 import { DropdownMenuItem, DropdownMenuSeparator } from '@documenso/ui/primitives/dropdown-menu';
+import { msg } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react';
 import { Link } from 'react-router';
 import { RecipientHelpDialog } from '~/components/dialogs/recipient-help-dialog';
 
@@ -9,6 +15,8 @@ export type PublicLegalLinksProps = {
 };
 
 export const PublicLegalLinks = ({ className }: PublicLegalLinksProps) => {
+  const { _ } = useLingui();
+
   const links = getPublicLegalLinks();
 
   if (links.length === 0) {
@@ -27,11 +35,11 @@ export const PublicLegalLinks = ({ className }: PublicLegalLinksProps) => {
         <Link
           key={link.href}
           to={link.href}
-          target={link.target}
-          rel={link.target === '_blank' ? 'noopener noreferrer' : undefined}
+          target="_blank"
+          rel="noopener noreferrer"
           className="duration-200 hover:text-foreground hover:underline"
         >
-          {link.label}
+          {_(link.label)}
         </Link>
       ))}
     </div>
@@ -39,6 +47,8 @@ export const PublicLegalLinks = ({ className }: PublicLegalLinksProps) => {
 };
 
 export const PublicLegalLinksDropdownMenuItems = () => {
+  const { _ } = useLingui();
+
   const links = getPublicLegalLinks();
 
   if (links.length === 0) {
@@ -51,8 +61,8 @@ export const PublicLegalLinksDropdownMenuItems = () => {
 
       {links.map((link) => (
         <DropdownMenuItem key={link.href} asChild className="text-muted-foreground text-xs">
-          <Link to={link.href} target={link.target} rel={link.target === '_blank' ? 'noopener noreferrer' : undefined}>
-            {link.label}
+          <Link to={link.href} target="_blank" rel="noopener noreferrer">
+            {_(link.label)}
           </Link>
         </DropdownMenuItem>
       ))}
@@ -61,14 +71,14 @@ export const PublicLegalLinksDropdownMenuItems = () => {
 };
 
 const getPublicLegalLinks = () => {
+  const termsUrl = NEXT_PUBLIC_TERMS_OF_SERVICE_URL();
+  const privacyUrl = NEXT_PUBLIC_PRIVACY_POLICY_URL();
   const imprintUrl = NEXT_PUBLIC_IMPRINT_URL();
 
-  // デンケイでは法務ページをアプリ内ルートとして提供する（常に表示）。
   const links = [
-    { label: '利用規約', href: '/terms', target: undefined },
-    { label: 'プライバシーポリシー', href: '/privacy', target: undefined },
-    { label: '特定商取引法に基づく表記', href: '/tokushoho', target: undefined },
-    imprintUrl ? { label: '運営者情報', href: imprintUrl, target: '_blank' as const } : null,
+    termsUrl ? { label: msg`Terms of Service`, href: termsUrl } : null,
+    privacyUrl ? { label: msg`Privacy Policy`, href: privacyUrl } : null,
+    imprintUrl ? { label: msg`Imprint`, href: imprintUrl } : null,
   ];
 
   return links.filter((link) => link !== null);

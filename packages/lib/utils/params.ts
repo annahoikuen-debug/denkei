@@ -11,7 +11,7 @@ export const parseToIntegerArray = (value: unknown): number[] => {
   return value
     .split(',')
     .map((value) => parseInt(value, 10))
-    .filter((value) => !Number.isNaN(value));
+    .filter((value) => !isNaN(value));
 };
 
 type GetRootHrefOptions = {

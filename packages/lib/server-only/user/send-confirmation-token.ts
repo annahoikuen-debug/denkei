@@ -1,5 +1,5 @@
-import crypto from 'node:crypto';
 import { prisma } from '@documenso/prisma';
+import crypto from 'crypto';
 import { DateTime } from 'luxon';
 
 import { USER_SIGNUP_VERIFICATION_TOKEN_IDENTIFIER } from '../../constants/email';

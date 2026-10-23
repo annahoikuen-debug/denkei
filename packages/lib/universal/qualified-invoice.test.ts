@@ -33,13 +33,13 @@ describe('適格請求書(インボイス制度) ユーティリティ', () => {
       expect(breakdown.taxRatePercent).toBe(10);
     });
 
-    it('Businessプラン ¥6,980 の端数処理が正しい', () => {
-      const breakdown = calculateConsumptionTax(6980);
+    it('Businessプラン ¥4,980 の端数処理が正しい', () => {
+      const breakdown = calculateConsumptionTax(4980);
 
-      expect(breakdown.grossAmountJpy).toBe(6980);
-      expect(breakdown.taxAmountJpy).toBe(635);
-      expect(breakdown.netAmountJpy).toBe(6345);
-      expect(breakdown.netAmountJpy + breakdown.taxAmountJpy).toBe(6980);
+      expect(breakdown.grossAmountJpy).toBe(4980);
+      expect(breakdown.taxAmountJpy).toBe(453);
+      expect(breakdown.netAmountJpy).toBe(4527);
+      expect(breakdown.netAmountJpy + breakdown.taxAmountJpy).toBe(4980);
     });
 
     it('年払い一括 Standardプラン ¥29,760 の端数処理が正しい (実質2ヶ月無料)', () => {
@@ -51,13 +51,13 @@ describe('適格請求書(インボイス制度) ユーティリティ', () => {
       expect(breakdown.netAmountJpy + breakdown.taxAmountJpy).toBe(29760);
     });
 
-    it('年払い一括 Businessプラン ¥69,800 の端数処理が正しい', () => {
-      const breakdown = calculateConsumptionTax(69800);
+    it('年払い一括 Businessプラン ¥49,800 の端数処理が正しい', () => {
+      const breakdown = calculateConsumptionTax(49800);
 
-      expect(breakdown.grossAmountJpy).toBe(69800);
-      expect(breakdown.taxAmountJpy).toBe(6345);
-      expect(breakdown.netAmountJpy).toBe(63455);
-      expect(breakdown.netAmountJpy + breakdown.taxAmountJpy).toBe(69800);
+      expect(breakdown.grossAmountJpy).toBe(49800);
+      expect(breakdown.taxAmountJpy).toBe(4527);
+      expect(breakdown.netAmountJpy).toBe(45273);
+      expect(breakdown.netAmountJpy + breakdown.taxAmountJpy).toBe(49800);
     });
   });
 

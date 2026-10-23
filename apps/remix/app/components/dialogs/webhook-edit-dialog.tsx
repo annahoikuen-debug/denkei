@@ -73,7 +73,7 @@ export const WebhookEditDialog = ({ trigger, webhook, ...props }: WebhookEditDia
         description: t`The webhook has been updated successfully.`,
         duration: 5000,
       });
-    } catch (_err) {
+    } catch (err) {
       toast({
         title: t`Failed to update webhook`,
         description: t`We encountered an error while updating the webhook. Please try again later.`,

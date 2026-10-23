@@ -38,7 +38,10 @@
 /* Korean noto sans */
 @font-face {
   font-family: "Noto Sans Korean";
-  src: url("/fonts/noto-sans-korean.ttf") format("truetype-variations");
+  src:
+    local("Noto Sans KR"),
+    local("Noto Sans Korean"),
+    url("/fonts/noto-sans-korean.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -47,7 +50,10 @@
 /* Japanese noto sans */
 @font-face {
   font-family: "Noto Sans Japanese";
-  src: url("/fonts/noto-sans-japanese.ttf") format("truetype-variations");
+  src:
+    local("Noto Sans JP"),
+    local("Noto Sans Japanese"),
+    url("/fonts/noto-sans-japanese.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -56,7 +62,10 @@
 /* Chinese noto sans */
 @font-face {
   font-family: "Noto Sans Chinese";
-  src: url("/fonts/noto-sans-chinese.ttf") format("truetype-variations");
+  src:
+    local("Noto Sans SC"),
+    local("Noto Sans Chinese"),
+    url("/fonts/noto-sans-chinese.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -64,8 +73,10 @@
 
 @layer base {
   :root {
-    --font-sans: "Inter";
-    --font-signature: "Caveat";
-    --font-noto: "Noto Sans", "Noto Sans Korean", "Noto Sans Japanese", "Noto Sans Chinese";
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-signature: "Caveat", cursive;
+    --font-noto:
+      "Noto Sans", "Noto Sans JP", "Noto Sans Japanese", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic",
+      "Meiryo", "Noto Sans KR", "Noto Sans SC", sans-serif;
   }
 }

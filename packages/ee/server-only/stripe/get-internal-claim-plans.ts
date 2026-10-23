@@ -50,7 +50,7 @@ export const getInternalClaimPlans = async (): Promise<InternalClaimPlans> => {
       : `$${toHumanPrice(price.unit_amount ?? 0, price.currency)} ${price.currency.toUpperCase()}`.replace('.00', '');
 
     if (price.recurring?.interval === 'month') {
-      if (product.metadata.isSeatBased === 'true' && !isJpy) {
+      if (product.metadata['isSeatBased'] === 'true' && !isJpy) {
         formattedPrice = `$50 ${price.currency.toUpperCase()}`;
       }
 
@@ -64,7 +64,7 @@ export const getInternalClaimPlans = async (): Promise<InternalClaimPlans> => {
     }
 
     if (price.recurring?.interval === 'year') {
-      if (product.metadata.isSeatBased === 'true' && !isJpy) {
+      if (product.metadata['isSeatBased'] === 'true' && !isJpy) {
         formattedPrice = `$480 ${price.currency.toUpperCase()}`;
       }
 

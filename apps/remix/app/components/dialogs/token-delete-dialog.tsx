@@ -74,7 +74,7 @@ export default function TokenDeleteDialog({ token, onDelete, children }: TokenDe
       });
 
       setIsOpen(false);
-    } catch (_error) {
+    } catch (error) {
       toast({
         title: _(msg`An unknown error occurred`),
         description: _(

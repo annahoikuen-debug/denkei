@@ -1,9 +1,9 @@
 /**
  * フェーズ3 ステップ26: 月額固定 3 プラン定義
  *
- * - 無料(FREE): 月3件 / メンバー1名
- * - スタンダード(STANDARD): 月100件(年払いは月120件) + Firebaseメール認証 + メンバー3名まで
- * - ビジネス(BUSINESS): 無制限 + 承認フロー + テンプレート共有 + CSV一括 + メンバー無制限
+ * - 無料(FREE): 月3件
+ * - スタンダード(STANDARD): 無制限 + Firebaseメール認証 + タイムスタンプ
+ * - ビジネス(BUSINESS): 承認フロー + テンプレート共有 + CSV一括
  *
  * 取引先の本人確認はメールOTP(LOW)と Firebase Authentication メール認証(MEDIUM)のみ
  * (SMS 認証は提供しない)。
@@ -41,8 +41,6 @@ export type PlanFeatures = {
     /** 自社ブランドメール設定（送信元・Reply-To・送信者名カスタマイズ、有料プラン限定） */
     customEmailSettings: boolean;
   };
-  /** 組織メンバー上限（オーナー含む）。null は無制限 */
-  maxMembers: number | null;
 };
 
 export const PLANS: Record<PlanId, PlanFeatures> = {
@@ -63,7 +61,6 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
       companySeal: false,
       customEmailSettings: false,
     },
-    maxMembers: 1,
   },
   STANDARD: {
     id: 'STANDARD',
@@ -71,7 +68,7 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
     monthlyPriceJpy: 2980,
     annualPriceJpy: 29760, // 2,480円/月相当（実質2ヶ月無料）
     monthlyDocumentLimit: 100,
-    annualDocumentLimit: 1440, // 年払い特典: 月120件 × 12ヶ月
+    annualDocumentLimit: 1200,
     features: {
       firebaseEmailAuth: true,
       timestamp: false,
@@ -82,13 +79,12 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
       companySeal: true,
       customEmailSettings: true,
     },
-    maxMembers: 3,
   },
   BUSINESS: {
     id: 'BUSINESS',
     label: 'ビジネス',
-    monthlyPriceJpy: 6980,
-    annualPriceJpy: 69800, // 月換算約5,817円（実質2ヶ月無料）
+    monthlyPriceJpy: 4980,
+    annualPriceJpy: 49800, // 4,150円/月相当（実質2ヶ月無料）
     monthlyDocumentLimit: null,
     annualDocumentLimit: null,
     features: {
@@ -101,7 +97,6 @@ export const PLANS: Record<PlanId, PlanFeatures> = {
       companySeal: true,
       customEmailSettings: true,
     },
-    maxMembers: null,
   },
 };
 
@@ -125,16 +120,16 @@ export const SEND_CREDIT_PACKAGES: Record<CreditPackageId, CreditPackage> = {
     id: 'PACK_10',
     name: '追加10件チケット',
     credits: 10,
-    priceJpy: 1980,
-    pricePerDocumentJpy: 198,
+    priceJpy: 1500,
+    pricePerDocumentJpy: 150,
     stripePriceEnvKey: 'NEXT_PRIVATE_STRIPE_PRICE_ID_CREDIT_10',
   },
   PACK_50: {
     id: 'PACK_50',
     name: '追加50件チケット',
     credits: 50,
-    priceJpy: 5800,
-    pricePerDocumentJpy: 116,
+    priceJpy: 5000,
+    pricePerDocumentJpy: 100,
     stripePriceEnvKey: 'NEXT_PRIVATE_STRIPE_PRICE_ID_CREDIT_50',
   },
 };
@@ -154,32 +149,22 @@ export const isFeatureEnabledForPlan = ({
 
 /**
  * 送信可能か(月次上限および追加購入クレジットの合算チェック)。
- *
- * `isAnnual: true` の場合は年払い契約の月次枠（年間枠の1/12、切り上げ）を適用する。
- * 年払い特典として STANDARD は月100件 → 月120件に拡大される。
  */
 export const canSendDocument = ({
   plan,
   currentMonthlyCount,
   extraCredits = 0,
-  isAnnual = false,
 }: {
   plan: PlanId;
   currentMonthlyCount: number;
   extraCredits?: number;
-  isAnnual?: boolean;
 }): {
   allowed: boolean;
   limit: number | null;
   remaining: number | null;
   extraCredits: number;
 } => {
-  const annualLimit = PLANS[plan].annualDocumentLimit;
-  const baseLimit = isAnnual
-    ? annualLimit === null
-      ? null
-      : Math.ceil(annualLimit / 12)
-    : PLANS[plan].monthlyDocumentLimit;
+  const baseLimit = PLANS[plan].monthlyDocumentLimit;
 
   if (baseLimit === null) {
     return {
@@ -198,66 +183,6 @@ export const canSendDocument = ({
     limit: effectiveLimit,
     remaining,
     extraCredits,
-  };
-};
-
-/**
- * Stripe Price ID が年払い（年一括）契約のものかを判定する。
- * 環境変数に設定された年額 Price ID と一致、または ID 文字列に ANNUAL / _YEAR を含む場合に真。
- */
-export const isAnnualStripePriceId = (priceId?: string | null): boolean => {
-  if (typeof process === 'undefined' || !process.env || !priceId) {
-    return false;
-  }
-
-  if (
-    priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_STANDARD_ANNUAL ||
-    priceId === process.env.NEXT_PRIVATE_STRIPE_PRICE_ID_BUSINESS_ANNUAL
-  ) {
-    return true;
-  }
-
-  const upper = priceId.toUpperCase();
-
-  return upper.includes('ANNUAL') || upper.includes('_YEAR');
-};
-
-/**
- * 組織メンバーを追加招待できるか（プランの席上限チェック）。
- * 現在のメンバー数と未承認の招待数の合計がプラン上限を超えないかを判定する。
- */
-export const canInviteOrganisationMembers = ({
-  plan,
-  currentMemberCount,
-  pendingInviteCount = 0,
-  newInviteCount = 1,
-}: {
-  plan: PlanId;
-  currentMemberCount: number;
-  pendingInviteCount?: number;
-  newInviteCount?: number;
-}): {
-  allowed: boolean;
-  limit: number | null;
-  maxNewInviteCount: number;
-} => {
-  const limit = PLANS[plan].maxMembers;
-
-  if (limit === null) {
-    return {
-      allowed: true,
-      limit: null,
-      maxNewInviteCount: newInviteCount,
-    };
-  }
-
-  const usedSeats = currentMemberCount + pendingInviteCount;
-  const maxNewInviteCount = Math.max(limit - usedSeats, 0);
-
-  return {
-    allowed: usedSeats + newInviteCount <= limit,
-    limit,
-    maxNewInviteCount,
   };
 };
 

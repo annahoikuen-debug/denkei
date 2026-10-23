@@ -7,8 +7,6 @@
  *   3. 物理削除(観察期間後に別 PR で実施)
  */
 
-import { env } from '../utils/env';
-
 /**
  * API v1 の有効フラグ。既定は false(SaaS では無効)。
  * セルフホスト移行ユーザーは環境変数で有効化可能。
@@ -78,14 +76,9 @@ export const getUploadTransport = (): 's3' | 'database' => {
 /**
  * 既存: PostHog 設定(上書きにより欠落したため復元)
  * 引数なしで呼ばれ、未設定時は null を返す。
- *
- * 注意: クライアントバンドルから参照されるため `process.env` を直接参照しないこと。
- * 生の参照は Vite ビルドで置換されない場合に `ReferenceError: process is not defined`
- * (ErrorBoundary が二重クラッシュし元エラーが隠蔽される)を引き起こす。
- * `env()` ヘルパーはサーバーでは process.env、クライアントでは window.__ENV__ を読む。
  */
 export const extractPostHogConfig = (): { key: string; host: string } | null => {
-  const key = env('NEXT_PUBLIC_POSTHOG_KEY');
+  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
   if (!key) {
     return null;
@@ -93,6 +86,6 @@ export const extractPostHogConfig = (): { key: string; host: string } | null => 
 
   return {
     key,
-    host: env('NEXT_PUBLIC_POSTHOG_HOST') ?? 'https://us.i.posthog.com',
+    host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
   };
 };

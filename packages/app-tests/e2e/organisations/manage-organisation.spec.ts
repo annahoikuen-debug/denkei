@@ -215,7 +215,7 @@ test('[ORGANISATIONS]: manage groups and members', async ({ page }) => {
   const adminEmail2 = `admin-2-${nanoid()}@test.documenso.com`;
   const adminEmail3 = `admin-3-${nanoid()}@test.documenso.com`;
 
-  const _ownerEmail = user.email;
+  const ownerEmail = user.email;
 
   await seedOrganisationMembers({
     members: [

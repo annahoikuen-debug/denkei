@@ -6,7 +6,8 @@
   <a href="README.md">プロジェクト概要</a> ·
   <a href="USER_MANUAL.md">ユーザーマニュアル</a> ·
   <a href="Q&A.md">よくある質問</a> ·
-  <a href="OPERATIONS_MANUAL.md">運用者マニュアル</a>
+  <a href="OPERATIONS_MANUAL.md">運用者マニュアル</a> ·
+  <a href="OPERATOR_TODO.md">運用者ToDoリスト</a>
 </p>
 
 <p align="center">
@@ -264,7 +265,7 @@ Railway、Render、Koyeb、Elestio などへのワンクリックデプロイボ
 
 ## 運用者向けマニュアル
 
-デプロイ・運用・バックアップ・アップグレード・課金運用などについては `OPERATIONS_MANUAL.md` を参照してください。
+デプロイ・運用・バックアップ・アップグレード・課金運用などについては `OPERATIONS_MANUAL.md` を参照してください。導入・運用開始後に実施すべき作業のチェックリストは `OPERATOR_TODO.md` を参照してください。
 
 ## よくある質問 (Q&A)
 

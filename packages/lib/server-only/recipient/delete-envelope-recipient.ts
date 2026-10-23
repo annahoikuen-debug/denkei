@@ -65,7 +65,7 @@ export const deleteEnvelopeRecipient = async ({
     });
   }
 
-  await assertEnvelopeMutable(envelope);
+  assertEnvelopeMutable(envelope);
 
   if (envelope.completedAt) {
     throw new AppError(AppErrorCode.INVALID_REQUEST, {

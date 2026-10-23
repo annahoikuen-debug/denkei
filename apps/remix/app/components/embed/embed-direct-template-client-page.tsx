@@ -132,7 +132,7 @@ export const EmbedDirectTemplateClientPage = ({
             created: new Date(),
             recipientId: 1,
             fieldId: 1,
-            signatureImageAsBase64: payload.value?.startsWith('data:') ? payload.value : null,
+            signatureImageAsBase64: payload.value && payload.value.startsWith('data:') ? payload.value : null,
             typedSignature: payload.value && !payload.value.startsWith('data:') ? payload.value : null,
           } satisfies Signature;
         }

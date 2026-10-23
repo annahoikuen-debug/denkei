@@ -416,7 +416,7 @@ export const extractFieldAutoInsertValues = (
 
   if (parsedField.error) {
     throw new AppError(AppErrorCode.INVALID_REQUEST, {
-      message: `One or more fields have invalid metadata. Error: ${parsedField.error.message}`,
+      message: 'One or more fields have invalid metadata. Error: ' + parsedField.error.message,
     });
   }
 

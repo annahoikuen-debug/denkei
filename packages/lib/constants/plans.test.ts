@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  canInviteOrganisationMembers,
   canSendDocument,
   getPlanIdFromStripePriceId,
-  isAnnualStripePriceId,
   isFeatureEnabledForPlan,
   PLANS,
   resolvePlanIdFromOrganisation,
@@ -21,17 +19,11 @@ describe('プラン定義(フェーズ3 ステップ26)', () => {
     expect(PLANS.BUSINESS.monthlyDocumentLimit).toBeNull();
   });
 
-  it('年額プラン設定: スタンダードは年29,760円(月換算2,480円・年払い月120件枠)', () => {
+  it('年額プラン設定: スタンダードは年29,760円(月換算2,480円・年1,200件枠)', () => {
     expect(PLANS.STANDARD.annualPriceJpy).toBe(29760);
-    expect(PLANS.STANDARD.annualDocumentLimit).toBe(1440);
-    expect(PLANS.BUSINESS.annualPriceJpy).toBe(69800);
+    expect(PLANS.STANDARD.annualDocumentLimit).toBe(1200);
+    expect(PLANS.BUSINESS.annualPriceJpy).toBe(49800);
     expect(PLANS.BUSINESS.annualDocumentLimit).toBeNull();
-  });
-
-  it('メンバー席: 無料1名・スタンダード3名・ビジネス無制限', () => {
-    expect(PLANS.FREE.maxMembers).toBe(1);
-    expect(PLANS.STANDARD.maxMembers).toBe(3);
-    expect(PLANS.BUSINESS.maxMembers).toBeNull();
   });
 
   it('機能マトリクス: 承認フロー・CSV一括は BUSINESS のみ', () => {
@@ -99,58 +91,6 @@ describe('プラン制限ゲート ＆ チケット都度購入クレジット (
     expect(canSendDocument({ plan: 'FREE', currentMonthlyCount: 1 }).remaining).toBe(2);
     expect(canSendDocument({ plan: 'STANDARD', currentMonthlyCount: 95 }).remaining).toBe(5);
     expect(canSendDocument({ plan: 'BUSINESS', currentMonthlyCount: 500 }).remaining).toBeNull();
-  });
-
-  it('年払い契約は月120件の枠増特典（STANDARD 月100件 → 月120件）', () => {
-    expect(canSendDocument({ plan: 'STANDARD', currentMonthlyCount: 100 }).allowed).toBe(false);
-    expect(canSendDocument({ plan: 'STANDARD', currentMonthlyCount: 100, isAnnual: true }).allowed).toBe(true);
-    expect(canSendDocument({ plan: 'STANDARD', currentMonthlyCount: 120, isAnnual: true }).allowed).toBe(false);
-    expect(canSendDocument({ plan: 'STANDARD', currentMonthlyCount: 119, isAnnual: true }).remaining).toBe(1);
-    expect(canSendDocument({ plan: 'FREE', currentMonthlyCount: 3, isAnnual: true }).allowed).toBe(false);
-    expect(canSendDocument({ plan: 'BUSINESS', currentMonthlyCount: 999999, isAnnual: true }).allowed).toBe(true);
-  });
-
-  it('isAnnualStripePriceId で年払いPrice IDを判定できる', () => {
-    expect(isAnnualStripePriceId('price_annual_test')).toBe(true);
-    expect(isAnnualStripePriceId('price_standard_year_123')).toBe(true);
-    expect(isAnnualStripePriceId('price_standard_test_123')).toBe(false);
-    expect(isAnnualStripePriceId(undefined)).toBe(false);
-    expect(isAnnualStripePriceId(null)).toBe(false);
-  });
-});
-
-describe('メンバー席ゲート (canInviteOrganisationMembers)', () => {
-  it('無料プランは1名のみ（オーナー）で2人目の招待をブロック', () => {
-    expect(canInviteOrganisationMembers({ plan: 'FREE', currentMemberCount: 1, newInviteCount: 1 }).allowed).toBe(
-      false,
-    );
-    expect(canInviteOrganisationMembers({ plan: 'FREE', currentMemberCount: 0, newInviteCount: 1 }).allowed).toBe(true);
-  });
-
-  it('スタンダードは3名まで（メンバー+未承認招待の合算で判定）', () => {
-    expect(canInviteOrganisationMembers({ plan: 'STANDARD', currentMemberCount: 1, newInviteCount: 2 }).allowed).toBe(
-      true,
-    );
-    expect(canInviteOrganisationMembers({ plan: 'STANDARD', currentMemberCount: 1, newInviteCount: 3 }).allowed).toBe(
-      false,
-    );
-    expect(
-      canInviteOrganisationMembers({
-        plan: 'STANDARD',
-        currentMemberCount: 2,
-        pendingInviteCount: 1,
-        newInviteCount: 1,
-      }).allowed,
-    ).toBe(false);
-    expect(
-      canInviteOrganisationMembers({ plan: 'STANDARD', currentMemberCount: 2, newInviteCount: 1 }).maxNewInviteCount,
-    ).toBe(1);
-  });
-
-  it('ビジネスは無制限', () => {
-    const result = canInviteOrganisationMembers({ plan: 'BUSINESS', currentMemberCount: 50, newInviteCount: 10 });
-    expect(result.allowed).toBe(true);
-    expect(result.limit).toBeNull();
   });
 });
 

@@ -131,6 +131,6 @@ test.describe('[JP] Reminder & Expiry', () => {
     const updated = await prisma.recipient.findFirstOrThrow({ where: { id: recipient.id } });
 
     expect(updated.reminderCount).toBe(1);
-    expect(updated.nextReminderAt?.getTime()).toBeGreaterThan(Date.now());
+    expect(updated.nextReminderAt!.getTime()).toBeGreaterThan(Date.now());
   });
 });

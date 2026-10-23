@@ -65,8 +65,10 @@ export const useEnvelopeRoute = authenticatedProcedure
       });
     }
 
-    const filesToUpload = files.filter((file, index) =>
-      payload.customDocumentData?.some((mapping) => mapping.identifier === file.name || mapping.identifier === index),
+    const filesToUpload = files.filter(
+      (file, index) =>
+        payload.customDocumentData &&
+        payload.customDocumentData.some((mapping) => mapping.identifier === file.name || mapping.identifier === index),
     );
 
     // Process uploaded files and create document data for them

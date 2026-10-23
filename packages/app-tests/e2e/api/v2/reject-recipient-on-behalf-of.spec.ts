@@ -76,7 +76,7 @@ test.describe('Reject recipient on behalf of', () => {
 
     expect(auditLog).not.toBeNull();
 
-    const auditData = auditLog?.data as Record<string, unknown>;
+    const auditData = auditLog!.data as Record<string, unknown>;
 
     expect(auditData.recipientId).toBe(recipient.id);
     expect(auditData.recipientEmail).toBe(recipient.email);
@@ -84,8 +84,8 @@ test.describe('Reject recipient on behalf of', () => {
     expect(auditData.isExternal).toBe(true);
 
     // No actAsEmail supplied - the rejection defaults to the API user.
-    expect(auditLog?.userId).toBe(user.id);
-    expect(auditLog?.email).toBe(user.email);
+    expect(auditLog!.userId).toBe(user.id);
+    expect(auditLog!.email).toBe(user.email);
     expect(auditData.onBehalfOfUserEmail).toBeUndefined();
   });
 

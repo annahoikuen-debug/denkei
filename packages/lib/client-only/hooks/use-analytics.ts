@@ -54,7 +54,7 @@ export function useAnalytics() {
    *
    * @param eventFlag The event to check against feature flags to determine whether tracking is enabled.
    */
-  const startSessionRecording = (_eventFlag?: string) => {
+  const startSessionRecording = (eventFlag?: string) => {
     return;
     // const isSessionRecordingEnabled = featureFlags.getFlag(FEATURE_FLAG_GLOBAL_SESSION_RECORDING);
     // const isSessionRecordingEnabledForEvent = Boolean(eventFlag && featureFlags.getFlag(eventFlag));

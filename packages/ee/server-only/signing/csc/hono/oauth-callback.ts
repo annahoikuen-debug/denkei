@@ -200,7 +200,7 @@ const completeCscCallback = async ({ c, query, cookie, embedNonce, embedOutcome 
 
   if (query.error) {
     throw new AppError(AppErrorCode.CSC_REQUEST_FAILED, {
-      message: `CSC TSP returned OAuth error: ${query.error}${query.error_description ? ` — ${query.error_description}` : ''}`,
+      message: `CSC TSP returned OAuth error: ${query.error}${query.error_description ? ' — ' + query.error_description : ''}`,
     });
   }
 

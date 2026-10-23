@@ -46,7 +46,7 @@ describe('audit log hash chain', () => {
   });
 
   it('hash を改変すると検証に失敗する', () => {
-    const _hash1 = computeAuditLogHash(baseEntry, '');
+    const hash1 = computeAuditLogHash(baseEntry, '');
 
     expect(verifyAuditLogHashChain([{ ...baseEntry, prevHash: '', hash: 'deadbeef' }])).toEqual({
       isValid: false,

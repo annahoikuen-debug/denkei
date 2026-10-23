@@ -76,7 +76,7 @@ export const updateTeamSettingsRoute = authenticatedProcedure
       where: buildTeamWhereQuery({
         teamId,
         userId: user.id,
-        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_TEAM,
+        roles: TEAM_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_TEAM'],
       }),
     });
 
@@ -106,7 +106,7 @@ export const updateTeamSettingsRoute = authenticatedProcedure
       where: buildOrganisationWhereQuery({
         organisationId: team.organisationId,
         userId: user.id,
-        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP.MANAGE_ORGANISATION,
+        roles: ORGANISATION_MEMBER_ROLE_PERMISSIONS_MAP['MANAGE_ORGANISATION'],
       }),
       select: {
         type: true,

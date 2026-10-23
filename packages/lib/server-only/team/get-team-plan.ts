@@ -1,7 +1,6 @@
 import { prisma } from '@documenso/prisma';
 import {
   canSendDocument,
-  isAnnualStripePriceId,
   isFeatureEnabledForPlan,
   PLANS,
   type PlanFeatures,
@@ -19,7 +18,6 @@ export type TeamPlanInfo = {
   remaining: number | null;
   allowed: boolean;
   extraCredits: number;
-  isAnnual: boolean;
 };
 
 /**
@@ -48,7 +46,6 @@ export const getTeamPlanInfo = async ({ teamId }: { teamId: number }): Promise<T
   const { organisation } = team;
   // 1. Subscription / Claim から判定
   const planId: PlanId = resolvePlanIdFromOrganisation(organisation);
-  const isAnnual = isAnnualStripePriceId(organisation.subscription?.priceId);
 
   // 2. 追加チケットクレジット（Claim flags または Claim から取得）
   const flags = (organisation.organisationClaim?.flags as Record<string, unknown> | null) || {};
@@ -67,7 +64,7 @@ export const getTeamPlanInfo = async ({ teamId }: { teamId: number }): Promise<T
   });
 
   const currentMonthlyCount = stat?.documentCount ?? 0;
-  const sendCheck = canSendDocument({ plan: planId, currentMonthlyCount, extraCredits, isAnnual });
+  const sendCheck = canSendDocument({ plan: planId, currentMonthlyCount, extraCredits });
 
   return {
     planId,
@@ -77,7 +74,6 @@ export const getTeamPlanInfo = async ({ teamId }: { teamId: number }): Promise<T
     remaining: sendCheck.remaining,
     allowed: sendCheck.allowed,
     extraCredits,
-    isAnnual,
   };
 };
 

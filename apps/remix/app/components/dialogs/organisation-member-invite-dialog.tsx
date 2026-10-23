@@ -238,7 +238,7 @@ export const OrganisationMemberInviteDialog = ({ trigger, ...props }: Organisati
       { email: 'member@documenso.com', role: 'Member' },
     ];
 
-    const csvContent = `Email address,Role\n${data.map((row) => `${row.email},${row.role}`).join('\n')}`;
+    const csvContent = 'Email address,Role\n' + data.map((row) => `${row.email},${row.role}`).join('\n');
 
     const blob = new Blob([csvContent], {
       type: 'text/csv',

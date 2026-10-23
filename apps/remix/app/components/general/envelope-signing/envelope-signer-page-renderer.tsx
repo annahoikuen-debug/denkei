@@ -538,7 +538,7 @@ export const EnvelopeSignerPageRenderer = ({ pageData }: { pageData: PageRenderD
   /**
    * Initialize the Konva page canvas and all fields and interactions.
    */
-  const createPageCanvas = (_currentStage: Konva.Stage, currentPageLayer: Konva.Layer) => {
+  const createPageCanvas = (currentStage: Konva.Stage, currentPageLayer: Konva.Layer) => {
     renderFields();
     currentPageLayer.batchDraw();
   };

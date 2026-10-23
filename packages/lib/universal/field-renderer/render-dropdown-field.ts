@@ -80,7 +80,8 @@ export const renderDropdownFieldElement = (field: FieldToRender, options: Render
   if (
     dropdownMeta?.readOnly &&
     dropdownMeta.defaultValue &&
-    dropdownMeta.values?.some((value) => value.value === dropdownMeta.defaultValue)
+    dropdownMeta.values &&
+    dropdownMeta.values.some((value) => value.value === dropdownMeta.defaultValue)
   ) {
     selectedValue = dropdownMeta.defaultValue;
   }

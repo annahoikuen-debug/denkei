@@ -136,7 +136,7 @@ export const duplicateEnvelope = async ({ id, userId, teamId, overrides }: Dupli
       signatureLevel: duplicatedSignatureLevel,
       userId,
       teamId,
-      title: `${envelope.title} (copy)`,
+      title: envelope.title + ' (copy)',
       documentMetaId: createdDocumentMeta.id,
       authOptions: envelope.authOptions || undefined,
       visibility: envelope.visibility,

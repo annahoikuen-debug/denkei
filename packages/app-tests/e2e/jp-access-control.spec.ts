@@ -95,7 +95,7 @@ test.describe('[JP] Access Control', () => {
     const oldToken = recipient.token;
 
     // ローテーション(サーバー関数相当を直接実行する替わりに DB 更新を模擬)
-    const newToken = `rotated-token-${Date.now().toString(36)}`;
+    const newToken = 'rotated-token-' + Date.now().toString(36);
 
     await prisma.recipient.update({
       where: { id: recipient.id },

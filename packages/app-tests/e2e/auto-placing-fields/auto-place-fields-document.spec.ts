@@ -1,8 +1,8 @@
-import path from 'node:path';
 import { prisma } from '@documenso/prisma';
 import { RecipientRole } from '@documenso/prisma/client';
 import { seedUser } from '@documenso/prisma/seed/users';
 import { expect, type Page, test } from '@playwright/test';
+import path from 'path';
 
 import { apiSignin } from '../fixtures/authentication';
 
@@ -118,7 +118,7 @@ test.describe('PDF Placeholders with single recipient', () => {
       });
 
       expect(fields.length).toBeGreaterThan(0);
-      expect(fields.every((field) => field.recipientId === placeholderRecipient?.id)).toBe(true);
+      expect(fields.every((field) => field.recipientId === placeholderRecipient!.id)).toBe(true);
     }).toPass();
   });
 
@@ -158,9 +158,9 @@ test.describe('PDF Placeholders with single recipient', () => {
       });
 
       expect(textField).toBeDefined();
-      expect(textField?.fieldMeta).toBeDefined();
+      expect(textField!.fieldMeta).toBeDefined();
 
-      const meta = textField?.fieldMeta as Record<string, unknown>;
+      const meta = textField!.fieldMeta as Record<string, unknown>;
       expect(meta.required).toBe(true);
       expect(meta.textAlign).toBe('right');
     }).toPass();

@@ -1,4 +1,3 @@
-import { SEND_CREDIT_PACKAGES } from '@documenso/lib/constants/plans';
 import { Badge } from '@documenso/ui/primitives/badge';
 import { Button } from '@documenso/ui/primitives/button';
 import {
@@ -90,12 +89,8 @@ export function PlanLimitUpgradeDialog({
               className="group flex flex-col items-center justify-center rounded-lg border border-border bg-background p-2.5 text-center transition-all hover:border-primary"
             >
               <span className="font-bold text-foreground group-hover:text-primary">10件チケット</span>
-              <span className="mt-0.5 font-black text-foreground text-sm">
-                ¥{SEND_CREDIT_PACKAGES.PACK_10.priceJpy.toLocaleString('ja-JP')}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                （{SEND_CREDIT_PACKAGES.PACK_10.pricePerDocumentJpy}円/件）
-              </span>
+              <span className="mt-0.5 font-black text-foreground text-sm">¥1,500</span>
+              <span className="text-[10px] text-muted-foreground">（150円/件）</span>
             </Link>
 
             <Link
@@ -104,12 +99,8 @@ export function PlanLimitUpgradeDialog({
               className="group flex flex-col items-center justify-center rounded-lg border border-border bg-background p-2.5 text-center transition-all hover:border-primary"
             >
               <span className="font-bold text-foreground group-hover:text-primary">50件チケット</span>
-              <span className="mt-0.5 font-black text-foreground text-sm">
-                ¥{SEND_CREDIT_PACKAGES.PACK_50.priceJpy.toLocaleString('ja-JP')}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                （{SEND_CREDIT_PACKAGES.PACK_50.pricePerDocumentJpy}円/件）
-              </span>
+              <span className="mt-0.5 font-black text-foreground text-sm">¥5,000</span>
+              <span className="text-[10px] text-muted-foreground">（100円/件）</span>
             </Link>
           </div>
         </div>
