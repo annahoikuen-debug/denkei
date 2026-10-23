@@ -254,7 +254,7 @@ export const generateQualifiedInvoiceHtml = (props: QualifiedInvoiceProps): stri
 
   <div class="total-box">
     <span class="total-label">ご請求金額 (税込)</span>
-    <span class="total-amount">¥${props.amountJpy.toLocaleString()}</span>
+    <span class="total-amount">¥${props.amountJpy.toLocaleString('ja-JP')}</span>
   </div>
 
   <table class="items-table">
@@ -272,8 +272,8 @@ export const generateQualifiedInvoiceHtml = (props: QualifiedInvoiceProps): stri
         <td><strong>${props.itemName}</strong></td>
         <td style="text-align: center;">10%</td>
         <td style="text-align: center;">1</td>
-        <td style="text-align: right;">¥${tax.netAmountJpy.toLocaleString()}</td>
-        <td style="text-align: right;">¥${tax.netAmountJpy.toLocaleString()}</td>
+        <td style="text-align: right;">¥${tax.netAmountJpy.toLocaleString('ja-JP')}</td>
+        <td style="text-align: right;">¥${tax.netAmountJpy.toLocaleString('ja-JP')}</td>
       </tr>
     </tbody>
   </table>
@@ -281,15 +281,15 @@ export const generateQualifiedInvoiceHtml = (props: QualifiedInvoiceProps): stri
   <table class="tax-breakdown-table">
     <tr>
       <td style="color: #475569;">10%対象金額 (税抜):</td>
-      <td style="text-align: right; font-weight: 600;">¥${tax.netAmountJpy.toLocaleString()}</td>
+      <td style="text-align: right; font-weight: 600;">¥${tax.netAmountJpy.toLocaleString('ja-JP')}</td>
     </tr>
     <tr>
       <td style="color: #475569;">消費税等 (10%):</td>
-      <td style="text-align: right; font-weight: 600;">¥${tax.taxAmountJpy.toLocaleString()}</td>
+      <td style="text-align: right; font-weight: 600;">¥${tax.taxAmountJpy.toLocaleString('ja-JP')}</td>
     </tr>
     <tr style="font-size: 15px; font-weight: 700; border-top: 2px solid #cbd5e1;">
       <td>合計金額 (税込):</td>
-      <td style="text-align: right; color: #1e3a8a;">¥${tax.grossAmountJpy.toLocaleString()}</td>
+      <td style="text-align: right; color: #1e3a8a;">¥${tax.grossAmountJpy.toLocaleString('ja-JP')}</td>
     </tr>
   </table>
 

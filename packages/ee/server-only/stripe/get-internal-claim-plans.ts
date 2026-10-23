@@ -46,7 +46,7 @@ export const getInternalClaimPlans = async (): Promise<InternalClaimPlans> => {
 
     const isJpy = price.currency.toLowerCase() === 'jpy';
     let formattedPrice = isJpy
-      ? `¥${(price.unit_amount ?? 0).toLocaleString()} (税込)`
+      ? `¥${(price.unit_amount ?? 0).toLocaleString('ja-JP')} (税込)`
       : `$${toHumanPrice(price.unit_amount ?? 0, price.currency)} ${price.currency.toUpperCase()}`.replace('.00', '');
 
     if (price.recurring?.interval === 'month') {

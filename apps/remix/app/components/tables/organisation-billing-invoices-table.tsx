@@ -48,7 +48,7 @@ export const OrganisationBillingInvoicesTable = ({
   const formatCurrency = (currency: string, amount: number) => {
     const isJpy = currency.toLowerCase() === 'jpy';
     if (isJpy) {
-      return `¥${Math.round(amount).toLocaleString()}`;
+      return `¥${Math.round(amount).toLocaleString('ja-JP')}`;
     }
 
     const formatter = new Intl.NumberFormat('en-US', {
@@ -229,7 +229,7 @@ export const OrganisationBillingInvoicesTable = ({
                     <span className="font-medium text-foreground text-sm">
                       <Trans>ご請求金額 (税込)</Trans>
                     </span>
-                    <span className="font-bold text-2xl text-foreground">¥{gross.toLocaleString()}</span>
+                    <span className="font-bold text-2xl text-foreground">¥{gross.toLocaleString('ja-JP')}</span>
                   </div>
 
                   <table className="w-full border-collapse text-xs">
@@ -250,9 +250,9 @@ export const OrganisationBillingInvoicesTable = ({
                             : 'デンケイ スタンダード月額利用料 (100件/月)'}
                         </td>
                         <td className="p-2.5 text-center">10%</td>
-                        <td className="p-2.5 text-right">¥{tax.netAmountJpy.toLocaleString()}</td>
-                        <td className="p-2.5 text-right">¥{tax.taxAmountJpy.toLocaleString()}</td>
-                        <td className="p-2.5 text-right font-semibold">¥{gross.toLocaleString()}</td>
+                        <td className="p-2.5 text-right">¥{tax.netAmountJpy.toLocaleString('ja-JP')}</td>
+                        <td className="p-2.5 text-right">¥{tax.taxAmountJpy.toLocaleString('ja-JP')}</td>
+                        <td className="p-2.5 text-right font-semibold">¥{gross.toLocaleString('ja-JP')}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -260,15 +260,15 @@ export const OrganisationBillingInvoicesTable = ({
                   <div className="ml-auto w-72 space-y-1 text-xs">
                     <div className="flex justify-between border-border/50 border-b py-1">
                       <span className="text-muted-foreground">10%対象金額 (税抜):</span>
-                      <span className="font-medium">¥{tax.netAmountJpy.toLocaleString()}</span>
+                      <span className="font-medium">¥{tax.netAmountJpy.toLocaleString('ja-JP')}</span>
                     </div>
                     <div className="flex justify-between border-border/50 border-b py-1">
                       <span className="text-muted-foreground">消費税額等 (10%):</span>
-                      <span className="font-medium">¥{tax.taxAmountJpy.toLocaleString()}</span>
+                      <span className="font-medium">¥{tax.taxAmountJpy.toLocaleString('ja-JP')}</span>
                     </div>
                     <div className="flex justify-between border-border border-t py-1.5 font-bold text-sm">
                       <span>合計金額 (税込):</span>
-                      <span className="text-primary">¥{gross.toLocaleString()}</span>
+                      <span className="text-primary">¥{gross.toLocaleString('ja-JP')}</span>
                     </div>
                   </div>
 
