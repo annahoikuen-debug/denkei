@@ -12,6 +12,9 @@ const WAREKI_FORMATTER = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
+  // Intl は JS Date を「実行環境のタイムゾーン」で解釈するため、明示的に指定する。
+  // 指定しないと TZ=UTC の本番環境で日付が1日ずれる。
+  timeZone: 'Asia/Tokyo',
 });
 
 const WAREKI_ERA_START = '2019-05-01';

@@ -11,9 +11,10 @@ describe('日本語日付フォーマット', () => {
   });
 
   it('日本語フォーマットでパース→フォーマットが往復できる', () => {
-    const formatted = DateTime.fromObject({ year: 2026, month: 10, day: 15 }, { zone: 'Asia/Tokyo' })
-      .toLocal()
-      .toFormat('yyyy年M月d日');
+    // 実行環境のタイムゾーンに依存しない(Tokyo ゾーンのまま往復する)
+    const formatted = DateTime.fromObject({ year: 2026, month: 10, day: 15 }, { zone: 'Asia/Tokyo' }).toFormat(
+      'yyyy年M月d日',
+    );
 
     expect(formatted).toBe('2026年10月15日');
   });
@@ -22,6 +23,13 @@ describe('日本語日付フォーマット', () => {
     const result = convertToLocalSystemFormat('2026年10月15日', 'yyyy年M月d日', 'Asia/Tokyo');
 
     expect(result).toBe('2026年10月15日');
+  });
+
+  it('convertToLocalSystemFormat は文書タイムゾーンを基準にする(実行環境が TZ=UTC でもずれない)', () => {
+    // JST 午前0時〜9時の帯は UTC では前日になる。文書TZ基準で出力すればずれない。
+    const result = convertToLocalSystemFormat('2026年10月15日 00:30', 'yyyy年M月d日 HH:mm', 'Asia/Tokyo');
+
+    expect(result).toBe('2026年10月15日 00:30');
   });
 
   it('既存フォーマットが壊れていないこと', () => {

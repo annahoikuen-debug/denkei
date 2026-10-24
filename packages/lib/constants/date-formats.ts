@@ -200,7 +200,9 @@ export const convertToLocalSystemFormat = (
     return 'Invalid date';
   }
 
-  const formattedDate = parsedDate.toLocal().toFormat(coalescedDateFormat);
+  // 実行環境のシステムタイムゾーン(toLocal())に依存せず、
+  // 文書のタイムゾーンを基準に出力する。本番が TZ=UTC でも日付がずれない。
+  const formattedDate = parsedDate.setZone(coalescedTimeZone).toFormat(coalescedDateFormat);
 
   return formattedDate;
 };
