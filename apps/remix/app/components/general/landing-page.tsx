@@ -761,11 +761,11 @@ export function LandingPage() {
                     <span>年間コスト削減額（見込み）</span>
                   </div>
                   <div className="font-black text-4xl text-red-600 tracking-tight sm:text-6xl">
-                    ¥{annualSavings.toLocaleString()}
+                    ¥{annualSavings.toLocaleString('ja-JP')}
                   </div>
                   <div className="mt-2 font-medium text-muted-foreground text-xs sm:text-sm">
-                    従来の紙費用 約 ¥{annualPaperCost.toLocaleString()} → デンケイなら ¥
-                    {denkeiAnnualCost.toLocaleString()}
+                    従来の紙費用 約 ¥{annualPaperCost.toLocaleString('ja-JP')} → デンケイなら ¥
+                    {denkeiAnnualCost.toLocaleString('ja-JP')}
                   </div>
                 </div>
                 <div className="mt-4 border-red-500/20 border-t pt-3 font-bold text-red-700 text-xs dark:text-red-400">

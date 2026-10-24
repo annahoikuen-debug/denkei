@@ -137,6 +137,11 @@ type UsageStatCardProps = {
 const UsageStatCard = ({ label, icon: Icon, used, limit, countOnly = false, footnote, action }: UsageStatCardProps) => {
   const { status, percent, hasFiniteLimit, progressClassName, subtext } = getUsageCardState({ used, limit, footnote });
 
+  // ReactNode includes experimental node types (e.g. promises), so compare against
+  // null/undefined instead of testing the node's truthiness directly.
+  const hasSubtext = subtext !== null && subtext !== undefined;
+  const hasAction = action !== null && action !== undefined;
+
   return (
     <div className="flex flex-col rounded-lg border bg-background p-5">
       <div className="flex items-center justify-between gap-3">
@@ -170,10 +175,10 @@ const UsageStatCard = ({ label, icon: Icon, used, limit, countOnly = false, foot
 
         {hasFiniteLimit ? <Progress className={cn('mt-3 h-2', progressClassName)} value={percent} /> : null}
 
-        {subtext ? <p className="mt-2 text-muted-foreground text-xs">{subtext}</p> : null}
+        {hasSubtext ? <p className="mt-2 text-muted-foreground text-xs">{subtext}</p> : null}
       </div>
 
-      {action ? <div className="mt-4 flex justify-end border-t pt-4">{action}</div> : null}
+      {hasAction ? <div className="mt-4 flex justify-end border-t pt-4">{action}</div> : null}
     </div>
   );
 };
