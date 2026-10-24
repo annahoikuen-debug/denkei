@@ -78,7 +78,14 @@ export const getUploadTransport = (): 's3' | 'database' => {
  * 引数なしで呼ばれ、未設定時は null を返す。
  */
 export const extractPostHogConfig = (): { key: string; host: string } | null => {
-  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  // この関数はクライアントバンドル(useAnalytics)からも呼ばれる。
+  // Vite dev では process がブラウザに存在しないため、安全にガードする。
+  const env =
+    typeof process !== 'undefined'
+      ? process.env
+      : ((import.meta as { env?: Record<string, string | undefined> }).env ?? {});
+
+  const key = env.NEXT_PUBLIC_POSTHOG_KEY;
 
   if (!key) {
     return null;
@@ -86,6 +93,6 @@ export const extractPostHogConfig = (): { key: string; host: string } | null => 
 
   return {
     key,
-    host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
+    host: env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
   };
 };
