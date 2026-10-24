@@ -21,7 +21,7 @@ import {
 import { ZRecipientAuthOptionsSchema } from '../types/document-auth';
 import type { ApiRequestMetadata, RequestMetadata } from '../universal/extract-request-metadata';
 
-type CreateDocumentAuditLogDataOptions<T = TDocumentAuditLog['type']> = {
+export type CreateDocumentAuditLogDataOptions<T = TDocumentAuditLog['type']> = {
   envelopeId: string;
   type: T;
   data: Extract<TDocumentAuditLog, { type: T }>['data'];

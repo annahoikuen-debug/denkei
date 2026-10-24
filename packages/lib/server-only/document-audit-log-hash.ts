@@ -51,6 +51,31 @@ export const computeAuditLogHash = (
 };
 
 /**
+ * PostgreSQL jsonb はオブジェクトキーを「キー長 → バイト順」で並べ替えて保存する。
+ * ハッシュは create 前に計算するため、DB から読み戻した値(verifyAuditLogHashChain)と
+ * 一致させるよう、ハッシュ計算入力を jsonb と同じ順序へ正規化する。
+ */
+export const normalizeForJsonb = (value: unknown): unknown => {
+  if (Array.isArray(value)) {
+    return value.map(normalizeForJsonb);
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => {
+      if (a.length !== b.length) {
+        return a.length - b.length;
+      }
+
+      return a < b ? -1 : a > b ? 1 : 0;
+    });
+
+    return Object.fromEntries(entries.map(([key, item]) => [key, normalizeForJsonb(item)]));
+  }
+
+  return value;
+};
+
+/**
  * ハッシュチェーンの連続性を検証する。
  *
  * @returns 検証結果。isValid = false の場合は破損位置(breakAtId)を返す。

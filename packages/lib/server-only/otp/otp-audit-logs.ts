@@ -1,6 +1,9 @@
 import { DocumentAuth } from '@documenso/lib/types/document-auth';
 import { prisma } from '@documenso/prisma';
 
+import { alphaid } from '../../universal/id';
+import { computeAuditLogHash, normalizeForJsonb } from '../document-audit-log-hash';
+
 /**
  * フェーズ2 ステップ8: OTP 関連の監査ログ記録
  *
@@ -21,6 +24,9 @@ export type OtpAuditLogType = (typeof OTP_AUDIT_LOG_TYPES)[keyof typeof OTP_AUDI
 
 /**
  * OTP 関連の監査ログを記録する(ハッシュチェーン対応)。
+ *
+ * WORM 保証(Prisma 拡張 + DB トリガー)により DocumentAuditLog は UPDATE/DELETE 不可のため、
+ * ハッシュは create 前に計算し、prevHash + hash を 1 回の insert で書き込む。
  */
 export const recordOtpAuditLog = async ({
   envelopeId,
@@ -48,8 +54,6 @@ export const recordOtpAuditLog = async ({
     select: { hash: true },
   });
 
-  const { computeAuditLogHash } = await import('../document-audit-log-hash');
-
   const data = {
     recipientId,
     authType: DocumentAuth.EMAIL_OTP,
@@ -57,25 +61,27 @@ export const recordOtpAuditLog = async ({
     attemptCount: attemptCount ?? undefined,
   };
 
+  // 監査ログは create 前にハッシュを計算して 1 回で書き込む(WORM トリガーは UPDATE/DELETE を禁止するため)。
+  const logId = alphaid();
+  const createdAt = new Date();
+  const logData = normalizeForJsonb(data);
+  const prevHash = previous?.hash ?? '';
+  const hash = computeAuditLogHash({ id: logId, createdAt, type, data: logData }, prevHash);
+
   const log = await prisma.documentAuditLog.create({
     data: {
+      id: logId,
+      createdAt,
       envelopeId,
       type,
-      data,
+      data: logData,
       email: email ?? undefined,
       name: name ?? undefined,
       ipAddress: ipAddress ?? undefined,
       userAgent: userAgent ?? undefined,
-      prevHash: previous?.hash ?? '',
+      prevHash,
+      hash,
     },
-  });
-
-  // ハッシュを計算して保存
-  const hash = computeAuditLogHash(log, log.prevHash);
-
-  await prisma.documentAuditLog.update({
-    where: { id: log.id },
-    data: { hash },
   });
 
   return { ...log, hash };

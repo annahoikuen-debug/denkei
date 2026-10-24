@@ -4,37 +4,11 @@ import { DocumentDataType, DocumentStatus, EnvelopeType } from '@prisma/client';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../types/document-audit-logs';
 import { alphaid } from '../../universal/id';
 import { deleteFile } from '../../universal/upload/delete-file';
-import { computeAuditLogHash } from '../document-audit-log-hash';
+import { computeAuditLogHash, normalizeForJsonb } from '../document-audit-log-hash';
 
 const PURGE_AUDIT_LOG_USER = {
   name: 'System',
   email: null as string | null,
-};
-
-/**
- * PostgreSQL jsonb はオブジェクトキーを「キー長 → バイト順」で並べ替えて保存する。
- * そのためインメモリの挿入順で JSON.stringify したペイロードは、DB 往復後の値と一致しない。
- * ハッシュチェーンは「DB から読み戻した値」で検証される(verifyAuditLogHashChain / バックフィル)ため、
- * 書き込み時に jsonb と同じ順序へ正規化してからハッシュを計算する必要がある。
- */
-const normalizeForJsonb = (value: unknown): unknown => {
-  if (Array.isArray(value)) {
-    return value.map((item) => normalizeForJsonb(item));
-  }
-
-  if (value !== null && typeof value === 'object') {
-    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => {
-      if (a.length !== b.length) {
-        return a.length - b.length;
-      }
-
-      return a < b ? -1 : a > b ? 1 : 0;
-    });
-
-    return Object.fromEntries(entries.map(([key, item]) => [key, normalizeForJsonb(item)]));
-  }
-
-  return value;
 };
 
 type PurgeExpiredEnvelopeDataOptions = {
