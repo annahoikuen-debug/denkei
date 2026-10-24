@@ -1,10 +1,16 @@
+import { DocumentAuth, type TRecipientAccessAuthTypes } from '@documenso/lib/types/document-auth';
 import { joinJapaneseName } from '@documenso/lib/universal/japanese-name';
+import { trpc } from '@documenso/trpc/react';
 import { Button } from '@documenso/ui/primitives/button';
 import { Input } from '@documenso/ui/primitives/input';
 import { Label } from '@documenso/ui/primitives/label';
+import { useToast } from '@documenso/ui/primitives/use-toast';
+import { msg } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
+import { RecipientRole } from '@prisma/client';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
 
 import { useCurrentTeam } from '~/providers/team';
@@ -16,6 +22,9 @@ import { WizardProgress } from './_index';
  *
  * 姓/名/メールのシンプル入力 + 署名順(先方→自社/自社→先方/同時)を選択。
  * 氏名は「姓 名」順で結合して登録する。
+ *
+ * C-4 修正: 宛先情報(PII)を URL クエリで次ステップへ引き渡さない。
+ * ここでエンベロープに宛先を保存し、次ステップへは envelopeId のみを渡す。
  */
 const ZRecipientFormSchema = z.object({
   sei: z.string().trim().min(1, '姓を入力してください'),
@@ -28,9 +37,25 @@ const ZRecipientFormSchema = z.object({
 
 export type TWizardRecipient = z.infer<typeof ZRecipientFormSchema>;
 
+/**
+ * ウィザードの本人確認レベルを受取人の accessAuth 設定へ変換する。
+ * 'high'(eKYC) はフェーズ2 ステップ10で外部APIが未接続のため、当面はメールOTPにフォールバックする。
+ */
+const VERIFICATION_LEVEL_TO_ACCESS_AUTH: Record<TWizardRecipient['verificationLevel'], TRecipientAccessAuthTypes[]> = {
+  none: [],
+  low: [DocumentAuth.EMAIL_OTP],
+  medium: [DocumentAuth.FIREBASE_EMAIL],
+  high: [DocumentAuth.EMAIL_OTP],
+};
+
 export default function WizardStepRecipientsPage() {
+  const { _ } = useLingui();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const team = useCurrentTeam();
+  const [searchParams] = useSearchParams();
+
+  const envelopeId = searchParams.get('envelopeId') ?? '';
 
   const [sei, setSei] = useState('');
   const [mei, setMei] = useState('');
@@ -39,7 +64,15 @@ export default function WizardStepRecipientsPage() {
   const [verificationLevel, setVerificationLevel] = useState<TWizardRecipient['verificationLevel']>('low');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const onSubmit = (event: React.FormEvent) => {
+  const { mutateAsync: createRecipients, isPending: isSavingRecipients } =
+    trpc.envelope.recipient.createMany.useMutation();
+
+  // ステップ1を経由せずアクセスした場合はウィザードの先頭へ戻す。
+  if (!envelopeId) {
+    return <Navigate to={`/t/${team.url}/new`} replace />;
+  }
+
+  const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     const parsed = ZRecipientFormSchema.safeParse({
@@ -67,13 +100,41 @@ export default function WizardStepRecipientsPage() {
 
     setErrors({});
 
-    // 氏名を「姓 名」順に結合して次ステップへ引き渡す(query 経由は避け、
-    // 実装では SessionStorage またはエンベロープ保存後に遷移する)
     const fullName = joinJapaneseName({ sei: parsed.data.sei, mei: parsed.data.mei });
 
-    void navigate(
-      `/t/${team.url}/new/fields?name=${encodeURIComponent(fullName)}&email=${encodeURIComponent(parsed.data.email)}&order=${parsed.data.signingOrderMode}&verification=${parsed.data.verificationLevel}`,
-    );
+    try {
+      // 宛先(PII)はここでエンベロープに保存し、URL には載せない。
+      await createRecipients({
+        envelopeId,
+        data: [
+          {
+            email: parsed.data.email,
+            name: fullName,
+            role: RecipientRole.SIGNER,
+            signingOrder: 1,
+            accessAuth: VERIFICATION_LEVEL_TO_ACCESS_AUTH[parsed.data.verificationLevel],
+          },
+        ],
+      });
+    } catch (err: unknown) {
+      const errMessage = err instanceof Error ? err.message : String(err);
+
+      if (errMessage.includes('EMAIL_ADDRESS_ALREADY_IN_USE') || errMessage.includes('already')) {
+        setErrors({ email: 'このメールアドレスは既に登録されています' });
+        return;
+      }
+
+      toast({
+        title: _(msg`宛先の保存に失敗しました`),
+        description: _(msg`入力内容を確認してもう一度お試しください。`),
+        variant: 'destructive',
+      });
+
+      return;
+    }
+
+    // 次ステップへは envelopeId のみを渡す(PII は URL に含めない)。
+    void navigate(`/t/${team.url}/new/fields?envelopeId=${envelopeId}`);
   };
 
   return (
@@ -199,7 +260,7 @@ export default function WizardStepRecipientsPage() {
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
             <Trans>戻る</Trans>
           </Button>
-          <Button type="submit" data-testid="wizard-step2-next">
+          <Button type="submit" data-testid="wizard-step2-next" loading={isSavingRecipients}>
             <Trans>次へ</Trans>
           </Button>
         </div>

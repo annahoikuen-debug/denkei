@@ -1,8 +1,13 @@
+import { trpc } from '@documenso/trpc/react';
 import { Button } from '@documenso/ui/primitives/button';
 import { Label } from '@documenso/ui/primitives/label';
+import { useToast } from '@documenso/ui/primitives/use-toast';
+import { msg } from '@lingui/core/macro';
+import { useLingui } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
+import { RecipientRole } from '@prisma/client';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 
 import { useCurrentTeam } from '~/providers/team';
 
@@ -14,21 +19,115 @@ import { WizardProgress } from './_index';
  * 簡易モード: 署名(SIGNATURE)+日付(DATE)を自動配置。
  * 詳細モードへの切替リンクで既存エディタ(`documents.$id.edit`)へ移行。
  * 送信前確認サマリ(宛先・件名)を表示して送信する。
+ *
+ * C-4 修正:
+ * - 宛先情報(PII)はステップ2でエンベロープに保存済みのため、URL からではなく
+ *   エンベロープ取得(envelope.get)経由で表示する。
+ * - 「送信」ボタンを実装し、フィールド自動配置 → 送信(envelope.distribute)を行う。
  */
 export default function WizardStepFieldsPage() {
+  const { _ } = useLingui();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const team = useCurrentTeam();
   const [searchParams] = useSearchParams();
 
-  const name = searchParams.get('name') ?? '';
-  const email = searchParams.get('email') ?? '';
+  const envelopeId = searchParams.get('envelopeId') ?? '';
+
+  const [isSending, setIsSending] = useState(false);
 
   // フェーズ2 ステップ25・27: リマインダー・有効期限の設定状態
+  // (自動送信ジョブへの反映は envelope automation 設定の保存ルート実装後に接続する)
   const [expirationDays, setExpirationDays] = useState('14');
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const [reminderIntervalDays, setReminderIntervalDays] = useState('3');
   const [reminderMaxCount, setReminderMaxCount] = useState('3');
 
+  const { data: envelope, isLoading: isLoadingEnvelope } = trpc.envelope.get.useQuery(
+    { envelopeId },
+    { enabled: Boolean(envelopeId) },
+  );
+
+  const { mutateAsync: createFields } = trpc.envelope.field.createMany.useMutation();
+  const { mutateAsync: distributeEnvelope } = trpc.envelope.distribute.useMutation();
+
   const expirationLabel = expirationDays === 'none' ? '無期限' : `送信から${expirationDays}日後`;
+
+  // ステップ2を経由せずアクセスした場合は宛先入力へ戻す。
+  if (!envelopeId) {
+    return <Navigate to={`/t/${team.url}/new/recipients`} replace />;
+  }
+
+  const signer =
+    envelope?.recipients.find((recipient) => recipient.role === RecipientRole.SIGNER) ?? envelope?.recipients[0];
+
+  const onSend = async () => {
+    if (!envelopeId || !signer) {
+      return;
+    }
+
+    try {
+      setIsSending(true);
+
+      // 簡易モード: 1ページ目に署名欄と日付を自動配置する(% ベースの座標)。
+      await createFields({
+        envelopeId,
+        data: [
+          {
+            type: 'SIGNATURE',
+            recipientId: signer.id,
+            page: 1,
+            positionX: 30,
+            positionY: 50,
+            width: 40,
+            height: 12,
+          },
+          {
+            type: 'DATE',
+            recipientId: signer.id,
+            page: 1,
+            positionX: 30,
+            positionY: 68,
+            width: 40,
+            height: 8,
+          },
+        ],
+      });
+
+      // 送信。文書のタイムゾーンは日本時間を既定とする。
+      await distributeEnvelope({
+        envelopeId,
+        meta: {
+          timezone: 'Asia/Tokyo',
+        },
+      });
+
+      toast({
+        title: _(msg`契約書を送信しました`),
+        description: _(msg`${signer.email} 宛に署名依頼メールを送信しました。`),
+      });
+
+      void navigate(`/t/${team.url}/documents`);
+    } catch (err: unknown) {
+      const errMessage = err instanceof Error ? err.message : String(err);
+
+      if (errMessage.includes('MISSING_SIGNATURE_FIELD')) {
+        toast({
+          title: _(msg`署名欄の配置に失敗しました`),
+          description: _(msg`PDFの解析に失敗した可能性があります。詳細モードで配置してください。`),
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: _(msg`送信に失敗しました`),
+          description: _(msg`しばらく待ってからもう一度お試しください。`),
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -53,8 +152,22 @@ export default function WizardStepFieldsPage() {
               <Trans>宛先</Trans>
             </dt>
             <dd data-testid="wizard-summary-name">
-              {name} <span className="text-muted-foreground">({email})</span>
+              {isLoadingEnvelope ? (
+                <span className="text-muted-foreground">読み込み中...</span>
+              ) : signer ? (
+                <>
+                  {signer.name} <span className="text-muted-foreground">({signer.email})</span>
+                </>
+              ) : (
+                <span className="text-destructive">宛先が未設定です。ステップ2へ戻って入力してください。</span>
+              )}
             </dd>
+          </div>
+          <div className="flex justify-between py-1">
+            <dt className="text-muted-foreground">
+              <Trans>文書名</Trans>
+            </dt>
+            <dd>{envelope?.title ?? '-'}</dd>
           </div>
           <div className="flex justify-between py-1">
             <dt className="text-muted-foreground">
@@ -146,7 +259,7 @@ export default function WizardStepFieldsPage() {
 
       <div className="mt-8 flex justify-between">
         <Button variant="ghost" asChild>
-          <Link to={`/t/${team.url}/new/recipients`}>
+          <Link to={`/t/${team.url}/new/recipients?envelopeId=${envelopeId}`}>
             <Trans>戻る</Trans>
           </Link>
         </Button>
@@ -158,7 +271,12 @@ export default function WizardStepFieldsPage() {
             </Link>
           </Button>
 
-          <Button data-testid="wizard-send">
+          <Button
+            data-testid="wizard-send"
+            loading={isSending}
+            disabled={isSending || isLoadingEnvelope || !signer}
+            onClick={() => void onSend()}
+          >
             <Trans>送信</Trans>
           </Button>
         </div>
