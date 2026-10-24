@@ -2,9 +2,9 @@ import { DocumentInviteEmailTemplate } from '@documenso/email/templates/document
 import { resolveExpiresAt } from '@documenso/lib/constants/envelope-expiration';
 import { RECIPIENT_ROLE_TO_EMAIL_TYPE, RECIPIENT_ROLES_DESCRIPTION } from '@documenso/lib/constants/recipient-roles';
 import { AppError } from '@documenso/lib/errors/app-error';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { renderCustomEmailTemplate } from '@documenso/lib/utils/render-custom-email-template';
 import { prisma } from '@documenso/prisma';
 import { msg } from '@lingui/core/macro';
@@ -311,20 +311,18 @@ export const resendDocument = async ({ id, userId, recipients, teamId, requestMe
         },
       });
 
-      await prisma.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
-          envelopeId: envelope.id,
-          metadata: requestMetadata,
-          data: {
-            emailType: recipientEmailType,
-            recipientEmail: recipient.email,
-            recipientName: recipient.name,
-            recipientRole: recipient.role,
-            recipientId: recipient.id,
-            isResending: true,
-          },
-        }),
+      await createDocumentAuditLog(prisma, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
+        envelopeId: envelope.id,
+        metadata: requestMetadata,
+        data: {
+          emailType: recipientEmailType,
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          recipientRole: recipient.role,
+          recipientId: recipient.id,
+          isResending: true,
+        },
       });
     }),
   );

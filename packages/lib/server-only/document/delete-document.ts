@@ -9,12 +9,12 @@ import { extractDerivedDocumentEmailSettings } from '../../types/document-email'
 import { mapEnvelopeToWebhookDocumentPayload, ZWebhookDocumentSchema } from '../../types/webhook-payload';
 import type { ApiRequestMetadata } from '../../universal/extract-request-metadata';
 import { isDocumentCompleted } from '../../utils/document';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import { type EnvelopeIdOptions, unsafeBuildEnvelopeIdQuery } from '../../utils/envelope';
 import { isRecipientEmailValidForSending } from '../../utils/recipients';
 import { getEmailContext } from '../email/get-email-context';
 import { getEnvelopeWhereInput } from '../envelope/get-envelope-by-id';
 import { triggerWebhook } from '../webhooks/trigger/trigger-webhook';
+import { createDocumentAuditLog } from './create-document-audit-log';
 
 export type DeleteDocumentOptions = {
   id: EnvelopeIdOptions;
@@ -145,15 +145,13 @@ const handleDocumentOwnerDelete = async ({ envelope, user, requestMetadata }: Ha
   // Soft delete completed documents.
   if (isDocumentCompleted(envelope.status)) {
     return await prisma.$transaction(async (tx) => {
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          envelopeId: envelope.id,
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELETED,
-          metadata: requestMetadata,
-          data: {
-            type: 'SOFT',
-          },
-        }),
+      await createDocumentAuditLog(tx, {
+        envelopeId: envelope.id,
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELETED,
+        metadata: requestMetadata,
+        data: {
+          type: 'SOFT',
+        },
       });
 
       return await tx.envelope.update({
@@ -171,15 +169,13 @@ const handleDocumentOwnerDelete = async ({ envelope, user, requestMetadata }: Ha
   const deletedEnvelope = await prisma.$transaction(async (tx) => {
     // Currently redundant since deleting a document will delete the audit logs.
     // However may be useful if we disassociate audit logs and documents if required.
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        envelopeId: envelope.id,
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELETED,
-        metadata: requestMetadata,
-        data: {
-          type: 'HARD',
-        },
-      }),
+    await createDocumentAuditLog(tx, {
+      envelopeId: envelope.id,
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELETED,
+      metadata: requestMetadata,
+      data: {
+        type: 'HARD',
+      },
     });
 
     return await tx.envelope.delete({

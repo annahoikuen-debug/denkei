@@ -1,6 +1,6 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import type { EnvelopeItem, EnvelopeType } from '@prisma/client';
 
@@ -51,7 +51,7 @@ export const UNSAFE_updateEnvelopeItems = async ({
 
   // Write audit logs for DOCUMENT type envelopes when changes are detected.
   if (envelopeType === 'DOCUMENT') {
-    const auditLogs = data.flatMap((item) => {
+    const auditLogOptions = data.flatMap((item) => {
       const existing = existingEnvelopeItems.find((e) => e.id === item.envelopeItemId);
 
       if (!existing) {
@@ -73,7 +73,7 @@ export const UNSAFE_updateEnvelopeItems = async ({
       }
 
       return [
-        createDocumentAuditLogData({
+        {
           type: DOCUMENT_AUDIT_LOG_TYPE.ENVELOPE_ITEM_UPDATED,
           envelopeId,
           data: {
@@ -85,14 +85,13 @@ export const UNSAFE_updateEnvelopeItems = async ({
             email: user.email,
           },
           requestMetadata: apiRequestMetadata.requestMetadata,
-        }),
+        },
       ];
     });
 
-    if (auditLogs.length > 0) {
-      await prisma.documentAuditLog.createMany({
-        data: auditLogs,
-      });
+    // ハッシュチェーンを維持するため 1 件ずつ順序通りに書き込む
+    for (const auditLogOption of auditLogOptions) {
+      await createDocumentAuditLog(prisma, auditLogOption);
     }
   }
 

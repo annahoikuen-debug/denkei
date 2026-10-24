@@ -1,7 +1,7 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { assertSenderNotDisabled } from '@documenso/lib/server-only/user/assert-user-not-disabled';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { RequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { getRecipientFieldsWhereInput } from '@documenso/lib/utils/recipient-queries';
 import { assertRecipientNotExpired } from '@documenso/lib/utils/recipients';
 import { prisma } from '@documenso/prisma';
@@ -79,20 +79,18 @@ export const removeSignedFieldWithToken = async ({
     });
 
     if (recipient.role !== RecipientRole.ASSISTANT) {
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_UNINSERTED,
-          envelopeId: envelope.id,
-          user: {
-            name: recipient.name,
-            email: recipient.email,
-          },
-          requestMetadata,
-          data: {
-            field: field.type,
-            fieldId: field.secondaryId,
-          },
-        }),
+      await createDocumentAuditLog(tx, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_UNINSERTED,
+        envelopeId: envelope.id,
+        user: {
+          name: recipient.name,
+          email: recipient.email,
+        },
+        requestMetadata,
+        data: {
+          field: field.type,
+          fieldId: field.secondaryId,
+        },
       });
     }
   });

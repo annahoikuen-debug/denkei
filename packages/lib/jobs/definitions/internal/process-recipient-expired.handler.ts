@@ -1,10 +1,10 @@
 import { prisma } from '@documenso/prisma';
 import { SigningStatus, WebhookTriggerEvents } from '@prisma/client';
 
+import { createDocumentAuditLog } from '../../../server-only/document/create-document-audit-log';
 import { triggerWebhook } from '../../../server-only/webhooks/trigger/trigger-webhook';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../../types/document-audit-logs';
 import { mapEnvelopeToWebhookDocumentPayload, ZWebhookDocumentSchema } from '../../../types/webhook-payload';
-import { createDocumentAuditLogData } from '../../../utils/document-audit-logs';
 import { jobs } from '../../client';
 import type { JobRunIO } from '../../client/_internal/job';
 import type { TProcessRecipientExpiredJobDefinition } from './process-recipient-expired';
@@ -51,16 +51,14 @@ export const run = async ({ payload, io }: { payload: TProcessRecipientExpiredJo
 
   // Create audit log entry — wrapped so a retry skips this if it already succeeded.
   await io.runTask('create-audit-log', async () => {
-    await prisma.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_EXPIRED,
-        envelopeId: recipient.envelopeId,
-        data: {
-          recipientEmail: recipient.email,
-          recipientName: recipient.name,
-          recipientId: recipient.id,
-        },
-      }),
+    await createDocumentAuditLog(prisma, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_EXPIRED,
+      envelopeId: recipient.envelopeId,
+      data: {
+        recipientEmail: recipient.email,
+        recipientName: recipient.name,
+        recipientId: recipient.id,
+      },
     });
   });
 

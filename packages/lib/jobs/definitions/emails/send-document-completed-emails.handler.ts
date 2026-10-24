@@ -6,13 +6,13 @@ import { createElement } from 'react';
 
 import { getI18nInstance } from '../../../client-only/providers/i18n-server';
 import { NEXT_PUBLIC_WEBAPP_URL } from '../../../constants/app';
+import { createDocumentAuditLog } from '../../../server-only/document/create-document-audit-log';
 import { getEmailContext } from '../../../server-only/email/get-email-context';
 import { generateCertificatePdf } from '../../../server-only/pdf/generate-certificate-pdf';
 import { assertOrganisationRatesAndLimits } from '../../../server-only/rate-limit/assert-organisation-rates-and-limits';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../../types/document-audit-logs';
 import { extractDerivedDocumentEmailSettings } from '../../../types/document-email';
 import { getFileServerSide } from '../../../universal/upload/get-file.server';
-import { createDocumentAuditLogData } from '../../../utils/document-audit-logs';
 import { unsafeBuildEnvelopeIdQuery } from '../../../utils/envelope';
 import { isRecipientEmailValidForSending } from '../../../utils/recipients';
 import { renderCustomEmailTemplate } from '../../../utils/render-custom-email-template';
@@ -190,21 +190,19 @@ export const run = async ({ payload, io }: { payload: TSendDocumentCompletedEmai
       attachments: completedDocumentEmailAttachments,
     });
 
-    await prisma.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
-        envelopeId: envelope.id,
-        user: null,
-        requestMetadata,
-        data: {
-          emailType: 'DOCUMENT_COMPLETED',
-          recipientEmail: owner.email,
-          recipientName: owner.name ?? '',
-          recipientId: owner.id,
-          recipientRole: 'OWNER',
-          isResending: false,
-        },
-      }),
+    await createDocumentAuditLog(prisma, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
+      envelopeId: envelope.id,
+      user: null,
+      requestMetadata,
+      data: {
+        emailType: 'DOCUMENT_COMPLETED',
+        recipientEmail: owner.email,
+        recipientName: owner.name ?? '',
+        recipientId: owner.id,
+        recipientRole: 'OWNER',
+        isResending: false,
+      },
     });
   }
 
@@ -290,21 +288,19 @@ export const run = async ({ payload, io }: { payload: TSendDocumentCompletedEmai
         attachments: completedDocumentEmailAttachments,
       });
 
-      await prisma.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
-          envelopeId: envelope.id,
-          user: null,
-          requestMetadata,
-          data: {
-            emailType: 'DOCUMENT_COMPLETED',
-            recipientEmail: recipient.email,
-            recipientName: recipient.name,
-            recipientId: recipient.id,
-            recipientRole: recipient.role,
-            isResending: false,
-          },
-        }),
+      await createDocumentAuditLog(prisma, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
+        envelopeId: envelope.id,
+        user: null,
+        requestMetadata,
+        data: {
+          emailType: 'DOCUMENT_COMPLETED',
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          recipientId: recipient.id,
+          recipientRole: recipient.role,
+          isResending: false,
+        },
       });
     }),
   );

@@ -13,9 +13,9 @@ import { jobs } from '../../jobs/client';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../types/document-audit-logs';
 import { isTspEnvelope } from '../../types/signature-level';
 import type { ApiRequestMetadata } from '../../universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import { mapSecondaryIdToDocumentId } from '../../utils/envelope';
 import { getRecipientsInActiveSigningStep, isRecipientTurnBySigningOrder } from '../../utils/recipient-groups';
+import { createDocumentAuditLog } from '../document/create-document-audit-log';
 import { assertEnvelopeMutable } from '../envelope/assert-envelope-mutable';
 
 export type AdminDeleteRecipientOptions = {
@@ -86,20 +86,18 @@ export const adminDeleteRecipient = async ({ recipientId, reason, requestMetadat
   const deletedRecipient = await prisma.$transaction(async (tx) => {
     await assertEnvelopeMutable(envelope, tx);
 
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_DELETED,
-        envelopeId: envelope.id,
-        metadata: requestMetadata,
-        data: {
-          recipientEmail: recipient.email,
-          recipientName: recipient.name,
-          recipientId: recipient.id,
-          recipientRole: recipient.role,
-          removedByAdmin: true,
-          reason,
-        },
-      }),
+    await createDocumentAuditLog(tx, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_DELETED,
+      envelopeId: envelope.id,
+      metadata: requestMetadata,
+      data: {
+        recipientEmail: recipient.email,
+        recipientName: recipient.name,
+        recipientId: recipient.id,
+        recipientRole: recipient.role,
+        removedByAdmin: true,
+        reason,
+      },
     });
 
     return await tx.recipient.delete({

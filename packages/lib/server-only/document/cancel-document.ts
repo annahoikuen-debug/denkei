@@ -6,13 +6,13 @@ import { AppError, AppErrorCode } from '../../errors/app-error';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../types/document-audit-logs';
 import { mapEnvelopeToWebhookDocumentPayload, ZWebhookDocumentSchema } from '../../types/webhook-payload';
 import type { ApiRequestMetadata } from '../../universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import type { EnvelopeIdOptions } from '../../utils/envelope';
 import { mapSecondaryIdToDocumentId } from '../../utils/envelope';
 import { isMemberManagerOrAbove } from '../../utils/teams';
 import { getEnvelopeWhereInput } from '../envelope/get-envelope-by-id';
 import { getMemberRoles } from '../team/get-member-roles';
 import { triggerWebhook } from '../webhooks/trigger/trigger-webhook';
+import { createDocumentAuditLog } from './create-document-audit-log';
 
 export type CancelDocumentOptions = {
   id: EnvelopeIdOptions;
@@ -85,15 +85,13 @@ export const cancelDocument = async ({ id, userId, teamId, reason, requestMetada
       },
     });
 
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        envelopeId: envelope.id,
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CANCELLED,
-        metadata: requestMetadata,
-        data: {
-          reason,
-        },
-      }),
+    await createDocumentAuditLog(tx, {
+      envelopeId: envelope.id,
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CANCELLED,
+      metadata: requestMetadata,
+      data: {
+        reason,
+      },
     });
 
     return updated;

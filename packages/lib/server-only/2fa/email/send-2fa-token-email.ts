@@ -8,8 +8,8 @@ import { createElement } from 'react';
 import { getI18nInstance } from '../../../client-only/providers/i18n-server';
 import { NEXT_PUBLIC_WEBAPP_URL } from '../../../constants/app';
 import { AppError, AppErrorCode } from '../../../errors/app-error';
+import { createDocumentAuditLog } from '../../../server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../../types/document-audit-logs';
-import { createDocumentAuditLogData } from '../../../utils/document-audit-logs';
 import { unsafeBuildEnvelopeIdQuery } from '../../../utils/envelope';
 import { renderEmailWithI18N } from '../../../utils/render-email-with-i18n';
 import { getEmailContext } from '../../email/get-email-context';
@@ -119,15 +119,13 @@ export const send2FATokenEmail = async ({ token, envelopeId }: Send2FATokenEmail
     text,
   });
 
-  await prisma.documentAuditLog.create({
-    data: createDocumentAuditLogData({
-      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_ACCESS_AUTH_2FA_REQUESTED,
-      envelopeId: envelope.id,
-      data: {
-        recipientEmail: recipient.email,
-        recipientName: recipient.name,
-        recipientId: recipient.id,
-      },
-    }),
+  await createDocumentAuditLog(prisma, {
+    type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_ACCESS_AUTH_2FA_REQUESTED,
+    envelopeId: envelope.id,
+    data: {
+      recipientEmail: recipient.email,
+      recipientName: recipient.name,
+      recipientId: recipient.id,
+    },
   });
 };

@@ -13,11 +13,11 @@ import { DocumentStatus, EnvelopeType, SigningStatus } from '@prisma/client';
 import { AppError, AppErrorCode } from '../../errors/app-error';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../types/document-audit-logs';
 import type { RequestMetadata } from '../../universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import type { EnvelopeIdOptions } from '../../utils/envelope';
 import { mapSecondaryIdToDocumentId, unsafeBuildEnvelopeIdQuery } from '../../utils/envelope';
 import { assertRecipientNotExpired } from '../../utils/recipients';
 import { assertSenderNotDisabled } from '../user/assert-user-not-disabled';
+import { createDocumentAuditLog } from './create-document-audit-log';
 
 export type RejectDocumentWithTokenOptions = {
   token: string;
@@ -63,8 +63,8 @@ export async function rejectDocumentWithToken({ token, id, reason, requestMetada
   assertRecipientNotExpired(recipient);
 
   // Update the recipient status to rejected
-  const [updatedRecipient] = await prisma.$transaction([
-    prisma.recipient.update({
+  const updatedRecipient = await prisma.$transaction(async (tx) => {
+    const updatedRecipient = await tx.recipient.update({
       where: {
         id: recipient.id,
       },
@@ -73,26 +73,27 @@ export async function rejectDocumentWithToken({ token, id, reason, requestMetada
         signingStatus: SigningStatus.REJECTED,
         rejectionReason: reason,
       },
-    }),
-    prisma.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        envelopeId: envelope.id,
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_REJECTED,
-        user: {
-          name: recipient.name,
-          email: recipient.email,
-        },
-        data: {
-          recipientEmail: recipient.email,
-          recipientName: recipient.name,
-          recipientId: recipient.id,
-          recipientRole: recipient.role,
-          reason,
-        },
-        requestMetadata,
-      }),
-    }),
-  ]);
+    });
+
+    await createDocumentAuditLog(tx, {
+      envelopeId: envelope.id,
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_REJECTED,
+      user: {
+        name: recipient.name,
+        email: recipient.email,
+      },
+      data: {
+        recipientEmail: recipient.email,
+        recipientName: recipient.name,
+        recipientId: recipient.id,
+        recipientRole: recipient.role,
+        reason,
+      },
+      requestMetadata,
+    });
+
+    return updatedRecipient;
+  });
 
   const legacyDocumentId = mapSecondaryIdToDocumentId(envelope.secondaryId);
 

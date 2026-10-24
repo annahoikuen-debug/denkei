@@ -1,12 +1,12 @@
 import { NEXT_PUBLIC_WEBAPP_URL } from '@documenso/lib/constants/app';
 import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import type { TCscSessionItems } from '@documenso/lib/types/csc-session';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import { isTspEnvelope } from '@documenso/lib/types/signature-level';
 import type { RequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
 import { getFileServerSide } from '@documenso/lib/universal/upload/get-file.server';
 import { putPdfFileServerSide } from '@documenso/lib/universal/upload/put-file.server';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import type { FieldWithSignature } from '@documenso/prisma/types/field-with-signature';
 import { PDF } from '@libpdf/core';
@@ -222,23 +222,21 @@ export const prepareCscRecipientSigning = async (
     items,
   });
 
-  await prisma.documentAuditLog.create({
-    data: createDocumentAuditLogData({
-      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_CSC_SIGN_REQUESTED,
-      envelopeId: envelope.id,
-      user: { name: recipient.name, email: recipient.email },
-      requestMetadata,
-      data: {
-        recipientEmail: recipient.email,
-        recipientName: recipient.name,
-        recipientId: recipient.id,
-        recipientRole: recipient.role,
-        providerId: credential.providerId,
-        credentialId: credential.credentialId,
-        sessionId: session.id,
-        numSignatures: items.length,
-      },
-    }),
+  await createDocumentAuditLog(prisma, {
+    type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_CSC_SIGN_REQUESTED,
+    envelopeId: envelope.id,
+    user: { name: recipient.name, email: recipient.email },
+    requestMetadata,
+    data: {
+      recipientEmail: recipient.email,
+      recipientName: recipient.name,
+      recipientId: recipient.id,
+      recipientRole: recipient.role,
+      providerId: credential.providerId,
+      credentialId: credential.credentialId,
+      sessionId: session.id,
+      numSignatures: items.length,
+    },
   });
 
   const redirectUrl = `${NEXT_PUBLIC_WEBAPP_URL()}/api/csc/oauth/authorize?scope=credential&session=${session.id}`;

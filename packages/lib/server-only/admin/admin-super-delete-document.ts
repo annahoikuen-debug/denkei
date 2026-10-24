@@ -10,9 +10,9 @@ import { AppError, AppErrorCode } from '../../errors/app-error';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../types/document-audit-logs';
 import { extractDerivedDocumentEmailSettings } from '../../types/document-email';
 import type { RequestMetadata } from '../../universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import { isRecipientEmailValidForSending } from '../../utils/recipients';
 import { renderEmailWithI18N } from '../../utils/render-email-with-i18n';
+import { createDocumentAuditLog } from '../document/create-document-audit-log';
 import { getEmailContext } from '../email/get-email-context';
 
 export type AdminSuperDeleteDocumentOptions = {
@@ -105,16 +105,14 @@ export const adminSuperDeleteDocument = async ({ envelopeId, requestMetadata }: 
 
   // always hard delete if deleted from admin
   return await prisma.$transaction(async (tx) => {
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        envelopeId,
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELETED,
-        user,
-        requestMetadata,
-        data: {
-          type: 'HARD',
-        },
-      }),
+    await createDocumentAuditLog(tx, {
+      envelopeId,
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELETED,
+      user,
+      requestMetadata,
+      data: {
+        type: 'HARD',
+      },
     });
 
     return await tx.envelope.delete({ where: { id: envelopeId } });

@@ -1,9 +1,10 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { TRecipientAccessAuthTypes } from '@documenso/lib/types/document-auth';
 import { type TRecipientActionAuthTypes, ZRecipientAuthOptionsSchema } from '@documenso/lib/types/document-auth';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
 import { nanoid } from '@documenso/lib/universal/id';
-import { createDocumentAuditLogData, diffRecipientChanges } from '@documenso/lib/utils/document-audit-logs';
+import { diffRecipientChanges } from '@documenso/lib/utils/document-audit-logs';
 import { createRecipientAuthOptions } from '@documenso/lib/utils/document-auth';
 import { prisma } from '@documenso/prisma';
 import type { Recipient } from '@prisma/client';
@@ -217,32 +218,28 @@ export const setDocumentRecipients = async ({
 
         // Handle recipient updated audit log.
         if (recipient._persisted && changes.length > 0) {
-          await tx.documentAuditLog.create({
-            data: createDocumentAuditLogData({
-              type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_UPDATED,
-              envelopeId: envelope.id,
-              metadata: requestMetadata,
-              data: {
-                changes,
-                ...baseAuditLog,
-              },
-            }),
+          await createDocumentAuditLog(tx, {
+            type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_UPDATED,
+            envelopeId: envelope.id,
+            metadata: requestMetadata,
+            data: {
+              changes,
+              ...baseAuditLog,
+            },
           });
         }
 
         // Handle recipient created audit log.
         if (!recipient._persisted) {
-          await tx.documentAuditLog.create({
-            data: createDocumentAuditLogData({
-              type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_CREATED,
-              envelopeId: envelope.id,
-              metadata: requestMetadata,
-              data: {
-                ...baseAuditLog,
-                accessAuth: recipient.accessAuth || [],
-                actionAuth: recipient.actionAuth || [],
-              },
-            }),
+          await createDocumentAuditLog(tx, {
+            type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_CREATED,
+            envelopeId: envelope.id,
+            metadata: requestMetadata,
+            data: {
+              ...baseAuditLog,
+              accessAuth: recipient.accessAuth || [],
+              actionAuth: recipient.actionAuth || [],
+            },
           });
         }
 
@@ -264,21 +261,20 @@ export const setDocumentRecipients = async ({
         },
       });
 
-      await tx.documentAuditLog.createMany({
-        data: removedRecipients.map((recipient) =>
-          createDocumentAuditLogData({
-            type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_DELETED,
-            envelopeId: envelope.id,
-            metadata: requestMetadata,
-            data: {
-              recipientEmail: recipient.email,
-              recipientName: recipient.name,
-              recipientId: recipient.id,
-              recipientRole: recipient.role,
-            },
-          }),
-        ),
-      });
+      // ハッシュチェーンを維持するため 1 件ずつ順序通りに書き込む
+      for (const recipient of removedRecipients) {
+        await createDocumentAuditLog(tx, {
+          type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_DELETED,
+          envelopeId: envelope.id,
+          metadata: requestMetadata,
+          data: {
+            recipientEmail: recipient.email,
+            recipientName: recipient.name,
+            recipientId: recipient.id,
+            recipientRole: recipient.role,
+          },
+        });
+      }
     });
 
     const isRecipientRemovedEmailEnabled = extractDerivedDocumentEmailSettings(envelope.documentMeta).recipientRemoved;

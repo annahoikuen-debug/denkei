@@ -1,7 +1,8 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import type { RequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
 import { getFileServerSide } from '@documenso/lib/universal/upload/get-file.server';
 import { putPdfFileServerSide } from '@documenso/lib/universal/upload/put-file.server';
-import type { CreateDocumentAuditLogDataResponse } from '@documenso/lib/utils/document-audit-logs';
+import type { CreateDocumentAuditLogDataOptions } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import { HttpTimestampAuthority, PDF, type TimestampAuthority } from '@libpdf/core';
 import type { DocumentData, DocumentMeta, Envelope, EnvelopeItem, Recipient, User } from '@prisma/client';
@@ -36,7 +37,7 @@ export type FinalizeTspEnvelopeCompletionOptions = {
     envelopeItems: Array<EnvelopeItem & { documentData: DocumentData }>;
     user: Pick<User, 'name' | 'email'>;
   };
-  envelopeCompletedAuditLog: CreateDocumentAuditLogDataResponse;
+  envelopeCompletedAuditLog: CreateDocumentAuditLogDataOptions;
   requestMetadata?: RequestMetadata;
 };
 
@@ -105,9 +106,7 @@ export const finalizeTspEnvelopeCompletion = async (opts: FinalizeTspEnvelopeCom
       },
     });
 
-    await tx.documentAuditLog.create({
-      data: envelopeCompletedAuditLog,
-    });
+    await createDocumentAuditLog(tx, envelopeCompletedAuditLog);
   });
 };
 

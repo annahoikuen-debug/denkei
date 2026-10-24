@@ -1,8 +1,8 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { TRecipientAccessAuthTypes, TRecipientActionAuthTypes } from '@documenso/lib/types/document-auth';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
 import { nanoid } from '@documenso/lib/universal/id';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { createRecipientAuthOptions } from '@documenso/lib/utils/document-auth';
 import { prisma } from '@documenso/prisma';
 import { EnvelopeType, RecipientRole, SendStatus, SigningStatus } from '@prisma/client';
@@ -141,20 +141,18 @@ export const createEnvelopeRecipients = async ({
 
         // Handle recipient created audit log.
         if (envelope.type === EnvelopeType.DOCUMENT) {
-          await tx.documentAuditLog.create({
-            data: createDocumentAuditLogData({
-              type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_CREATED,
-              envelopeId: envelope.id,
-              metadata: requestMetadata,
-              data: {
-                recipientEmail: createdRecipient.email,
-                recipientName: createdRecipient.name,
-                recipientId: createdRecipient.id,
-                recipientRole: createdRecipient.role,
-                accessAuth: recipient.accessAuth ?? [],
-                actionAuth: recipient.actionAuth ?? [],
-              },
-            }),
+          await createDocumentAuditLog(tx, {
+            type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_CREATED,
+            envelopeId: envelope.id,
+            metadata: requestMetadata,
+            data: {
+              recipientEmail: createdRecipient.email,
+              recipientName: createdRecipient.name,
+              recipientId: createdRecipient.id,
+              recipientRole: createdRecipient.role,
+              accessAuth: recipient.accessAuth ?? [],
+              actionAuth: recipient.actionAuth ?? [],
+            },
           });
         }
 

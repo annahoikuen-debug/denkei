@@ -1,9 +1,9 @@
 import { isBase64Image } from '@documenso/lib/constants/signatures';
 import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { validateFieldAuth } from '@documenso/lib/server-only/document/validate-field-auth';
 import { assertSenderNotDisabled } from '@documenso/lib/server-only/user/assert-user-not-disabled';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { extractFieldInsertionValues } from '@documenso/lib/utils/envelope-signing';
 import { getRecipientFieldsWhereInput } from '@documenso/lib/utils/recipient-queries';
 import { assertRecipientNotExpired } from '@documenso/lib/utils/recipients';
@@ -147,20 +147,18 @@ export const signEnvelopeFieldRoute = procedure
         });
 
         if (recipient.role !== RecipientRole.ASSISTANT) {
-          await tx.documentAuditLog.create({
-            data: createDocumentAuditLogData({
-              type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_UNINSERTED,
-              envelopeId: envelope.id,
-              user: {
-                name: recipient.name,
-                email: recipient.email,
-              },
-              requestMetadata: metadata.requestMetadata,
-              data: {
-                field: field.type,
-                fieldId: field.secondaryId,
-              },
-            }),
+          await createDocumentAuditLog(tx, {
+            type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_UNINSERTED,
+            envelopeId: envelope.id,
+            user: {
+              name: recipient.name,
+              email: recipient.email,
+            },
+            requestMetadata: metadata.requestMetadata,
+            data: {
+              field: field.type,
+              fieldId: field.secondaryId,
+            },
           });
         }
 
@@ -235,45 +233,43 @@ export const signEnvelopeFieldRoute = procedure
         });
       }
 
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type:
-            assistant && field.recipientId !== assistant.id
-              ? DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_PREFILLED
-              : DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_INSERTED,
-          envelopeId: envelope.id,
-          user: {
-            email: assistant?.email ?? recipient.email,
-            name: assistant?.name ?? recipient.name,
-          },
-          requestMetadata: metadata.requestMetadata,
-          data: {
-            recipientEmail: recipient.email,
-            recipientId: recipient.id,
-            recipientName: recipient.name,
-            recipientRole: recipient.role,
-            fieldId: updatedField.secondaryId,
-            field: match(updatedField.type)
-              .with(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, (type) => ({
-                type,
-                data: signatureImageAsBase64 || typedSignature || '',
-              }))
-              .with(FieldType.DATE, FieldType.EMAIL, FieldType.NAME, FieldType.TEXT, FieldType.INITIALS, (type) => ({
-                type,
-                data: updatedField.customText,
-              }))
-              .with(FieldType.NUMBER, FieldType.RADIO, FieldType.CHECKBOX, FieldType.DROPDOWN, (type) => ({
-                type,
-                data: updatedField.customText,
-              }))
-              .exhaustive(),
-            fieldSecurity: derivedRecipientActionAuth
-              ? {
-                  type: derivedRecipientActionAuth,
-                }
-              : undefined,
-          },
-        }),
+      await createDocumentAuditLog(tx, {
+        type:
+          assistant && field.recipientId !== assistant.id
+            ? DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_PREFILLED
+            : DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_INSERTED,
+        envelopeId: envelope.id,
+        user: {
+          email: assistant?.email ?? recipient.email,
+          name: assistant?.name ?? recipient.name,
+        },
+        requestMetadata: metadata.requestMetadata,
+        data: {
+          recipientEmail: recipient.email,
+          recipientId: recipient.id,
+          recipientName: recipient.name,
+          recipientRole: recipient.role,
+          fieldId: updatedField.secondaryId,
+          field: match(updatedField.type)
+            .with(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, (type) => ({
+              type,
+              data: signatureImageAsBase64 || typedSignature || '',
+            }))
+            .with(FieldType.DATE, FieldType.EMAIL, FieldType.NAME, FieldType.TEXT, FieldType.INITIALS, (type) => ({
+              type,
+              data: updatedField.customText,
+            }))
+            .with(FieldType.NUMBER, FieldType.RADIO, FieldType.CHECKBOX, FieldType.DROPDOWN, (type) => ({
+              type,
+              data: updatedField.customText,
+            }))
+            .exhaustive(),
+          fieldSecurity: derivedRecipientActionAuth
+            ? {
+                type: derivedRecipientActionAuth,
+              }
+            : undefined,
+        },
       });
 
       return {

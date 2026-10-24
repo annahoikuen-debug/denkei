@@ -1,4 +1,5 @@
 import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import type { PlaceholderInfo } from '@documenso/lib/server-only/pdf/auto-place-fields';
 import { convertPlaceholdersToFieldInputs } from '@documenso/lib/server-only/pdf/auto-place-fields';
 import { findRecipientByPlaceholder } from '@documenso/lib/server-only/pdf/helpers';
@@ -7,7 +8,6 @@ import { ZDefaultRecipientsSchema } from '@documenso/lib/types/default-recipient
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
 import { nanoid, prefixedId } from '@documenso/lib/universal/id';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import type { DocumentMeta, DocumentVisibility, TemplateType } from '@prisma/client';
 import {
@@ -630,39 +630,35 @@ export const createEnvelope = async ({
 
     // Only create audit logs for documents.
     if (type === EnvelopeType.DOCUMENT) {
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CREATED,
-          envelopeId: envelope.id,
-          user: {
-            id: envelopeOwnerId,
+      await createDocumentAuditLog(tx, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CREATED,
+        envelopeId: envelope.id,
+        user: {
+          id: envelopeOwnerId,
+        },
+        metadata: requestMetadata,
+        data: {
+          title,
+          source: {
+            type: DocumentSource.DOCUMENT,
           },
-          metadata: requestMetadata,
-          data: {
-            title,
-            source: {
-              type: DocumentSource.DOCUMENT,
-            },
-          },
-        }),
+        },
       });
 
       // Create audit log for delegated owner if validation passed
       if (delegatedOwner) {
-        await tx.documentAuditLog.create({
-          data: createDocumentAuditLogData({
-            type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELEGATED_OWNER_CREATED,
-            envelopeId: envelope.id,
-            user: {
-              id: userId,
-            },
-            metadata: requestMetadata,
-            data: {
-              delegatedOwnerName: delegatedOwner.name,
-              delegatedOwnerEmail: delegatedOwner.email,
-              teamName: team.name,
-            },
-          }),
+        await createDocumentAuditLog(tx, {
+          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELEGATED_OWNER_CREATED,
+          envelopeId: envelope.id,
+          user: {
+            id: userId,
+          },
+          metadata: requestMetadata,
+          data: {
+            delegatedOwnerName: delegatedOwner.name,
+            delegatedOwnerEmail: delegatedOwner.email,
+            teamName: team.name,
+          },
         });
       }
     }

@@ -15,13 +15,13 @@ import { createElement } from 'react';
 import { getI18nInstance } from '../../../client-only/providers/i18n-server';
 import { NEXT_PUBLIC_WEBAPP_URL } from '../../../constants/app';
 import { RECIPIENT_ROLE_TO_EMAIL_TYPE, RECIPIENT_ROLES_DESCRIPTION } from '../../../constants/recipient-roles';
+import { createDocumentAuditLog } from '../../../server-only/document/create-document-audit-log';
 import { buildEnvelopeEmailHeaders } from '../../../server-only/email/build-envelope-email-headers';
 import { getEmailContext } from '../../../server-only/email/get-email-context';
 import { assertOrganisationRatesAndLimits } from '../../../server-only/rate-limit/assert-organisation-rates-and-limits';
 import { updateRecipientNextReminder } from '../../../server-only/recipient/update-recipient-next-reminder';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../../types/document-audit-logs';
 import { extractDerivedDocumentEmailSettings } from '../../../types/document-email';
-import { createDocumentAuditLogData } from '../../../utils/document-audit-logs';
 import { unsafeBuildEnvelopeIdQuery } from '../../../utils/envelope';
 import { renderCustomEmailTemplate } from '../../../utils/render-custom-email-template';
 import { renderEmailWithI18N } from '../../../utils/render-email-with-i18n';
@@ -256,20 +256,18 @@ export const run = async ({ payload, io }: { payload: TSendSigningEmailJobDefini
     lastReminderSentAt: null,
   });
 
-  await prisma.documentAuditLog.create({
-    data: createDocumentAuditLogData({
-      type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
-      envelopeId: envelope.id,
-      user,
-      requestMetadata,
-      data: {
-        emailType: recipientEmailType,
-        recipientId: recipient.id,
-        recipientName: recipient.name,
-        recipientEmail: recipient.email,
-        recipientRole: recipient.role,
-        isResending: false,
-      },
-    }),
+  await createDocumentAuditLog(prisma, {
+    type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
+    envelopeId: envelope.id,
+    user,
+    requestMetadata,
+    data: {
+      emailType: recipientEmailType,
+      recipientId: recipient.id,
+      recipientName: recipient.name,
+      recipientEmail: recipient.email,
+      recipientRole: recipient.role,
+      isResending: false,
+    },
   });
 };

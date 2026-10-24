@@ -1,6 +1,6 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 
 type UnsafeDeleteEnvelopeItemOptions = {
@@ -37,20 +37,18 @@ export const UNSAFE_deleteEnvelopeItem = async ({
       },
     });
 
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.ENVELOPE_ITEM_DELETED,
-        envelopeId,
-        data: {
-          envelopeItemId: deletedEnvelopeItem.id,
-          envelopeItemTitle: deletedEnvelopeItem.title,
-        },
-        user: {
-          name: user.name,
-          email: user.email,
-        },
-        requestMetadata: apiRequestMetadata.requestMetadata,
-      }),
+    await createDocumentAuditLog(tx, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.ENVELOPE_ITEM_DELETED,
+      envelopeId,
+      data: {
+        envelopeItemId: deletedEnvelopeItem.id,
+        envelopeItemTitle: deletedEnvelopeItem.title,
+      },
+      user: {
+        name: user.name,
+        email: user.email,
+      },
+      requestMetadata: apiRequestMetadata.requestMetadata,
     });
 
     return deletedEnvelopeItem;

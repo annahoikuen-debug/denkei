@@ -6,9 +6,9 @@ import { EnvelopeType, RecipientRole, SendStatus } from '@prisma/client';
 import { AppError, AppErrorCode } from '../../errors/app-error';
 import { jobs } from '../../jobs/client';
 import { extractDerivedDocumentEmailSettings } from '../../types/document-email';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import { canRecipientBeModified, isRecipientEmailValidForSending } from '../../utils/recipients';
 import { buildTeamWhereQuery } from '../../utils/teams';
+import { createDocumentAuditLog } from '../document/create-document-audit-log';
 import { assertEnvelopeMutable } from '../envelope/assert-envelope-mutable';
 import { getEnvelopeWhereInput } from '../envelope/get-envelope-by-id';
 
@@ -107,18 +107,16 @@ export const deleteEnvelopeRecipient = async ({
     await assertEnvelopeMutable(envelope, tx);
 
     if (envelope.type === EnvelopeType.DOCUMENT) {
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_DELETED,
-          envelopeId: envelope.id,
-          metadata: requestMetadata,
-          data: {
-            recipientEmail: recipientToDelete.email,
-            recipientName: recipientToDelete.name,
-            recipientId: recipientToDelete.id,
-            recipientRole: recipientToDelete.role,
-          },
-        }),
+      await createDocumentAuditLog(tx, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_DELETED,
+        envelopeId: envelope.id,
+        metadata: requestMetadata,
+        data: {
+          recipientEmail: recipientToDelete.email,
+          recipientName: recipientToDelete.name,
+          recipientId: recipientToDelete.id,
+          recipientRole: recipientToDelete.role,
+        },
       });
     }
 

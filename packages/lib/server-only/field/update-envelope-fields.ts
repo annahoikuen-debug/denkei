@@ -1,7 +1,8 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { TFieldMetaSchema } from '@documenso/lib/types/field-meta';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData, diffFieldChanges } from '@documenso/lib/utils/document-audit-logs';
+import { diffFieldChanges } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import { EnvelopeType, type FieldType } from '@prisma/client';
 
@@ -143,19 +144,17 @@ export const updateEnvelopeFields = async ({
           const changes = diffFieldChanges(originalField, updatedField);
 
           if (changes.length > 0) {
-            await tx.documentAuditLog.create({
-              data: createDocumentAuditLogData({
-                type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_UPDATED,
-                envelopeId: envelope.id,
-                metadata: requestMetadata,
-                data: {
-                  fieldId: updatedField.secondaryId,
-                  fieldRecipientEmail: recipientEmail,
-                  fieldRecipientId: updatedField.recipientId,
-                  fieldType: updatedField.type,
-                  changes,
-                },
-              }),
+            await createDocumentAuditLog(tx, {
+              type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_UPDATED,
+              envelopeId: envelope.id,
+              metadata: requestMetadata,
+              data: {
+                fieldId: updatedField.secondaryId,
+                fieldRecipientEmail: recipientEmail,
+                fieldRecipientId: updatedField.recipientId,
+                fieldType: updatedField.type,
+                changes,
+              },
             });
           }
         }

@@ -1,6 +1,7 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData, diffDocumentMetaChanges } from '@documenso/lib/utils/document-audit-logs';
+import { diffDocumentMetaChanges } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import { type DocumentDistributionMethod, type DocumentSigningOrder, EnvelopeType } from '@prisma/client';
 
@@ -140,15 +141,13 @@ export const updateDocumentMeta = async ({
 
     // Create audit logs only for document type envelopes.
     if (changes.length > 0 && envelope.type === EnvelopeType.DOCUMENT) {
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_META_UPDATED,
-          envelopeId: envelope.id,
-          metadata: requestMetadata,
-          data: {
-            changes: diffDocumentMetaChanges(originalDocumentMeta ?? {}, upsertedDocumentMeta),
-          },
-        }),
+      await createDocumentAuditLog(tx, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_META_UPDATED,
+        envelopeId: envelope.id,
+        metadata: requestMetadata,
+        data: {
+          changes: diffDocumentMetaChanges(originalDocumentMeta ?? {}, upsertedDocumentMeta),
+        },
       });
     }
 

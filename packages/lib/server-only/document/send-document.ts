@@ -1,8 +1,8 @@
 import { materializeTspAnchorsForEnvelope } from '@documenso/ee/server-only/signing/csc/materialize-anchors';
 import { resolveExpiresAt } from '@documenso/lib/constants/envelope-expiration';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import { checkboxValidationSigns } from '@documenso/ui/primitives/document-flow/field-items-advanced-settings/constants';
 import type { DocumentData, Envelope, EnvelopeItem, Field, Recipient } from '@prisma/client';
@@ -254,13 +254,11 @@ export const sendDocument = async ({ id, userId, teamId, sendEmail, requestMetad
 
   const updatedEnvelope = await prisma.$transaction(async (tx) => {
     if (envelope.status === DocumentStatus.DRAFT) {
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_SENT,
-          envelopeId: envelope.id,
-          metadata: requestMetadata,
-          data: {},
-        }),
+      await createDocumentAuditLog(tx, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_SENT,
+        envelopeId: envelope.id,
+        metadata: requestMetadata,
+        data: {},
       });
     }
 
@@ -280,19 +278,17 @@ export const sendDocument = async ({ id, userId, teamId, sendEmail, requestMetad
         }),
       );
 
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELDS_AUTO_INSERTED,
-          envelopeId: envelope.id,
-          data: {
-            fields: autoInsertedFields.map((field) => ({
-              fieldId: field.id,
-              fieldType: field.type,
-              recipientId: field.recipientId,
-            })),
-          },
-          // Don't put metadata or user here since it's a system event.
-        }),
+      await createDocumentAuditLog(tx, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELDS_AUTO_INSERTED,
+        envelopeId: envelope.id,
+        data: {
+          fields: autoInsertedFields.map((field) => ({
+            fieldId: field.id,
+            fieldType: field.type,
+            recipientId: field.recipientId,
+          })),
+        },
+        // Don't put metadata or user here since it's a system event.
       });
     }
 

@@ -7,6 +7,7 @@ import { match } from 'ts-pattern';
 import '@documenso/lib/constants/time-zones';
 import { DEFAULT_DOCUMENT_TIME_ZONE, TIME_ZONES } from '@documenso/lib/constants/time-zones';
 import { AppError } from '@documenso/lib/errors/app-error';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { deleteDocument } from '@documenso/lib/server-only/document/delete-document';
 import { findDocuments } from '@documenso/lib/server-only/document/find-documents';
 import { resendDocument } from '@documenso/lib/server-only/document/resend-document';
@@ -40,7 +41,6 @@ import { getFileServerSide } from '@documenso/lib/universal/upload/get-file.serv
 import { putNormalizedPdfFileServerSide } from '@documenso/lib/universal/upload/put-file.server';
 import { getPresignGetUrl, getPresignPostUrl } from '@documenso/lib/universal/upload/server-actions';
 import { isDocumentCompleted } from '@documenso/lib/utils/document';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { mapSecondaryIdToDocumentId, mapSecondaryIdToTemplateId } from '@documenso/lib/utils/envelope';
 import { prisma } from '@documenso/prisma';
 
@@ -1437,23 +1437,21 @@ export const ApiContractV1Implementation = tsr.router(ApiContractV1, {
               },
             });
 
-            await tx.documentAuditLog.create({
-              data: createDocumentAuditLogData({
-                type: 'FIELD_CREATED',
-                envelopeId: envelope.id,
-                user: {
-                  id: team.id ?? user.id,
-                  email: team?.name ?? user.email,
-                  name: team ? '' : user.name,
-                },
-                data: {
-                  fieldId: field.secondaryId,
-                  fieldRecipientEmail: field.recipient?.email ?? '',
-                  fieldRecipientId: recipientId,
-                  fieldType: field.type,
-                },
-                requestMetadata: metadata.requestMetadata,
-              }),
+            await createDocumentAuditLog(tx, {
+              type: 'FIELD_CREATED',
+              envelopeId: envelope.id,
+              user: {
+                id: team.id ?? user.id,
+                email: team?.name ?? user.email,
+                name: team ? '' : user.name,
+              },
+              data: {
+                fieldId: field.secondaryId,
+                fieldRecipientEmail: field.recipient?.email ?? '',
+                fieldRecipientId: recipientId,
+                fieldType: field.type,
+              },
+              requestMetadata: metadata.requestMetadata,
             });
 
             return {

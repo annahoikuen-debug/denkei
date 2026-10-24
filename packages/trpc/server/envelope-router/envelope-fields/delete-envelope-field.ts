@@ -1,7 +1,7 @@
 import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { getEnvelopeWhereInput } from '@documenso/lib/server-only/envelope/get-envelope-by-id';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { canRecipientFieldsBeModified } from '@documenso/lib/utils/recipients';
 import { prisma } from '@documenso/prisma';
 import { EnvelopeType } from '@prisma/client';
@@ -98,18 +98,16 @@ export const deleteEnvelopeFieldRoute = authenticatedProcedure
 
       // Handle field deleted audit log.
       if (envelope.type === EnvelopeType.DOCUMENT) {
-        await tx.documentAuditLog.create({
-          data: createDocumentAuditLogData({
-            type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_DELETED,
-            envelopeId: envelope.id,
-            metadata,
-            data: {
-              fieldId: deletedField.secondaryId,
-              fieldRecipientEmail: recipientWithFields.email,
-              fieldRecipientId: deletedField.recipientId,
-              fieldType: deletedField.type,
-            },
-          }),
+        await createDocumentAuditLog(tx, {
+          type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_DELETED,
+          envelopeId: envelope.id,
+          metadata,
+          data: {
+            fieldId: deletedField.secondaryId,
+            fieldRecipientEmail: recipientWithFields.email,
+            fieldRecipientId: deletedField.recipientId,
+            fieldType: deletedField.type,
+          },
         });
       }
 

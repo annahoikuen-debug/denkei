@@ -6,10 +6,10 @@ import type { TAuthHandoffCreate } from '@documenso/lib/constants/auth-handoff';
 import { AUTH_HANDOFF_TYPE } from '@documenso/lib/constants/auth-handoff';
 import { formatEmbedAuthCompletePageUrl } from '@documenso/lib/constants/embed-auth';
 import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { getRecipientByToken } from '@documenso/lib/server-only/recipient/get-recipient-by-token';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import { extractRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { formatSigningLink } from '@documenso/lib/utils/recipients';
 import { prisma } from '@documenso/prisma';
 import { sValidator } from '@hono/standard-validator';
@@ -289,23 +289,21 @@ const completeCscCallback = async ({ c, query, cookie, embedNonce, embedOutcome 
         return await redirectEmbedFailure();
       }
 
-      await prisma.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_CSC_AUTHENTICATED,
-          envelopeId: recipient.envelopeId,
-          user: { name: recipient.name, email: recipient.email },
-          requestMetadata: extractRequestMetadata(c.req.raw),
-          data: {
-            recipientEmail: recipient.email,
-            recipientName: recipient.name,
-            recipientId: recipient.id,
-            recipientRole: recipient.role,
-            providerId: transport.serviceBaseUrl,
-            credentialId,
-            signatureAlgorithm: policy.signAlgoOid,
-            digestAlgorithm: policy.digestAlgorithm,
-          },
-        }),
+      await createDocumentAuditLog(prisma, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_CSC_AUTHENTICATED,
+        envelopeId: recipient.envelopeId,
+        user: { name: recipient.name, email: recipient.email },
+        requestMetadata: extractRequestMetadata(c.req.raw),
+        data: {
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          recipientId: recipient.id,
+          recipientRole: recipient.role,
+          providerId: transport.serviceBaseUrl,
+          credentialId,
+          signatureAlgorithm: policy.signAlgoOid,
+          digestAlgorithm: policy.digestAlgorithm,
+        },
       });
 
       logger.info({
@@ -332,21 +330,19 @@ const completeCscCallback = async ({ c, query, cookie, embedNonce, embedOutcome 
           return await redirectEmbedFailure();
         }
 
-        await prisma.documentAuditLog.create({
-          data: createDocumentAuditLogData({
-            type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_CSC_AUTHENTICATION_FAILED,
-            envelopeId: recipient.envelopeId,
-            user: { name: recipient.name, email: recipient.email },
-            requestMetadata: extractRequestMetadata(c.req.raw),
-            data: {
-              recipientEmail: recipient.email,
-              recipientName: recipient.name,
-              recipientId: recipient.id,
-              recipientRole: recipient.role,
-              providerId: transport.serviceBaseUrl,
-              reason: err.code,
-            },
-          }),
+        await createDocumentAuditLog(prisma, {
+          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_CSC_AUTHENTICATION_FAILED,
+          envelopeId: recipient.envelopeId,
+          user: { name: recipient.name, email: recipient.email },
+          requestMetadata: extractRequestMetadata(c.req.raw),
+          data: {
+            recipientEmail: recipient.email,
+            recipientName: recipient.name,
+            recipientId: recipient.id,
+            recipientRole: recipient.role,
+            providerId: transport.serviceBaseUrl,
+            reason: err.code,
+          },
         });
 
         logger.warn({
@@ -422,23 +418,21 @@ const completeCscCallback = async ({ c, query, cookie, embedNonce, embedOutcome 
     });
   }
 
-  await prisma.documentAuditLog.create({
-    data: createDocumentAuditLogData({
-      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_CSC_AUTHORIZED,
-      envelopeId: recipient.envelopeId,
-      user: { name: recipient.name, email: recipient.email },
-      requestMetadata: extractRequestMetadata(c.req.raw),
-      data: {
-        recipientEmail: recipient.email,
-        recipientName: recipient.name,
-        recipientId: recipient.id,
-        recipientRole: recipient.role,
-        providerId: credential.providerId,
-        credentialId: credential.credentialId,
-        sessionId: cookie.sessionId,
-        sadExpiresAt,
-      },
-    }),
+  await createDocumentAuditLog(prisma, {
+    type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_CSC_AUTHORIZED,
+    envelopeId: recipient.envelopeId,
+    user: { name: recipient.name, email: recipient.email },
+    requestMetadata: extractRequestMetadata(c.req.raw),
+    data: {
+      recipientEmail: recipient.email,
+      recipientName: recipient.name,
+      recipientId: recipient.id,
+      recipientRole: recipient.role,
+      providerId: credential.providerId,
+      credentialId: credential.credentialId,
+      sessionId: cookie.sessionId,
+      sadExpiresAt,
+    },
   });
 
   logger.info({

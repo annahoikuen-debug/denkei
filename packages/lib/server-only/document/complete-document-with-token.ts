@@ -1,9 +1,9 @@
 import { DEFAULT_DOCUMENT_DATE_FORMAT } from '@documenso/lib/constants/date-formats';
 import { DEFAULT_DOCUMENT_TIME_ZONE } from '@documenso/lib/constants/time-zones';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE, RECIPIENT_DIFF_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { RequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
 import { fieldsContainUnsignedRequiredField } from '@documenso/lib/utils/advanced-fields-helpers';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import {
   DocumentSigningOrder,
@@ -181,16 +181,14 @@ export const completeDocumentWithToken = async ({
     });
 
     if (!isValid) {
-      await prisma.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_ACCESS_AUTH_2FA_FAILED,
-          envelopeId: envelope.id,
-          data: {
-            recipientId: recipient.id,
-            recipientName: recipient.name,
-            recipientEmail: recipient.email,
-          },
-        }),
+      await createDocumentAuditLog(prisma, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_ACCESS_AUTH_2FA_FAILED,
+        envelopeId: envelope.id,
+        data: {
+          recipientId: recipient.id,
+          recipientName: recipient.name,
+          recipientEmail: recipient.email,
+        },
       });
 
       throw new AppError(AppErrorCode.TWO_FACTOR_AUTH_FAILED, {
@@ -198,16 +196,14 @@ export const completeDocumentWithToken = async ({
       });
     }
 
-    await prisma.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_ACCESS_AUTH_2FA_VALIDATED,
-        envelopeId: envelope.id,
-        data: {
-          recipientId: recipient.id,
-          recipientName: recipient.name,
-          recipientEmail: recipient.email,
-        },
-      }),
+    await createDocumentAuditLog(prisma, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_ACCESS_AUTH_2FA_VALIDATED,
+      envelopeId: envelope.id,
+      data: {
+        recipientId: recipient.id,
+        recipientName: recipient.name,
+        recipientEmail: recipient.email,
+      },
     });
   }
 
@@ -273,30 +269,29 @@ export const completeDocumentWithToken = async ({
     });
 
     // Create audit log entries for each auto-inserted date field.
-    await prisma.documentAuditLog.createMany({
-      data: uninsertedDateFields.map((field) =>
-        createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_INSERTED,
-          envelopeId: envelope.id,
-          user: {
-            email: recipientEmail,
-            name: recipientName,
+    // ハッシュチェーンを維持するため 1 件ずつ順序通りに書き込む
+    for (const field of uninsertedDateFields) {
+      await createDocumentAuditLog(prisma, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_INSERTED,
+        envelopeId: envelope.id,
+        user: {
+          email: recipientEmail,
+          name: recipientName,
+        },
+        requestMetadata,
+        data: {
+          recipientEmail: recipientEmail,
+          recipientId: recipient.id,
+          recipientName: recipientName,
+          recipientRole: recipient.role,
+          fieldId: field.secondaryId,
+          field: {
+            type: FieldType.DATE,
+            data: formattedDate,
           },
-          requestMetadata,
-          data: {
-            recipientEmail: recipientEmail,
-            recipientId: recipient.id,
-            recipientName: recipientName,
-            recipientRole: recipient.role,
-            fieldId: field.secondaryId,
-            field: {
-              type: FieldType.DATE,
-              data: formattedDate,
-            },
-          },
-        }),
-      ),
-    });
+        },
+      });
+    }
 
     // Update the local fields array so the subsequent validation check passes.
     fields = fields.map((field) => {
@@ -348,34 +343,32 @@ export const completeDocumentWithToken = async ({
     }
 
     if (recipientEmail !== recipient.email || recipientName !== recipient.name) {
-      await tx.documentAuditLog.create({
-        data: createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_UPDATED,
-          envelopeId: envelope.id,
-          user: {
-            name: recipientName,
-            email: recipientEmail,
-          },
-          requestMetadata,
-          data: {
-            recipientEmail: recipient.email,
-            recipientName: recipient.name,
-            recipientId: recipient.id,
-            recipientRole: recipient.role,
-            changes: [
-              {
-                type: RECIPIENT_DIFF_TYPE.NAME,
-                from: recipient.name,
-                to: recipientName,
-              },
-              {
-                type: RECIPIENT_DIFF_TYPE.EMAIL,
-                from: recipient.email,
-                to: recipientEmail,
-              },
-            ],
-          },
-        }),
+      await createDocumentAuditLog(tx, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_UPDATED,
+        envelopeId: envelope.id,
+        user: {
+          name: recipientName,
+          email: recipientEmail,
+        },
+        requestMetadata,
+        data: {
+          recipientEmail: recipient.email,
+          recipientName: recipient.name,
+          recipientId: recipient.id,
+          recipientRole: recipient.role,
+          changes: [
+            {
+              type: RECIPIENT_DIFF_TYPE.NAME,
+              from: recipient.name,
+              to: recipientName,
+            },
+            {
+              type: RECIPIENT_DIFF_TYPE.EMAIL,
+              from: recipient.email,
+              to: recipientEmail,
+            },
+          ],
+        },
       });
     }
 
@@ -384,23 +377,21 @@ export const completeDocumentWithToken = async ({
       recipientAuth: recipient.authOptions,
     });
 
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_COMPLETED,
-        envelopeId: envelope.id,
-        user: {
-          name: recipientName,
-          email: recipientEmail,
-        },
-        requestMetadata,
-        data: {
-          recipientEmail: recipientEmail,
-          recipientName: recipientName,
-          recipientId: recipient.id,
-          recipientRole: recipient.role,
-          actionAuth: authOptions.derivedRecipientActionAuth,
-        },
-      }),
+    await createDocumentAuditLog(tx, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_COMPLETED,
+      envelopeId: envelope.id,
+      user: {
+        name: recipientName,
+        email: recipientEmail,
+      },
+      requestMetadata,
+      data: {
+        recipientEmail: recipientEmail,
+        recipientName: recipientName,
+        recipientId: recipient.id,
+        recipientRole: recipient.role,
+        actionAuth: authOptions.derivedRecipientActionAuth,
+      },
     });
   });
 
@@ -493,34 +484,32 @@ export const completeDocumentWithToken = async ({
               },
             });
 
-            await tx.documentAuditLog.create({
-              data: createDocumentAuditLogData({
-                type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_UPDATED,
-                envelopeId: envelope.id,
-                user: {
-                  name: recipientName,
-                  email: recipientEmail,
-                },
-                requestMetadata,
-                data: {
-                  recipientEmail: nextRecipient.email,
-                  recipientName: nextRecipient.name,
-                  recipientId: nextRecipient.id,
-                  recipientRole: nextRecipient.role,
-                  changes: [
-                    {
-                      type: RECIPIENT_DIFF_TYPE.NAME,
-                      from: nextRecipient.name,
-                      to: dictatedNextSigner.name,
-                    },
-                    {
-                      type: RECIPIENT_DIFF_TYPE.EMAIL,
-                      from: nextRecipient.email,
-                      to: dictatedNextSigner.email,
-                    },
-                  ],
-                },
-              }),
+            await createDocumentAuditLog(tx, {
+              type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_UPDATED,
+              envelopeId: envelope.id,
+              user: {
+                name: recipientName,
+                email: recipientEmail,
+              },
+              requestMetadata,
+              data: {
+                recipientEmail: nextRecipient.email,
+                recipientName: nextRecipient.name,
+                recipientId: nextRecipient.id,
+                recipientRole: nextRecipient.role,
+                changes: [
+                  {
+                    type: RECIPIENT_DIFF_TYPE.NAME,
+                    from: nextRecipient.name,
+                    to: dictatedNextSigner.name,
+                  },
+                  {
+                    type: RECIPIENT_DIFF_TYPE.EMAIL,
+                    from: nextRecipient.email,
+                    to: dictatedNextSigner.email,
+                  },
+                ],
+              },
             });
           });
         } else {

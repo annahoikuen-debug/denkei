@@ -1,6 +1,6 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { RequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import { EnvelopeType, ReadStatus, SendStatus, WebhookTriggerEvents } from '@prisma/client';
 
@@ -28,23 +28,21 @@ export const viewedDocument = async ({ token, recipientAccessAuth, requestMetada
     return;
   }
 
-  await prisma.documentAuditLog.create({
-    data: createDocumentAuditLogData({
-      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_VIEWED,
-      envelopeId: recipient.envelopeId,
-      user: {
-        name: recipient.name,
-        email: recipient.email,
-      },
-      requestMetadata,
-      data: {
-        recipientEmail: recipient.email,
-        recipientId: recipient.id,
-        recipientName: recipient.name,
-        recipientRole: recipient.role,
-        accessAuth: recipientAccessAuth ?? [],
-      },
-    }),
+  await createDocumentAuditLog(prisma, {
+    type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_VIEWED,
+    envelopeId: recipient.envelopeId,
+    user: {
+      name: recipient.name,
+      email: recipient.email,
+    },
+    requestMetadata,
+    data: {
+      recipientEmail: recipient.email,
+      recipientId: recipient.id,
+      recipientName: recipient.name,
+      recipientRole: recipient.role,
+      accessAuth: recipientAccessAuth ?? [],
+    },
   });
 
   // Early return if already opened.
@@ -66,23 +64,21 @@ export const viewedDocument = async ({ token, recipientAccessAuth, requestMetada
       },
     });
 
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_OPENED,
-        envelopeId: recipient.envelopeId,
-        user: {
-          name: recipient.name,
-          email: recipient.email,
-        },
-        requestMetadata,
-        data: {
-          recipientEmail: recipient.email,
-          recipientId: recipient.id,
-          recipientName: recipient.name,
-          recipientRole: recipient.role,
-          accessAuth: recipientAccessAuth ?? [],
-        },
-      }),
+    await createDocumentAuditLog(tx, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_OPENED,
+      envelopeId: recipient.envelopeId,
+      user: {
+        name: recipient.name,
+        email: recipient.email,
+      },
+      requestMetadata,
+      data: {
+        recipientEmail: recipient.email,
+        recipientId: recipient.id,
+        recipientName: recipient.name,
+        recipientRole: recipient.role,
+        accessAuth: recipientAccessAuth ?? [],
+      },
     });
   });
 

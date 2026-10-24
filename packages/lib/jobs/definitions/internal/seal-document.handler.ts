@@ -15,6 +15,7 @@ import { groupBy } from 'remeda';
 
 import { NEXT_PRIVATE_USE_PLAYWRIGHT_PDF } from '../../../constants/app';
 import { AppError, AppErrorCode } from '../../../errors/app-error';
+import { createDocumentAuditLog } from '../../../server-only/document/create-document-audit-log';
 import { getAuditLogsPdf } from '../../../server-only/htmltopdf/get-audit-logs-pdf';
 import { getCertificatePdf } from '../../../server-only/htmltopdf/get-certificate-pdf';
 import { insertFieldInPDFV1 } from '../../../server-only/pdf/insert-field-in-pdf-v1';
@@ -30,6 +31,7 @@ import { getFileServerSide } from '../../../universal/upload/get-file.server';
 import { putPdfFileServerSide } from '../../../universal/upload/put-file.server';
 import { fieldsContainUnsignedRequiredField } from '../../../utils/advanced-fields-helpers';
 import { isDocumentCompleted } from '../../../utils/document';
+import type { CreateDocumentAuditLogDataOptions } from '../../../utils/document-audit-logs';
 import { createDocumentAuditLogData } from '../../../utils/document-audit-logs';
 import { mapDocumentIdToSecondaryId } from '../../../utils/envelope';
 import { jobs } from '../../client';
@@ -152,8 +154,7 @@ export const run = async ({ payload, io }: { payload: TSealDocumentJobDefinition
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const envelopeCompletedAuditLog = createDocumentAuditLogData({
+    const envelopeCompletedAuditLogOptions = {
       type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_COMPLETED,
       envelopeId: envelope.id,
       requestMetadata,
@@ -162,7 +163,10 @@ export const run = async ({ payload, io }: { payload: TSealDocumentJobDefinition
         transactionId: nanoid(),
         ...(isRejected ? { isRejected: true, rejectionReason: rejectionReason } : {}),
       },
-    });
+    } satisfies CreateDocumentAuditLogDataOptions<typeof DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_COMPLETED>;
+
+    // PDF 監査ログページの描画用に解決済みデータも保持する
+    const envelopeCompletedAuditLog = createDocumentAuditLogData(envelopeCompletedAuditLogOptions);
 
     const finalEnvelopeStatus = isRejected ? DocumentStatus.REJECTED : DocumentStatus.COMPLETED;
 
@@ -182,7 +186,7 @@ export const run = async ({ payload, io }: { payload: TSealDocumentJobDefinition
 
       await finalizeTspEnvelopeCompletion({
         envelope,
-        envelopeCompletedAuditLog,
+        envelopeCompletedAuditLog: envelopeCompletedAuditLogOptions,
         requestMetadata,
       });
 
@@ -311,9 +315,7 @@ export const run = async ({ payload, io }: { payload: TSealDocumentJobDefinition
         },
       });
 
-      await tx.documentAuditLog.create({
-        data: envelopeCompletedAuditLog,
-      });
+      await createDocumentAuditLog(tx, envelopeCompletedAuditLogOptions);
     });
 
     return {

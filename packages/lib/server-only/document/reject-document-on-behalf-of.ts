@@ -13,11 +13,11 @@ import { DocumentStatus, EnvelopeType, SigningStatus } from '@prisma/client';
 import { AppError, AppErrorCode } from '../../errors/app-error';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '../../types/document-audit-logs';
 import type { ApiRequestMetadata } from '../../universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import { mapSecondaryIdToDocumentId } from '../../utils/envelope';
 import { assertRecipientNotExpired } from '../../utils/recipients';
 import { buildTeamWhereQuery } from '../../utils/teams';
 import { getEnvelopeWhereInput } from '../envelope/get-envelope-by-id';
+import { createDocumentAuditLog } from './create-document-audit-log';
 
 export type RejectDocumentOnBehalfOfOptions = {
   /**
@@ -112,8 +112,8 @@ export async function rejectDocumentOnBehalfOf({
 
   // Update the recipient status to rejected and record an external rejection
   // audit log within the same transaction.
-  const [updatedRecipient] = await prisma.$transaction([
-    prisma.recipient.update({
+  const updatedRecipient = await prisma.$transaction(async (tx) => {
+    const updatedRecipient = await tx.recipient.update({
       where: {
         id: recipient.id,
       },
@@ -122,29 +122,30 @@ export async function rejectDocumentOnBehalfOf({
         signingStatus: SigningStatus.REJECTED,
         rejectionReason: reason,
       },
-    }),
-    prisma.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        envelopeId: envelope.id,
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_REJECTED,
-        // Always attribute the audit log to a concrete user: the elected team
-        // member when supplied, otherwise the API user that owns the token.
-        user: { id: actingUser.id, email: actingUser.email, name: actingUser.name },
-        metadata: requestMetadata,
-        data: {
-          recipientEmail: recipient.email,
-          recipientName: recipient.name,
-          recipientId: recipient.id,
-          recipientRole: recipient.role,
-          reason,
-          isExternal: true,
-          // Only set when a member was explicitly elected via `actAsEmail`.
-          onBehalfOfUserEmail: electedUser?.email,
-          onBehalfOfUserName: electedUser?.name,
-        },
-      }),
-    }),
-  ]);
+    });
+
+    await createDocumentAuditLog(tx, {
+      envelopeId: envelope.id,
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_REJECTED,
+      // Always attribute the audit log to a concrete user: the elected team
+      // member when supplied, otherwise the API user that owns the token.
+      user: { id: actingUser.id, email: actingUser.email, name: actingUser.name },
+      metadata: requestMetadata,
+      data: {
+        recipientEmail: recipient.email,
+        recipientName: recipient.name,
+        recipientId: recipient.id,
+        recipientRole: recipient.role,
+        reason,
+        isExternal: true,
+        // Only set when a member was explicitly elected via `actAsEmail`.
+        onBehalfOfUserEmail: electedUser?.email,
+        onBehalfOfUserName: electedUser?.name,
+      },
+    });
+
+    return updatedRecipient;
+  });
 
   const legacyDocumentId = mapSecondaryIdToDocumentId(envelope.secondaryId);
 

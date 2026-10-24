@@ -1,3 +1,4 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import {
   convertPlaceholdersToFieldInputs,
   extractPdfPlaceholders,
@@ -9,7 +10,6 @@ import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-log
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
 import { prefixedId } from '@documenso/lib/universal/id';
 import { putPdfFileServerSide } from '@documenso/lib/universal/upload/put-file.server';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import type { Envelope, EnvelopeItem, Recipient } from '@prisma/client';
 
@@ -90,23 +90,22 @@ export const UNSAFE_createEnvelopeItems = async ({
       },
     });
 
-    await tx.documentAuditLog.createMany({
-      data: createdItems.map((item) =>
-        createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.ENVELOPE_ITEM_CREATED,
-          envelopeId: envelope.id,
-          data: {
-            envelopeItemId: item.id,
-            envelopeItemTitle: item.title,
-          },
-          user: {
-            name: user.name,
-            email: user.email,
-          },
-          requestMetadata: apiRequestMetadata.requestMetadata,
-        }),
-      ),
-    });
+    // ハッシュチェーンを維持するため 1 件ずつ順序通りに書き込む
+    for (const item of createdItems) {
+      await createDocumentAuditLog(tx, {
+        type: DOCUMENT_AUDIT_LOG_TYPE.ENVELOPE_ITEM_CREATED,
+        envelopeId: envelope.id,
+        data: {
+          envelopeItemId: item.id,
+          envelopeItemTitle: item.title,
+        },
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+        requestMetadata: apiRequestMetadata.requestMetadata,
+      });
+    }
 
     // Create fields from placeholders if the envelope already has recipients.
     if (envelope.recipients.length > 0) {

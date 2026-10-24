@@ -40,7 +40,6 @@ import type { ApiRequestMetadata } from '../../universal/extract-request-metadat
 import { getFileServerSide } from '../../universal/upload/get-file.server';
 import { putNormalizedPdfFileServerSide } from '../../universal/upload/put-file.server';
 import { extractDerivedDocumentMeta } from '../../utils/document';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import {
   createDocumentAuthOptions,
   createRecipientAuthOptions,
@@ -49,6 +48,7 @@ import {
 import type { EnvelopeIdOptions } from '../../utils/envelope';
 import { mapSecondaryIdToTemplateId } from '../../utils/envelope';
 import { buildTeamWhereQuery } from '../../utils/teams';
+import { createDocumentAuditLog } from '../document/create-document-audit-log';
 import { getAutomationSettings } from '../envelope/automation-settings';
 import { getEnvelopeWhereInput } from '../envelope/get-envelope-by-id';
 import { incrementDocumentId } from '../envelope/increment-id';
@@ -814,19 +814,17 @@ export const createDocumentFromTemplate = async ({
       })),
     });
 
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CREATED,
-        envelopeId: envelope.id,
-        metadata: requestMetadata,
-        data: {
-          title: envelope.title,
-          source: {
-            type: DocumentSource.TEMPLATE,
-            templateId: legacyTemplateId,
-          },
+    await createDocumentAuditLog(tx, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CREATED,
+      envelopeId: envelope.id,
+      metadata: requestMetadata,
+      data: {
+        title: envelope.title,
+        source: {
+          type: DocumentSource.TEMPLATE,
+          templateId: legacyTemplateId,
         },
-      }),
+      },
     });
 
     const templateAttachments = await tx.envelopeAttachment.findMany({

@@ -24,9 +24,9 @@ import {
   ZTextFieldMeta,
 } from '../../types/field-meta';
 import type { RequestMetadata } from '../../universal/extract-request-metadata';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
 import { getRecipientFieldsWhereInput } from '../../utils/recipient-queries';
 import { assertRecipientNotExpired } from '../../utils/recipients';
+import { createDocumentAuditLog } from '../document/create-document-audit-log';
 import { validateFieldAuth } from '../document/validate-field-auth';
 import { assertSenderNotDisabled } from '../user/assert-user-not-disabled';
 
@@ -271,45 +271,43 @@ export const signFieldWithToken = async ({
       });
     }
 
-    await tx.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type:
-          assistant && field.recipientId !== assistant.id
-            ? DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_PREFILLED
-            : DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_INSERTED,
-        envelopeId: envelope.id,
-        user: {
-          email: assistant?.email ?? recipient.email,
-          name: assistant?.name ?? recipient.name,
-        },
-        requestMetadata,
-        data: {
-          recipientEmail: recipient.email,
-          recipientId: recipient.id,
-          recipientName: recipient.name,
-          recipientRole: recipient.role,
-          fieldId: updatedField.secondaryId,
-          field: match(updatedField.type)
-            .with(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, (type) => ({
-              type,
-              data: signatureImageAsBase64 || typedSignature || '',
-            }))
-            .with(FieldType.DATE, FieldType.EMAIL, FieldType.NAME, FieldType.TEXT, FieldType.INITIALS, (type) => ({
-              type,
-              data: updatedField.customText,
-            }))
-            .with(FieldType.NUMBER, FieldType.RADIO, FieldType.CHECKBOX, FieldType.DROPDOWN, (type) => ({
-              type,
-              data: updatedField.customText,
-            }))
-            .exhaustive(),
-          fieldSecurity: derivedRecipientActionAuth
-            ? {
-                type: derivedRecipientActionAuth,
-              }
-            : undefined,
-        },
-      }),
+    await createDocumentAuditLog(tx, {
+      type:
+        assistant && field.recipientId !== assistant.id
+          ? DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_PREFILLED
+          : DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_INSERTED,
+      envelopeId: envelope.id,
+      user: {
+        email: assistant?.email ?? recipient.email,
+        name: assistant?.name ?? recipient.name,
+      },
+      requestMetadata,
+      data: {
+        recipientEmail: recipient.email,
+        recipientId: recipient.id,
+        recipientName: recipient.name,
+        recipientRole: recipient.role,
+        fieldId: updatedField.secondaryId,
+        field: match(updatedField.type)
+          .with(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, (type) => ({
+            type,
+            data: signatureImageAsBase64 || typedSignature || '',
+          }))
+          .with(FieldType.DATE, FieldType.EMAIL, FieldType.NAME, FieldType.TEXT, FieldType.INITIALS, (type) => ({
+            type,
+            data: updatedField.customText,
+          }))
+          .with(FieldType.NUMBER, FieldType.RADIO, FieldType.CHECKBOX, FieldType.DROPDOWN, (type) => ({
+            type,
+            data: updatedField.customText,
+          }))
+          .exhaustive(),
+        fieldSecurity: derivedRecipientActionAuth
+          ? {
+              type: derivedRecipientActionAuth,
+            }
+          : undefined,
+      },
     });
 
     return updatedField;

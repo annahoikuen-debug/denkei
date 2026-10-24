@@ -3,6 +3,7 @@ import { validateDropdownField } from '@documenso/lib/advanced-fields-validation
 import { validateNumberField } from '@documenso/lib/advanced-fields-validation/validate-number';
 import { validateRadioField } from '@documenso/lib/advanced-fields-validation/validate-radio';
 import { validateTextField } from '@documenso/lib/advanced-fields-validation/validate-text';
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import {
   FIELD_META_DEFAULT_VALUES,
@@ -15,7 +16,7 @@ import {
   ZTextFieldMeta,
 } from '@documenso/lib/types/field-meta';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import { createDocumentAuditLogData, diffFieldChanges } from '@documenso/lib/utils/document-audit-logs';
+import { diffFieldChanges } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import { EnvelopeType, type Field, FieldType } from '@prisma/client';
 import { isDeepEqual } from 'remeda';
@@ -256,30 +257,26 @@ export const setFieldsForDocument = async ({
 
         // Handle field updated audit log.
         if (field._persisted && changes.length > 0) {
-          await tx.documentAuditLog.create({
-            data: createDocumentAuditLogData({
-              type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_UPDATED,
-              envelopeId: envelope.id,
-              metadata: requestMetadata,
-              data: {
-                changes,
-                ...baseAuditLog,
-              },
-            }),
+          await createDocumentAuditLog(tx, {
+            type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_UPDATED,
+            envelopeId: envelope.id,
+            metadata: requestMetadata,
+            data: {
+              changes,
+              ...baseAuditLog,
+            },
           });
         }
 
         // Handle field created audit log.
         if (!field._persisted) {
-          await tx.documentAuditLog.create({
-            data: createDocumentAuditLogData({
-              type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_CREATED,
-              envelopeId: envelope.id,
-              metadata: requestMetadata,
-              data: {
-                ...baseAuditLog,
-              },
-            }),
+          await createDocumentAuditLog(tx, {
+            type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_CREATED,
+            envelopeId: envelope.id,
+            metadata: requestMetadata,
+            data: {
+              ...baseAuditLog,
+            },
           });
         }
 
@@ -301,21 +298,20 @@ export const setFieldsForDocument = async ({
         },
       });
 
-      await tx.documentAuditLog.createMany({
-        data: removedFields.map((field) =>
-          createDocumentAuditLogData({
-            type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_DELETED,
-            envelopeId: envelope.id,
-            metadata: requestMetadata,
-            data: {
-              fieldId: field.secondaryId,
-              fieldRecipientEmail: field.recipient?.email ?? '',
-              fieldRecipientId: field.recipientId ?? -1,
-              fieldType: field.type,
-            },
-          }),
-        ),
-      });
+      // ハッシュチェーンを維持するため 1 件ずつ順序通りに書き込む
+      for (const field of removedFields) {
+        await createDocumentAuditLog(tx, {
+          type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_DELETED,
+          envelopeId: envelope.id,
+          metadata: requestMetadata,
+          data: {
+            fieldId: field.secondaryId,
+            fieldRecipientEmail: field.recipient?.email ?? '',
+            fieldRecipientId: field.recipientId ?? -1,
+            fieldType: field.type,
+          },
+        });
+      }
     });
   }
 

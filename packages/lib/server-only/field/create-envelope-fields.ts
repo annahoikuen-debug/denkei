@@ -1,9 +1,9 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { TFieldAndMeta } from '@documenso/lib/types/field-meta';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
 import { getFileServerSide } from '@documenso/lib/universal/upload/get-file.server';
 import { putPdfFileServerSide } from '@documenso/lib/universal/upload/put-file.server';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import { PDF } from '@libpdf/core';
 import { EnvelopeType } from '@prisma/client';
@@ -266,23 +266,22 @@ export const createEnvelopeFields = async ({
 
     // Handle field created audit log.
     if (envelope.type === EnvelopeType.DOCUMENT) {
-      await tx.documentAuditLog.createMany({
-        data: newlyCreatedFields.map((createdField) => {
-          const recipient = validatedFields.find((field) => field.recipientId === createdField.recipientId);
+      // ハッシュチェーンを維持するため 1 件ずつ順序通りに書き込む
+      for (const createdField of newlyCreatedFields) {
+        const recipient = validatedFields.find((field) => field.recipientId === createdField.recipientId);
 
-          return createDocumentAuditLogData({
-            type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_CREATED,
-            envelopeId: envelope.id,
-            metadata: requestMetadata,
-            data: {
-              fieldId: createdField.secondaryId,
-              fieldRecipientEmail: recipient?.recipientEmail || '',
-              fieldRecipientId: createdField.recipientId,
-              fieldType: createdField.type,
-            },
-          });
-        }),
-      });
+        await createDocumentAuditLog(tx, {
+          type: DOCUMENT_AUDIT_LOG_TYPE.FIELD_CREATED,
+          envelopeId: envelope.id,
+          metadata: requestMetadata,
+          data: {
+            fieldId: createdField.secondaryId,
+            fieldRecipientEmail: recipient?.recipientEmail || '',
+            fieldRecipientId: createdField.recipientId,
+            fieldType: createdField.type,
+          },
+        });
+      }
     }
 
     return newlyCreatedFields;

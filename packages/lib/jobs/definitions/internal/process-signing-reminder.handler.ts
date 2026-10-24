@@ -15,6 +15,7 @@ import { createElement } from 'react';
 import { getI18nInstance } from '../../../client-only/providers/i18n-server';
 import { NEXT_PUBLIC_WEBAPP_URL } from '../../../constants/app';
 import { RECIPIENT_ROLES_DESCRIPTION } from '../../../constants/recipient-roles';
+import { createDocumentAuditLog } from '../../../server-only/document/create-document-audit-log';
 import { buildEnvelopeEmailHeaders } from '../../../server-only/email/build-envelope-email-headers';
 import { getEmailContext } from '../../../server-only/email/get-email-context';
 import { assertOrganisationRatesAndLimits } from '../../../server-only/rate-limit/assert-organisation-rates-and-limits';
@@ -23,7 +24,6 @@ import { triggerWebhook } from '../../../server-only/webhooks/trigger/trigger-we
 import { DOCUMENT_AUDIT_LOG_TYPE, DOCUMENT_EMAIL_TYPE } from '../../../types/document-audit-logs';
 import { extractDerivedDocumentEmailSettings } from '../../../types/document-email';
 import { mapEnvelopeToWebhookDocumentPayload, ZWebhookDocumentSchema } from '../../../types/webhook-payload';
-import { createDocumentAuditLogData } from '../../../utils/document-audit-logs';
 import { renderCustomEmailTemplate } from '../../../utils/render-custom-email-template';
 import { renderEmailWithI18N } from '../../../utils/render-email-with-i18n';
 import type { JobRunIO } from '../../client/_internal/job';
@@ -221,19 +221,17 @@ export const run = async ({ payload, io }: { payload: TProcessSigningReminderJob
       }),
     });
 
-    await prisma.documentAuditLog.create({
-      data: createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
-        envelopeId: envelope.id,
-        data: {
-          recipientEmail: recipient.email,
-          recipientName: recipient.name,
-          recipientId: recipient.id,
-          recipientRole: recipient.role,
-          emailType: DOCUMENT_EMAIL_TYPE.REMINDER,
-          isResending: false,
-        },
-      }),
+    await createDocumentAuditLog(prisma, {
+      type: DOCUMENT_AUDIT_LOG_TYPE.EMAIL_SENT,
+      envelopeId: envelope.id,
+      data: {
+        recipientEmail: recipient.email,
+        recipientName: recipient.name,
+        recipientId: recipient.id,
+        recipientRole: recipient.role,
+        emailType: DOCUMENT_EMAIL_TYPE.REMINDER,
+        isResending: false,
+      },
     });
 
     await triggerWebhook({

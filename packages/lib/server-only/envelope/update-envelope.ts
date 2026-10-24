@@ -1,7 +1,7 @@
+import { createDocumentAuditLog } from '@documenso/lib/server-only/document/create-document-audit-log';
 import { DOCUMENT_AUDIT_LOG_TYPE } from '@documenso/lib/types/document-audit-logs';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
-import type { CreateDocumentAuditLogDataResponse } from '@documenso/lib/utils/document-audit-logs';
-import { createDocumentAuditLogData } from '@documenso/lib/utils/document-audit-logs';
+import type { CreateDocumentAuditLogDataOptions } from '@documenso/lib/utils/document-audit-logs';
 import { prisma } from '@documenso/prisma';
 import type { DocumentMeta, DocumentVisibility, Prisma, TemplateType } from '@prisma/client';
 import { DocumentStatus, EnvelopeType, FolderType, WebhookTriggerEvents } from '@prisma/client';
@@ -207,7 +207,7 @@ export const updateEnvelope = async ({
     data.publicDescription === undefined || data.publicDescription === envelope.publicDescription;
   const isPublicTitleSame = data.publicTitle === undefined || data.publicTitle === envelope.publicTitle;
 
-  const auditLogs: CreateDocumentAuditLogDataResponse[] = [];
+  const auditLogs: CreateDocumentAuditLogDataOptions[] = [];
 
   if (!isTitleSame && envelope.status !== DocumentStatus.DRAFT && envelope.status !== DocumentStatus.PENDING) {
     throw new AppError(AppErrorCode.INVALID_BODY, {
@@ -216,88 +216,76 @@ export const updateEnvelope = async ({
   }
 
   if (!isTitleSame) {
-    auditLogs.push(
-      createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_TITLE_UPDATED,
-        envelopeId: envelope.id,
-        metadata: requestMetadata,
-        data: {
-          from: envelope.title,
-          to: data.title || '',
-        },
-      }),
-    );
+    auditLogs.push({
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_TITLE_UPDATED,
+      envelopeId: envelope.id,
+      metadata: requestMetadata,
+      data: {
+        from: envelope.title,
+        to: data.title || '',
+      },
+    });
   }
 
   if (!isExternalIdSame) {
-    auditLogs.push(
-      createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_EXTERNAL_ID_UPDATED,
-        envelopeId: envelope.id,
-        metadata: requestMetadata,
-        data: {
-          from: envelope.externalId,
-          to: data.externalId || '',
-        },
-      }),
-    );
+    auditLogs.push({
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_EXTERNAL_ID_UPDATED,
+      envelopeId: envelope.id,
+      metadata: requestMetadata,
+      data: {
+        from: envelope.externalId,
+        to: data.externalId || '',
+      },
+    });
   }
 
   if (!isGlobalAccessSame) {
-    auditLogs.push(
-      createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_GLOBAL_AUTH_ACCESS_UPDATED,
-        envelopeId: envelope.id,
-        metadata: requestMetadata,
-        data: {
-          from: documentGlobalAccessAuth,
-          to: newGlobalAccessAuth,
-        },
-      }),
-    );
+    auditLogs.push({
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_GLOBAL_AUTH_ACCESS_UPDATED,
+      envelopeId: envelope.id,
+      metadata: requestMetadata,
+      data: {
+        from: documentGlobalAccessAuth,
+        to: newGlobalAccessAuth,
+      },
+    });
   }
 
   if (!isGlobalActionSame) {
-    auditLogs.push(
-      createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_GLOBAL_AUTH_ACTION_UPDATED,
-        envelopeId: envelope.id,
-        metadata: requestMetadata,
-        data: {
-          from: documentGlobalActionAuth,
-          to: newGlobalActionAuth,
-        },
-      }),
-    );
+    auditLogs.push({
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_GLOBAL_AUTH_ACTION_UPDATED,
+      envelopeId: envelope.id,
+      metadata: requestMetadata,
+      data: {
+        from: documentGlobalActionAuth,
+        to: newGlobalActionAuth,
+      },
+    });
   }
 
   if (!isDocumentVisibilitySame) {
-    auditLogs.push(
-      createDocumentAuditLogData({
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_VISIBILITY_UPDATED,
-        envelopeId: envelope.id,
-        metadata: requestMetadata,
-        data: {
-          from: envelope.visibility,
-          to: data.visibility || '',
-        },
-      }),
-    );
+    auditLogs.push({
+      type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_VISIBILITY_UPDATED,
+      envelopeId: envelope.id,
+      metadata: requestMetadata,
+      data: {
+        from: envelope.visibility,
+        to: data.visibility || '',
+      },
+    });
   }
 
   // Todo: Decide if we want to log moving the document around.
   // if (!isFolderSame) {
-  //   auditLogs.push(
-  //     createDocumentAuditLogData({
-  //       type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FOLDER_UPDATED,
-  //       envelopeId: envelope.id,
-  //       metadata: requestMetadata,
-  //       data: {
-  //         from: envelope.folderId,
-  //         to: data.folderId || '',
-  //       },
-  //     }),
-  //   );
+  //   auditLogs.push({
+  //     type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FOLDER_UPDATED,
+  //     envelopeId: envelope.id,
+  //     metadata: requestMetadata,
+  //     data: {
+  //       from: envelope.folderId,
+  //       to: data.folderId || '',
+  //     },
+  //   });
   // }
 
   // Todo: Determine if changes are made
@@ -346,9 +334,10 @@ export const updateEnvelope = async ({
     });
 
     if (envelope.type === EnvelopeType.DOCUMENT) {
-      await tx.documentAuditLog.createMany({
-        data: auditLogs,
-      });
+      // ハッシュチェーンを維持するため 1 件ずつ順序通りに書き込む
+      for (const auditLog of auditLogs) {
+        await createDocumentAuditLog(tx, auditLog);
+      }
     }
 
     return result;
