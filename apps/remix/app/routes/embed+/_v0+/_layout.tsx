@@ -11,6 +11,7 @@ import { EmbedDocumentWaitingForTurn } from '~/components/embed/embed-document-w
 import { EmbedPaywall } from '~/components/embed/embed-paywall';
 import { EmbedRecipientExpired } from '~/components/embed/embed-recipient-expired';
 import { EmbedSenderDisabled } from '~/components/embed/embed-sender-disabled';
+import { RecipientOtpGate } from '~/components/general/document-signing/recipient-otp-gate';
 
 // Note: CSP (`frame-ancestors *`), `Referrer-Policy`, and
 // `X-Content-Type-Options` are now emitted globally by
@@ -54,6 +55,13 @@ export function ErrorBoundary() {
 
   if (isRouteErrorResponse(error)) {
     if (error.status === 401 && error.data.type === 'embed-authentication-required') {
+      // フェーズ2: EMAIL_OTP 未検証の場合は本人確認ゲート(OtpGate)を表示する。
+      if (error.data.requiresOtp) {
+        return (
+          <RecipientOtpGate token={error.data.token} email={error.data.email} initialState={error.data.otpGateState} />
+        );
+      }
+
       return <EmbedAuthenticationRequired email={error.data.email} />;
     }
 

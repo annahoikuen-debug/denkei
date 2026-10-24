@@ -1,11 +1,15 @@
 import { DocumentAuth } from '@documenso/lib/types/document-auth';
 import { prisma } from '@documenso/prisma';
+import type { Envelope, Recipient } from '@prisma/client';
 
+import { extractDocumentAuthMethods } from '../../utils/document-auth';
 import {
   generateOtp,
   getOtpExpiry,
   hashOtp,
   isResendAllowed,
+  OTP_MAX_ATTEMPTS,
+  OTP_RESEND_COOLDOWN_SECONDS,
   type OtpVerificationResult,
   shouldLockOtp,
   verifyOtp,
@@ -18,11 +22,29 @@ import {
  * 検証成功でトークンを consumed にし、署名セッションの発行根拠とする。
  */
 
-export type IssueOtpResult = { success: true; expiresAt: Date } | { success: false; reason: 'rate-limited' };
+export type IssueOtpResult =
+  | { success: true; otpCode: string; expiresAt: Date }
+  | { success: false; reason: 'rate-limited' };
+
+/**
+ * 署名画面 OTP ゲートの表示に使う状態。
+ */
+export type RecipientOtpGateState = {
+  maxAttempts: number;
+  remainingAttempts: number;
+  /** 残り再送クールダウン秒数(0 = 再送可) */
+  cooldownSeconds: number;
+  isLocked: boolean;
+  /** 未検証トークンを含め、OTP トークンが 1 件以上存在するか */
+  hasToken: boolean;
+};
 
 /**
  * OTP を発行し、対象 recipient のトークンを新規作成する。
  * 既存の未検証トークンは無効化(削除)する。
+ *
+ * 返り値の otpCode はメール送信ジョブへ渡すための平文コード。
+ * 監査ログ・クライアントへは絶対に返さないこと(サーバー内部専用)。
  */
 export const issueRecipientOtp = async ({
   recipientId,
@@ -58,7 +80,7 @@ export const issueRecipientOtp = async ({
     },
   });
 
-  return { success: true, expiresAt: created.expiresAt };
+  return { success: true, otpCode: otp, expiresAt: created.expiresAt };
 };
 
 /**
@@ -104,15 +126,20 @@ export const verifyRecipientOtp = async ({
   }
 
   if (result.status === 'invalid') {
-    const newAttemptCount = token.attemptCount + 1;
-
-    await prisma.recipientVerificationToken.update({
+    // 試行回数は DB 側の increment で加算する(並列リクエストでのすり抜け防止)。
+    const updatedToken = await prisma.recipientVerificationToken.update({
       where: { id: token.id },
       data: {
-        attemptCount: newAttemptCount,
-        ...(shouldLockOtp(newAttemptCount) ? { lockedAt: now } : {}),
+        attemptCount: { increment: 1 },
       },
     });
+
+    if (shouldLockOtp(updatedToken.attemptCount) && !updatedToken.lockedAt) {
+      await prisma.recipientVerificationToken.update({
+        where: { id: token.id },
+        data: { lockedAt: now },
+      });
+    }
   }
 
   return result;
@@ -134,4 +161,155 @@ export const hasVerifiedRecipientOtp = async ({ recipientId }: { recipientId: nu
   });
 
   return token !== null;
+};
+
+/**
+ * OTP ゲートの表示状態を返す(直近トークンの有無・残試行・ロック・再送クールダウン)。
+ */
+export const getRecipientOtpGateState = async ({
+  recipientId,
+  now = new Date(),
+}: {
+  recipientId: number;
+  now?: Date;
+}): Promise<RecipientOtpGateState> => {
+  const latestToken = await prisma.recipientVerificationToken.findFirst({
+    where: { recipientId, authType: DocumentAuth.EMAIL_OTP },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!latestToken) {
+    return {
+      maxAttempts: OTP_MAX_ATTEMPTS,
+      remainingAttempts: OTP_MAX_ATTEMPTS,
+      cooldownSeconds: 0,
+      isLocked: false,
+      hasToken: false,
+    };
+  }
+
+  const cooldownExpiresAt = latestToken.createdAt.getTime() + OTP_RESEND_COOLDOWN_SECONDS * 1000;
+
+  return {
+    maxAttempts: OTP_MAX_ATTEMPTS,
+    remainingAttempts: Math.max(0, OTP_MAX_ATTEMPTS - latestToken.attemptCount),
+    cooldownSeconds: cooldownExpiresAt > now.getTime() ? Math.ceil((cooldownExpiresAt - now.getTime()) / 1000) : 0,
+    isLocked: latestToken.lockedAt !== null || latestToken.attemptCount >= OTP_MAX_ATTEMPTS,
+    hasToken: true,
+  };
+};
+
+/**
+ * OTP 検証要求を対象の recipient へ紐付ける。
+ *
+ * 受け取れるトークン:
+ * - 署名リンク(Recipient.token)
+ * - direct リンク(Envelope.directLink.token)
+ */
+export const getOtpVerificationContextForToken = async ({
+  token,
+}: {
+  token: string;
+}): Promise<{
+  recipient: Pick<Recipient, 'id' | 'email' | 'name' | 'envelopeId'>;
+  envelopeId: string;
+  /** 設定上 EMAIL_OTP による本人確認が必要か */
+  isOtpRequired: boolean;
+  isOtpVerified: boolean;
+  gateState: RecipientOtpGateState;
+} | null> => {
+  const resolveRecipient = async (): Promise<{
+    recipient: Pick<Recipient, 'id' | 'email' | 'name' | 'envelopeId'>;
+    documentAuthOptions: Envelope['authOptions'];
+    recipientAuthOptions: Recipient['authOptions'];
+  } | null> => {
+    const directRecipient = await prisma.recipient.findFirst({
+      where: { token },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        envelopeId: true,
+        authOptions: true,
+        envelope: {
+          select: {
+            authOptions: true,
+          },
+        },
+      },
+    });
+
+    if (directRecipient) {
+      return {
+        recipient: directRecipient,
+        documentAuthOptions: directRecipient.envelope.authOptions,
+        recipientAuthOptions: directRecipient.authOptions,
+      };
+    }
+
+    const directLinkEnvelope = await prisma.envelope.findFirst({
+      where: {
+        directLink: {
+          enabled: true,
+          token,
+        },
+      },
+      select: {
+        id: true,
+        authOptions: true,
+        directLink: {
+          select: {
+            directTemplateRecipientId: true,
+          },
+        },
+        recipients: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            envelopeId: true,
+            authOptions: true,
+          },
+        },
+      },
+    });
+
+    const directTemplateRecipient = directLinkEnvelope?.recipients.find(
+      (recipient) => recipient.id === directLinkEnvelope.directLink?.directTemplateRecipientId,
+    );
+
+    if (!directLinkEnvelope || !directTemplateRecipient) {
+      return null;
+    }
+
+    return {
+      recipient: directTemplateRecipient,
+      documentAuthOptions: directLinkEnvelope.authOptions,
+      recipientAuthOptions: directTemplateRecipient.authOptions,
+    };
+  };
+
+  const resolved = await resolveRecipient();
+
+  if (!resolved) {
+    return null;
+  }
+
+  const { derivedRecipientAccessAuth } = extractDocumentAuthMethods({
+    documentAuth: resolved.documentAuthOptions,
+    recipientAuth: resolved.recipientAuthOptions,
+  });
+
+  const [isOtpVerified, gateState] = await Promise.all([
+    hasVerifiedRecipientOtp({ recipientId: resolved.recipient.id }),
+    getRecipientOtpGateState({ recipientId: resolved.recipient.id }),
+  ]);
+
+  return {
+    recipient: resolved.recipient,
+    envelopeId: resolved.recipient.envelopeId,
+    isOtpRequired: derivedRecipientAccessAuth.includes(DocumentAuth.EMAIL_OTP),
+    isOtpVerified,
+    gateState,
+  };
 };

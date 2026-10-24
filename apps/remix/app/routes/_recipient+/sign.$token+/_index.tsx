@@ -17,6 +17,10 @@ import { getEnvelopeForRecipientSigning } from '@documenso/lib/server-only/envel
 import { getEnvelopeRequiredAccessData } from '@documenso/lib/server-only/envelope/get-envelope-required-access-data';
 import { getCompletedFieldsForToken } from '@documenso/lib/server-only/field/get-completed-fields-for-token';
 import { getFieldsForToken } from '@documenso/lib/server-only/field/get-fields-for-token';
+import {
+  getRecipientOtpGateState,
+  hasVerifiedRecipientOtp,
+} from '@documenso/lib/server-only/otp/recipient-verification';
 import { getIsRecipientsTurnToSign } from '@documenso/lib/server-only/recipient/get-is-recipient-turn';
 import { getNextPendingRecipient } from '@documenso/lib/server-only/recipient/get-next-pending-recipient';
 import { getRecipientByToken } from '@documenso/lib/server-only/recipient/get-recipient-by-token';
@@ -48,6 +52,7 @@ import { DocumentSigningPageViewV2 } from '~/components/general/document-signing
 import { DocumentSigningProvider } from '~/components/general/document-signing/document-signing-provider';
 import { DocumentSigningSenderDisabledPage } from '~/components/general/document-signing/document-signing-sender-disabled-page';
 import { EnvelopeSigningProvider } from '~/components/general/document-signing/envelope-signing-provider';
+import { RecipientOtpGate } from '~/components/general/document-signing/recipient-otp-gate';
 import { RecipientBranding } from '~/components/general/recipient-branding';
 import { useCspNonce } from '~/utils/nonce';
 import { superLoaderJson, useSuperLoaderData } from '~/utils/super-json-loader';
@@ -118,12 +123,18 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
     recipientAuth: recipient.authOptions,
   });
 
+  // フェーズ2 ステップ6: EMAIL_OTP は署名画面のゲート(OtpGate)で本人確認済みセッションを取得する方式。
+  // 未検証のまま署名画面の本文(書類内容)が表示されることを防ぐ。
+  const requiresOtpVerification =
+    derivedRecipientAccessAuth.includes(DocumentAccessAuth.EMAIL_OTP) &&
+    !(await hasVerifiedRecipientOtp({ recipientId: recipient.id }));
+
   const isAccessAuthValid = derivedRecipientAccessAuth.every((accesssAuth) =>
     match(accesssAuth)
-      .with(DocumentAccessAuth.ACCOUNT, () => user && user.email === recipient.email)
+      .with(DocumentAccessAuth.ACCOUNT, () => Boolean(user && user.email === recipient.email))
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true) // Allow without account requirement
-      // フェーズ2 ステップ6: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲート(OtpGate)で検証する
-      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.EMAIL_OTP, () => !requiresOtpVerification)
+      // フェーズ2: FIREBASE_EMAIL は署名時に本人の Firebase セッションを要求する(is-recipient-authorized)。
       .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
@@ -131,6 +142,16 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
   let recipientHasAccount: boolean | null = null;
 
   if (!isAccessAuthValid) {
+    if (requiresOtpVerification) {
+      return {
+        isDocumentAccessValid: false,
+        requiresOtpVerification: true as const,
+        token,
+        recipientEmail: recipient.email,
+        otpGateState: await getRecipientOtpGateState({ recipientId: recipient.id }),
+      } as const;
+    }
+
     recipientHasAccount = await getUserByEmail({ email: recipient.email })
       .then((user) => !!user)
       .catch(() => false);
@@ -213,6 +234,7 @@ const handleV2Loader = async ({ params, request }: Route.LoaderArgs) => {
 
         return {
           isDocumentAccessValid: false,
+          token,
           ...requiredAccessData,
         } as const;
       }
@@ -235,12 +257,18 @@ const handleV2Loader = async ({ params, request }: Route.LoaderArgs) => {
     recipientAuth: recipient.authOptions,
   });
 
+  // フェーズ2 ステップ6: EMAIL_OTP はゲート(OtpGate)での本人確認済みセッションが必須。
+  // (アクセス自体は getEnvelopeForRecipientSigning → is-recipient-authorized で既に検証済み)
+  const otpAccessVerified = derivedRecipientAccessAuth.includes(DocumentAccessAuth.EMAIL_OTP)
+    ? await hasVerifiedRecipientOtp({ recipientId: recipient.id })
+    : false;
+
   const isAccessAuthValid = derivedRecipientAccessAuth.every((accesssAuth) =>
     match(accesssAuth)
-      .with(DocumentAccessAuth.ACCOUNT, () => user && user.email === recipient.email)
+      .with(DocumentAccessAuth.ACCOUNT, () => Boolean(user && user.email === recipient.email))
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true) // Allow without account requirement
-      // フェーズ2 ステップ6: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
-      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.EMAIL_OTP, () => otpAccessVerified)
+      // フェーズ2: FIREBASE_EMAIL は署名時に本人の Firebase セッションを要求する(is-recipient-authorized)。
       .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
@@ -433,6 +461,10 @@ const SigningPageV1 = ({ data }: { data: Awaited<ReturnType<typeof handleV1Loade
   const user = sessionData?.user;
 
   if (!data.isDocumentAccessValid) {
+    if ('requiresOtpVerification' in data && data.requiresOtpVerification) {
+      return <RecipientOtpGate token={data.token} email={data.recipientEmail} initialState={data.otpGateState} />;
+    }
+
     return <DocumentSigningAuthPageView email={data.recipientEmail} emailHasAccount={!!data.recipientHasAccount} />;
   }
 
@@ -532,6 +564,10 @@ const SigningPageV2 = ({ data }: { data: Awaited<ReturnType<typeof handleV2Loade
   const user = sessionData?.user;
 
   if (!data.isDocumentAccessValid) {
+    if ('requiresOtpVerification' in data && data.requiresOtpVerification) {
+      return <RecipientOtpGate token={data.token} email={data.recipientEmail} initialState={data.otpGateState} />;
+    }
+
     return <DocumentSigningAuthPageView email={data.recipientEmail} emailHasAccount={!!data.recipientHasAccount} />;
   }
 

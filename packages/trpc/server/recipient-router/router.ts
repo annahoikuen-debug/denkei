@@ -16,6 +16,7 @@ import { EnvelopeType } from '@prisma/client';
 import { ZGenericSuccessResponse, ZSuccessResponseSchema } from '../schema';
 import { authenticatedProcedure, procedure, router } from '../trpc';
 import { findRecipientSuggestionsRoute } from './find-recipient-suggestions';
+import { requestRecipientOtpRoute } from './request-recipient-otp';
 import {
   ZCompleteDocumentWithTokenMutationSchema,
   ZCompleteDocumentWithTokenResponseSchema,
@@ -45,11 +46,22 @@ import {
   ZUpdateTemplateRecipientsRequestSchema,
   ZUpdateTemplateRecipientsResponseSchema,
 } from './schema';
+import { verifyRecipientOtpRoute } from './verify-recipient-otp';
 
 export const recipientRouter = router({
   suggestions: {
     find: findRecipientSuggestionsRoute,
   },
+
+  /**
+   * 受取人向け OTP 発行要求(本人確認ゲート用・トークン認可)。
+   */
+  requestRecipientOtp: requestRecipientOtpRoute,
+
+  /**
+   * 受取人向け OTP 検証(本人確認ゲート用・トークン認可)。
+   */
+  verifyRecipientOtp: verifyRecipientOtpRoute,
 
   /**
    * @public

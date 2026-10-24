@@ -3,9 +3,10 @@ import { OtpVerificationEmailTemplate } from '@documenso/email/templates/otp-ver
 import { prisma } from '@documenso/prisma';
 import { msg } from '@lingui/core/macro';
 import { createElement } from 'react';
-
 import { getI18nInstance } from '../../../client-only/providers/i18n-server';
+import { NEXT_PUBLIC_WEBAPP_URL } from '../../../constants/app';
 import { getEmailContext } from '../../../server-only/email/get-email-context';
+import { OTP_EXPIRY_SECONDS } from '../../../server-only/otp/otp';
 import { renderEmailWithI18N } from '../../../utils/render-email-with-i18n';
 import type { JobRunIO } from '../../client/_internal/job';
 import type { TSendOtpEmailJobDefinition } from './send-otp-email';
@@ -55,8 +56,8 @@ export const run = async ({ payload }: { payload: TSendOtpEmailJobDefinition; io
   const template = createElement(OtpVerificationEmailTemplate, {
     otpCode,
     documentName: envelope.title,
-    expiresMinutes: 10,
-    assetBaseUrl: '',
+    expiresMinutes: Math.ceil(OTP_EXPIRY_SECONDS / 60),
+    assetBaseUrl: NEXT_PUBLIC_WEBAPP_URL() || 'http://localhost:3000',
   });
 
   const [html, text] = await Promise.all([

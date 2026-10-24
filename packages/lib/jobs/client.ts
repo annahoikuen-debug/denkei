@@ -11,6 +11,7 @@ import { SEND_ORGANISATION_LIMIT_ALERT_EMAIL_JOB_DEFINITION } from './definition
 import { SEND_ORGANISATION_LIMITS_UPDATED_EMAIL_JOB_DEFINITION } from './definitions/emails/send-organisation-limits-updated-email';
 import { SEND_ORGANISATION_MEMBER_JOINED_EMAIL_JOB_DEFINITION } from './definitions/emails/send-organisation-member-joined-email';
 import { SEND_ORGANISATION_MEMBER_LEFT_EMAIL_JOB_DEFINITION } from './definitions/emails/send-organisation-member-left-email';
+import { SEND_OTP_EMAIL_JOB_DEFINITION } from './definitions/emails/send-otp-email';
 import { SEND_OWNER_RECIPIENT_EXPIRED_EMAIL_JOB_DEFINITION } from './definitions/emails/send-owner-recipient-expired-email';
 import { SEND_PASSWORD_RESET_SUCCESS_EMAIL_JOB_DEFINITION } from './definitions/emails/send-password-reset-success-email';
 import { SEND_RECIPIENT_REMOVED_EMAIL_JOB_DEFINITION } from './definitions/emails/send-recipient-removed-email';
@@ -43,6 +44,7 @@ import { SYNC_ORGANISATION_SEATS_JOB_DEFINITION } from './definitions/internal/s
 export const jobsClient = new JobClient([
   SEND_ADMIN_USER_CREATED_EMAIL_JOB_DEFINITION,
   SEND_SIGNING_EMAIL_JOB_DEFINITION,
+  SEND_OTP_EMAIL_JOB_DEFINITION,
   SEND_CONFIRMATION_EMAIL_JOB_DEFINITION,
   SEND_ORGANISATION_MEMBER_JOINED_EMAIL_JOB_DEFINITION,
   SEND_ORGANISATION_MEMBER_LEFT_EMAIL_JOB_DEFINITION,

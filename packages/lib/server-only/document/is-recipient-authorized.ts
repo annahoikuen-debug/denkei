@@ -78,6 +78,18 @@ export const isRecipientAuthorized = async ({
     return true;
   }
 
+  // フェーズ2 ステップ6: EMAIL_OTP は署名画面のゲート(OtpGate)で検証済みセッションを取得する方式。
+  // ACCESS 系では 1 回限りのコードではなく、検証済みセッション(consumed トークン)で判定する。
+  if (
+    (type === 'ACCESS' || type === 'ACCESS_2FA') &&
+    authMethods.length > 0 &&
+    authMethods.every((method) => method === DocumentAuth.EMAIL_OTP)
+  ) {
+    const { hasVerifiedRecipientOtp } = await import('../otp/recipient-verification');
+
+    return hasVerifiedRecipientOtp({ recipientId: recipient.id });
+  }
+
   // Create auth options when none are passed for account.
   if (!authOptions && authMethods.some((method) => method === DocumentAuth.ACCOUNT)) {
     authOptions = {
@@ -170,7 +182,16 @@ export const isRecipientAuthorized = async ({
     // 検証済みセッション(hasVerifiedRecipientOtp)を前提とする。
     // この関数はトークンによる即時検証を扱うため、ここでは検証済み確認を行う。
     .with({ type: DocumentAuth.EMAIL_OTP }, async ({ token }) => {
-      const { verifyRecipientOtp } = await import('../otp/recipient-verification');
+      const { hasVerifiedRecipientOtp, verifyRecipientOtp } = await import('../otp/recipient-verification');
+
+      // ゲート(OtpGate)で本人確認済みのセッションがあれば、それ自体が確認根拠となる。
+      if (await hasVerifiedRecipientOtp({ recipientId: recipient.id })) {
+        return true;
+      }
+
+      if (!token) {
+        return false;
+      }
 
       const result = await verifyRecipientOtp({ recipientId: recipient.id, inputOtp: token });
 
@@ -181,7 +202,13 @@ export const isRecipientAuthorized = async ({
 
       const firebaseResult = await verifyFirebaseSession(sessionIdentifier);
 
-      return firebaseResult.valid;
+      if (!firebaseResult.valid || !firebaseResult.email) {
+        return false;
+      }
+
+      // 検証済みFirebaseアカウントのメールが受取人本人のメールと一致することを必須とする
+      // (任意のFirebaseログイン済みアカウントで他人の受取人として署名されるのを防ぐ)。
+      return firebaseResult.email.toLowerCase() === recipient.email.toLowerCase();
     })
     .exhaustive();
 };

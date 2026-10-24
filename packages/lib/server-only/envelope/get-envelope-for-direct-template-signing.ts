@@ -7,6 +7,7 @@ import { DocumentAccessAuth, type TDocumentAuthMethods } from '../../types/docum
 import { extractDocumentAuthMethods } from '../../utils/document-auth';
 import { getRecipientsWithMissingFields } from '../../utils/recipients';
 import { extractFieldAutoInsertValues } from '../document/send-document';
+import { hasVerifiedRecipientOtp } from '../otp/recipient-verification';
 import { getTeamSettings } from '../team/get-team-settings';
 import { assertSenderNotDisabled } from '../user/assert-user-not-disabled';
 import type { EnvelopeForSigningResponse } from './get-envelope-for-recipient-signing';
@@ -115,13 +116,19 @@ export const getEnvelopeForDirectTemplateSigning = async ({
     documentAuth: envelope.authOptions,
   });
 
+  // フェーズ2: EMAIL_OTP は署名画面のゲート(OtpGate)で検証済みセッションを取得する方式。
+  // 未検証のまま direct 署名画面(本文書を含む全表示経路)に入ることを防ぐ。
+  const otpAccessVerified = derivedRecipientAccessAuth.includes(DocumentAccessAuth.EMAIL_OTP)
+    ? await hasVerifiedRecipientOtp({ recipientId: recipient.id })
+    : false;
+
   // Ensure typesafety when we add more options.
   const documentAccessValid = derivedRecipientAccessAuth.every((auth) =>
     match(auth)
       .with(DocumentAccessAuth.ACCOUNT, () => Boolean(userId))
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true)
-      // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
-      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.EMAIL_OTP, () => otpAccessVerified)
+      // フェーズ2: FIREBASE_EMAIL は署名時に本人の Firebase セッションを要求する(is-recipient-authorized)。
       .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );

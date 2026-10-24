@@ -105,7 +105,19 @@ export class FirebaseEmailVerificationProvider implements IIdentityVerificationP
 
     const result = await verifyFirebaseSession(request.sessionIdentifier);
 
-    if (!result.valid) {
+    if (!result.valid || !result.email) {
+      return { status: 'invalid', level: this.level };
+    }
+
+    // 検証済みメールが受取人のメールと一致することを必須とする
+    // (Firebaseプロジェクト内の任意アカウントでの代理検証を防ぐ)。
+    const { prisma } = await import('@documenso/prisma');
+    const recipient = await prisma.recipient.findUnique({
+      where: { id: request.recipientId },
+      select: { email: true },
+    });
+
+    if (!recipient || recipient.email.toLowerCase() !== result.email.toLowerCase()) {
       return { status: 'invalid', level: this.level };
     }
 

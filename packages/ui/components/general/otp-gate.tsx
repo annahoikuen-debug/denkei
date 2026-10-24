@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { cn } from '../../lib/utils';
 import { Button } from '../../primitives/button';
@@ -34,6 +34,28 @@ export const OtpGate = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(cooldownSeconds);
 
+  const resendIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // 親から残りクールダウンが更新された場合(再送成功・レート制限等)に同期する。
+  useEffect(() => {
+    setResendCountdown((prev) => Math.max(prev, cooldownSeconds));
+  }, [cooldownSeconds]);
+
+  useEffect(() => {
+    if (resendCountdown === 0 && resendIntervalRef.current) {
+      clearInterval(resendIntervalRef.current);
+      resendIntervalRef.current = null;
+    }
+  }, [resendCountdown]);
+
+  useEffect(() => {
+    return () => {
+      if (resendIntervalRef.current) {
+        clearInterval(resendIntervalRef.current);
+      }
+    };
+  }, []);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -56,21 +78,25 @@ export const OtpGate = ({
 
   const handleResend = async () => {
     setError(null);
-    setResendCountdown(cooldownSeconds);
+
+    if (resendIntervalRef.current) {
+      clearInterval(resendIntervalRef.current);
+    }
 
     // カウントダウン開始
-    const interval = setInterval(() => {
-      setResendCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
+    setResendCountdown(cooldownSeconds);
 
-        return prev - 1;
-      });
+    const interval = setInterval(() => {
+      setResendCountdown((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
-    await onResend();
+    resendIntervalRef.current = interval;
+
+    try {
+      await onResend();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '再送に失敗しました');
+    }
   };
 
   return (

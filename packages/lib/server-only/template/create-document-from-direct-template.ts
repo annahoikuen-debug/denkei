@@ -32,8 +32,7 @@ import { getFileServerSide } from '../../universal/upload/get-file.server';
 import { putPdfFileServerSide } from '../../universal/upload/put-file.server';
 import { isRequiredField } from '../../utils/advanced-fields-helpers';
 import { extractDerivedDocumentMeta } from '../../utils/document';
-import type { CreateDocumentAuditLogDataResponse } from '../../utils/document-audit-logs';
-import { createDocumentAuditLogData } from '../../utils/document-audit-logs';
+import type { CreateDocumentAuditLogDataOptions } from '../../utils/document-audit-logs';
 import {
   createDocumentAuthOptions,
   createRecipientAuthOptions,
@@ -46,9 +45,11 @@ import {
   isRecipientBefore,
   sortRecipientsBySigningPosition,
 } from '../../utils/recipients';
+import { createDocumentAuditLog } from '../document/create-document-audit-log';
 import { sendDocument } from '../document/send-document';
 import { validateFieldAuth } from '../document/validate-field-auth';
 import { incrementDocumentId } from '../envelope/increment-id';
+import { hasVerifiedRecipientOtp } from '../otp/recipient-verification';
 import { assertOrganisationRatesAndLimits } from '../rate-limit/assert-organisation-rates-and-limits';
 import { assignOmittedRecipientSigningOrders } from '../recipient/assign-omitted-recipient-signing-orders';
 import { resolveSignatureLevel } from '../signature-level/resolve-signature-level';
@@ -203,12 +204,19 @@ export const createDocumentFromDirectTemplate = async ({
 
   let directRecipientName = user?.name || initialDirectRecipientName;
 
+  // フェーズ2: EMAIL_OTP は署名画面のゲート(OtpGate)で検証済みセッションを取得する方式。
+  // direct テンプレート送信時点でも、未検証なら受理しない。
+  const otpAccessVerified =
+    derivedRecipientAccessAuth.at(0) === DocumentAccessAuth.EMAIL_OTP
+      ? await hasVerifiedRecipientOtp({ recipientId: directTemplateRecipient.id })
+      : false;
+
   // Ensure typesafety when we add more options.
   const isAccessAuthValid = match(derivedRecipientAccessAuth.at(0))
     .with(DocumentAccessAuth.ACCOUNT, () => user && user?.email === directRecipientEmail)
     .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => false) // Not supported for direct templates
-    // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する(direct テンプレートでは許可)
-    .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+    .with(DocumentAccessAuth.EMAIL_OTP, () => otpAccessVerified)
+    // フェーズ2: FIREBASE_EMAIL は署名時に本人の Firebase セッションを要求する(is-recipient-authorized)。
     .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
     .with(undefined, () => true)
     .exhaustive();
@@ -594,8 +602,8 @@ export const createDocumentFromDirectTemplate = async ({
      * - DOCUMENT_FIELD_INSERTED
      * - DOCUMENT_RECIPIENT_COMPLETED
      */
-    const auditLogsToCreate: CreateDocumentAuditLogDataResponse[] = [
-      createDocumentAuditLogData({
+    const auditLogsToCreate: CreateDocumentAuditLogDataOptions[] = [
+      {
         type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CREATED,
         envelopeId: createdEnvelope.id,
         user: {
@@ -612,8 +620,8 @@ export const createDocumentFromDirectTemplate = async ({
             directRecipientEmail,
           },
         },
-      }),
-      createDocumentAuditLogData({
+      },
+      {
         type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_OPENED,
         envelopeId: createdEnvelope.id,
         user: {
@@ -629,53 +637,51 @@ export const createDocumentFromDirectTemplate = async ({
           recipientRole: createdDirectRecipient.role,
           accessAuth: derivedRecipientAccessAuth || undefined,
         },
-      }),
-      ...createdDirectRecipientFields.map(({ field, derivedRecipientActionAuth }) =>
-        createDocumentAuditLogData({
-          type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_INSERTED,
-          envelopeId: createdEnvelope.id,
-          user: {
-            id: user?.id,
-            name: user?.name,
-            email: directRecipientEmail,
-          },
-          metadata: requestMetadata,
-          data: {
-            recipientEmail: createdDirectRecipient.email,
-            recipientId: createdDirectRecipient.id,
-            recipientName: createdDirectRecipient.name,
-            recipientRole: createdDirectRecipient.role,
-            fieldId: field.secondaryId,
-            field: match(field.type)
-              .with(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, (type) => ({
+      },
+      ...createdDirectRecipientFields.map(({ field, derivedRecipientActionAuth }) => ({
+        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_FIELD_INSERTED,
+        envelopeId: createdEnvelope.id,
+        user: {
+          id: user?.id,
+          name: user?.name,
+          email: directRecipientEmail,
+        },
+        metadata: requestMetadata,
+        data: {
+          recipientEmail: createdDirectRecipient.email,
+          recipientId: createdDirectRecipient.id,
+          recipientName: createdDirectRecipient.name,
+          recipientRole: createdDirectRecipient.role,
+          fieldId: field.secondaryId,
+          field: match(field.type)
+            .with(FieldType.SIGNATURE, FieldType.FREE_SIGNATURE, (type) => ({
+              type,
+              data: field.signature?.signatureImageAsBase64 || field.signature?.typedSignature || '',
+            }))
+            .with(
+              FieldType.DATE,
+              FieldType.EMAIL,
+              FieldType.INITIALS,
+              FieldType.NAME,
+              FieldType.TEXT,
+              FieldType.NUMBER,
+              FieldType.CHECKBOX,
+              FieldType.DROPDOWN,
+              FieldType.RADIO,
+              (type) => ({
                 type,
-                data: field.signature?.signatureImageAsBase64 || field.signature?.typedSignature || '',
-              }))
-              .with(
-                FieldType.DATE,
-                FieldType.EMAIL,
-                FieldType.INITIALS,
-                FieldType.NAME,
-                FieldType.TEXT,
-                FieldType.NUMBER,
-                FieldType.CHECKBOX,
-                FieldType.DROPDOWN,
-                FieldType.RADIO,
-                (type) => ({
-                  type,
-                  data: field.customText,
-                }),
-              )
-              .exhaustive(),
-            fieldSecurity: derivedRecipientActionAuth
-              ? {
-                  type: derivedRecipientActionAuth,
-                }
-              : undefined,
-          },
-        }),
-      ),
-      createDocumentAuditLogData({
+                data: field.customText,
+              }),
+            )
+            .exhaustive(),
+          fieldSecurity: derivedRecipientActionAuth
+            ? {
+                type: derivedRecipientActionAuth,
+              }
+            : undefined,
+        },
+      })),
+      {
         type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_RECIPIENT_COMPLETED,
         envelopeId: createdEnvelope.id,
         user: {
@@ -691,7 +697,7 @@ export const createDocumentFromDirectTemplate = async ({
           recipientRole: createdDirectRecipient.role,
           actionAuth: createdDirectRecipient.authOptions?.actionAuth ?? [],
         },
-      }),
+      },
     ];
 
     if (nextSigner) {
@@ -732,35 +738,33 @@ export const createDocumentFromDirectTemplate = async ({
       const nextRecipient = hasCompletedCurrentStep && nextRecipients.length === 1 ? nextRecipients[0] : null;
 
       if (nextRecipient && documentMeta.allowDictateNextSigner) {
-        auditLogsToCreate.push(
-          createDocumentAuditLogData({
-            type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_UPDATED,
-            envelopeId: createdEnvelope.id,
-            user: {
-              name: user?.name || directRecipientName || '',
-              email: user?.email || directRecipientEmail,
-            },
-            metadata: requestMetadata,
-            data: {
-              recipientEmail: nextRecipient.email,
-              recipientName: nextRecipient.name,
-              recipientId: nextRecipient.id,
-              recipientRole: nextRecipient.role,
-              changes: [
-                {
-                  type: RECIPIENT_DIFF_TYPE.NAME,
-                  from: nextRecipient.name,
-                  to: nextSigner.name,
-                },
-                {
-                  type: RECIPIENT_DIFF_TYPE.EMAIL,
-                  from: nextRecipient.email,
-                  to: nextSigner.email,
-                },
-              ],
-            },
-          }),
-        );
+        auditLogsToCreate.push({
+          type: DOCUMENT_AUDIT_LOG_TYPE.RECIPIENT_UPDATED,
+          envelopeId: createdEnvelope.id,
+          user: {
+            name: user?.name || directRecipientName || '',
+            email: user?.email || directRecipientEmail,
+          },
+          metadata: requestMetadata,
+          data: {
+            recipientEmail: nextRecipient.email,
+            recipientName: nextRecipient.name,
+            recipientId: nextRecipient.id,
+            recipientRole: nextRecipient.role,
+            changes: [
+              {
+                type: RECIPIENT_DIFF_TYPE.NAME,
+                from: nextRecipient.name,
+                to: nextSigner.name,
+              },
+              {
+                type: RECIPIENT_DIFF_TYPE.EMAIL,
+                from: nextRecipient.email,
+                to: nextSigner.email,
+              },
+            ],
+          },
+        });
 
         await tx.recipient.update({
           where: { id: nextRecipient.id },
@@ -772,9 +776,10 @@ export const createDocumentFromDirectTemplate = async ({
       }
     }
 
-    await tx.documentAuditLog.createMany({
-      data: auditLogsToCreate,
-    });
+    // ハッシュチェーンを維持するため 1 件ずつ順序通りに書き込む
+    for (const auditLogToCreate of auditLogsToCreate) {
+      await createDocumentAuditLog(tx, auditLogToCreate);
+    }
 
     const templateAttachments = await tx.envelopeAttachment.findMany({
       where: {

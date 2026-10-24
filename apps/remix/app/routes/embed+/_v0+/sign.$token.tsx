@@ -11,6 +11,10 @@ import { getEnvelopeRequiredAccessData } from '@documenso/lib/server-only/envelo
 import { getCompletedFieldsForToken } from '@documenso/lib/server-only/field/get-completed-fields-for-token';
 import { getFieldsForToken } from '@documenso/lib/server-only/field/get-fields-for-token';
 import { getOrganisationClaimByTeamId } from '@documenso/lib/server-only/organisation/get-organisation-claims';
+import {
+  getRecipientOtpGateState,
+  hasVerifiedRecipientOtp,
+} from '@documenso/lib/server-only/otp/recipient-verification';
 import { getIsRecipientsTurnToSign } from '@documenso/lib/server-only/recipient/get-is-recipient-turn';
 import { getRecipientByToken } from '@documenso/lib/server-only/recipient/get-recipient-by-token';
 import { getRecipientsForAssistant } from '@documenso/lib/server-only/recipient/get-recipients-for-assistant';
@@ -101,17 +105,37 @@ async function handleV1Loader({ params, request }: Route.LoaderArgs) {
     documentAuth: document.authOptions,
   });
 
+  // フェーズ2: EMAIL_OTP は署名画面のゲート(OtpGate)で本人確認済みセッションを取得する方式。
+  const requiresOtpVerification =
+    derivedRecipientAccessAuth.includes(DocumentAccessAuth.EMAIL_OTP) &&
+    !(await hasVerifiedRecipientOtp({ recipientId: recipient.id }));
+
   const isAccessAuthValid = derivedRecipientAccessAuth.every((accesssAuth) =>
     match(accesssAuth)
-      .with(DocumentAccessAuth.ACCOUNT, () => user && user.email === recipient.email)
-      .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true) // Allow without account requirement
-      // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
-      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.ACCOUNT, () => Boolean(user && user.email === recipient.email))
+      .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true)
+      .with(DocumentAccessAuth.EMAIL_OTP, () => !requiresOtpVerification)
+      // フェーズ2: FIREBASE_EMAIL は署名時に本人の Firebase セッションを要求する(is-recipient-authorized)。
       .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 
   if (!isAccessAuthValid) {
+    if (requiresOtpVerification) {
+      throw data(
+        {
+          type: 'embed-authentication-required',
+          email: recipient.email,
+          requiresOtp: true,
+          token,
+          otpGateState: await getRecipientOtpGateState({ recipientId: recipient.id }),
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
     throw data(
       {
         type: 'embed-authentication-required',
@@ -231,6 +255,13 @@ async function handleV2Loader({ params, request }: Route.LoaderArgs) {
       {
         type: 'embed-authentication-required',
         email: envelopeForSigning.recipientEmail,
+        requiresOtp: envelopeForSigning.requiresOtpVerification,
+        ...(envelopeForSigning.requiresOtpVerification
+          ? {
+              token,
+              otpGateState: envelopeForSigning.otpGateState,
+            }
+          : {}),
       },
       {
         status: 401,
@@ -283,17 +314,37 @@ async function handleV2Loader({ params, request }: Route.LoaderArgs) {
     recipientAuth: recipient.authOptions,
   });
 
+  // フェーズ2: EMAIL_OTP はゲート(OtpGate)での本人確認済みセッションが必須。
+  const otpAccessVerified = derivedRecipientAccessAuth.includes(DocumentAccessAuth.EMAIL_OTP)
+    ? await hasVerifiedRecipientOtp({ recipientId: recipient.id })
+    : false;
+
   const isAccessAuthValid = derivedRecipientAccessAuth.every((accesssAuth) =>
     match(accesssAuth)
-      .with(DocumentAccessAuth.ACCOUNT, () => user && user.email === recipient.email)
+      .with(DocumentAccessAuth.ACCOUNT, () => Boolean(user && user.email === recipient.email))
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true)
-      // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
-      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.EMAIL_OTP, () => otpAccessVerified)
+      // フェーズ2: FIREBASE_EMAIL は署名時に本人の Firebase セッションを要求する(is-recipient-authorized)。
       .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 
   if (!isAccessAuthValid) {
+    if (derivedRecipientAccessAuth.includes(DocumentAccessAuth.EMAIL_OTP) && !otpAccessVerified) {
+      throw data(
+        {
+          type: 'embed-authentication-required',
+          email: recipient.email,
+          requiresOtp: true,
+          token,
+          otpGateState: await getRecipientOtpGateState({ recipientId: recipient.id }),
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
     throw data(
       {
         type: 'embed-authentication-required',

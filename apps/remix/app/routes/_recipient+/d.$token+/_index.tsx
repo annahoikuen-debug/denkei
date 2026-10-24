@@ -4,6 +4,10 @@ import { useOptionalSession } from '@documenso/lib/client-only/providers/session
 import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
 import { loadRecipientBrandingByTeamId } from '@documenso/lib/server-only/branding/load-recipient-branding';
 import { getEnvelopeForDirectTemplateSigning } from '@documenso/lib/server-only/envelope/get-envelope-for-direct-template-signing';
+import {
+  getOtpVerificationContextForToken,
+  hasVerifiedRecipientOtp,
+} from '@documenso/lib/server-only/otp/recipient-verification';
 import { getTemplateByDirectLinkToken } from '@documenso/lib/server-only/template/get-template-by-direct-link-token';
 import { assertSenderNotDisabled } from '@documenso/lib/server-only/user/assert-user-not-disabled';
 import { DocumentAccessAuth } from '@documenso/lib/types/document-auth';
@@ -25,6 +29,7 @@ import { DocumentSigningPageViewV2 } from '~/components/general/document-signing
 import { DocumentSigningProvider } from '~/components/general/document-signing/document-signing-provider';
 import { DocumentSigningSenderDisabledPage } from '~/components/general/document-signing/document-signing-sender-disabled-page';
 import { EnvelopeSigningProvider } from '~/components/general/document-signing/envelope-signing-provider';
+import { RecipientOtpGate } from '~/components/general/document-signing/recipient-otp-gate';
 import { RecipientBranding } from '~/components/general/recipient-branding';
 import { useCspNonce } from '~/utils/nonce';
 import { superLoaderJson, useSuperLoaderData } from '~/utils/super-json-loader';
@@ -60,18 +65,37 @@ const handleV1Loader = async ({ params, request }: Route.LoaderArgs) => {
     documentAuth: template.authOptions,
   });
 
+  // フェーズ2: EMAIL_OTP は署名画面のゲート(OtpGate)で本人確認済みセッションを取得する方式。
+  const requiresOtpVerification =
+    derivedRecipientAccessAuth.includes(DocumentAccessAuth.EMAIL_OTP) &&
+    !(await hasVerifiedRecipientOtp({ recipientId: directTemplateRecipient.id }));
+
   // Ensure typesafety when we add more options.
   const isAccessAuthValid = derivedRecipientAccessAuth.every((auth) =>
     match(auth)
       .with(DocumentAccessAuth.ACCOUNT, () => Boolean(session.user))
       .with(DocumentAccessAuth.TWO_FACTOR_AUTH, () => true)
-      // フェーズ2: EMAIL_OTP/FIREBASE_EMAIL は署名画面側のゲートで検証する
-      .with(DocumentAccessAuth.EMAIL_OTP, () => true)
+      .with(DocumentAccessAuth.EMAIL_OTP, () => !requiresOtpVerification)
+      // フェーズ2: FIREBASE_EMAIL は署名時に本人の Firebase セッションを要求する(is-recipient-authorized)。
       .with(DocumentAccessAuth.FIREBASE_EMAIL, () => true)
       .exhaustive(),
   );
 
   if (!isAccessAuthValid) {
+    if (requiresOtpVerification) {
+      const otpContext = await getOtpVerificationContextForToken({ token });
+
+      if (otpContext) {
+        return {
+          isAccessAuthValid: false as const,
+          requiresOtpVerification: true as const,
+          token,
+          recipientEmail: otpContext.recipient.email,
+          otpGateState: otpContext.gateState,
+        };
+      }
+    }
+
     return {
       isAccessAuthValid: false as const,
     };
@@ -117,10 +141,23 @@ const handleV2Loader = async ({ params, request }: Route.LoaderArgs) => {
         envelopeForSigning,
       } as const;
     })
-    .catch((e) => {
+    .catch(async (e) => {
       const error = AppError.parseError(e);
 
       if (error.code === AppErrorCode.UNAUTHORIZED) {
+        // フェーズ2: EMAIL_OTP 未検証の場合はゲート(OtpGate)を表示する。
+        const otpContext = await getOtpVerificationContextForToken({ token });
+
+        if (otpContext?.isOtpRequired && !otpContext.isOtpVerified) {
+          return {
+            isDocumentAccessValid: false,
+            requiresOtpVerification: true as const,
+            token,
+            recipientEmail: otpContext.recipient.email,
+            otpGateState: otpContext.gateState,
+          } as const;
+        }
+
         return {
           isDocumentAccessValid: false,
         } as const;
@@ -223,6 +260,10 @@ const DirectSigningPageV1 = ({ data }: { data: Awaited<ReturnType<typeof handleV
 
   // Should not be possible for directLink to be null.
   if (!data.isAccessAuthValid) {
+    if ('requiresOtpVerification' in data && data.requiresOtpVerification) {
+      return <RecipientOtpGate token={data.token} email={data.recipientEmail} initialState={data.otpGateState} />;
+    }
+
     return <DirectTemplateAuthPageView />;
   }
 
@@ -281,6 +322,10 @@ const DirectSigningPageV2 = ({ data }: { data: Awaited<ReturnType<typeof handleV
   const user = sessionData?.user;
 
   if (!data.isDocumentAccessValid) {
+    if ('requiresOtpVerification' in data && data.requiresOtpVerification) {
+      return <RecipientOtpGate token={data.token} email={data.recipientEmail} initialState={data.otpGateState} />;
+    }
+
     return <DocumentSigningAuthPageView email={''} emailHasAccount={true} />;
   }
 
