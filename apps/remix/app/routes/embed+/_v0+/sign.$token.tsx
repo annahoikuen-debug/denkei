@@ -18,6 +18,7 @@ import {
 import { getIsRecipientsTurnToSign } from '@documenso/lib/server-only/recipient/get-is-recipient-turn';
 import { getRecipientByToken } from '@documenso/lib/server-only/recipient/get-recipient-by-token';
 import { getRecipientsForAssistant } from '@documenso/lib/server-only/recipient/get-recipients-for-assistant';
+import { getTeamPlanInfo } from '@documenso/lib/server-only/team/get-team-plan';
 import { assertSenderNotDisabled } from '@documenso/lib/server-only/user/assert-user-not-disabled';
 import { DocumentAccessAuth } from '@documenso/lib/types/document-auth';
 import { fireAndForget } from '@documenso/lib/universal/fire-and-forget';
@@ -72,10 +73,10 @@ async function handleV1Loader({ params, request }: Route.LoaderArgs) {
   const allowEmbedSigningWhitelabel = organisationClaim.flags.embedSigningWhiteLabel;
   const hidePoweredBy = organisationClaim.flags.hidePoweredBy;
 
-  // TODO: Make this more robust, we need to ensure the owner is either
-  // TODO: the member of a team that has an active subscription, is an early
-  // TODO: adopter or is an enterprise user.
-  if (IS_BILLING_ENABLED() && !organisationClaim.flags.embedSigning) {
+  const { planId } = await getTeamPlanInfo({ teamId: document.teamId });
+  const isEmbedSigningEnabled = organisationClaim.flags.embedSigning || planId !== 'FREE';
+
+  if (IS_BILLING_ENABLED() && !isEmbedSigningEnabled) {
     throw data(
       {
         type: 'embed-paywall',
@@ -276,7 +277,10 @@ async function handleV2Loader({ params, request }: Route.LoaderArgs) {
   const allowEmbedSigningWhitelabel = organisationClaim.flags.embedSigningWhiteLabel;
   const hidePoweredBy = organisationClaim.flags.hidePoweredBy;
 
-  if (IS_BILLING_ENABLED() && !organisationClaim.flags.embedSigning) {
+  const { planId } = await getTeamPlanInfo({ teamId: envelope.teamId });
+  const isEmbedSigningEnabled = organisationClaim.flags.embedSigning || planId !== 'FREE';
+
+  if (IS_BILLING_ENABLED() && !isEmbedSigningEnabled) {
     throw data(
       {
         type: 'embed-paywall',

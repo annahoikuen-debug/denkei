@@ -1,6 +1,7 @@
 import { DOCUMENSO_ENCRYPTION_SECONDARY_KEY } from '@documenso/lib/constants/crypto';
 import { ZEncryptedDataSchema } from '@documenso/lib/server-only/crypto/encrypt';
 import { symmetricDecrypt } from '@documenso/lib/universal/crypto';
+import { logger } from '@documenso/lib/utils/logger';
 
 /**
  * Decrypt the passed in data. This uses the secondary encrypt key for miscellaneous data.
@@ -31,7 +32,11 @@ export const decryptSecondaryData = (encryptedData: string): string | null => {
     }
 
     return result.data.data;
-  } catch {
+  } catch (err: unknown) {
+    logger.warn({
+      event: 'crypto.decrypt_secondary_data_failed',
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 };

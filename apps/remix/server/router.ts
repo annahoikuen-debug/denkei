@@ -15,7 +15,7 @@ import {
 import { TelemetryClient } from '@documenso/lib/server-only/telemetry/telemetry-client';
 import { migrateDeletedAccountServiceAccount } from '@documenso/lib/server-only/user/service-accounts/deleted-account';
 import { migrateLegacyServiceAccount } from '@documenso/lib/server-only/user/service-accounts/legacy-service-account';
-import { env } from '@documenso/lib/utils/env';
+import { env, requireEnv } from '@documenso/lib/utils/env';
 import { logger } from '@documenso/lib/utils/logger';
 import { openApiDocument } from '@documenso/trpc/server/open-api';
 import { Hono } from 'hono';
@@ -49,6 +49,15 @@ export interface HonoEnv {
 }
 
 const basePath = (env('NEXT_PUBLIC_BASE_PATH') ?? '').replace(/\/$/, '');
+
+// Validate required environment variables on startup
+try {
+  requireEnv('NEXTAUTH_SECRET');
+  requireEnv('NEXT_PRIVATE_ENCRYPTION_KEY');
+  requireEnv('NEXT_PRIVATE_DATABASE_URL');
+} catch (err: unknown) {
+  console.error('[startup error] Missing required environment variable:', err instanceof Error ? err.message : err);
+}
 
 const app = new Hono<HonoEnv>().basePath(basePath || '/');
 
