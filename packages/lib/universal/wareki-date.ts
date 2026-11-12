@@ -10,7 +10,7 @@ import { DateTime } from 'luxon';
 const WAREKI_FORMATTER = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
   era: 'long',
   year: 'numeric',
-  month: 'long',
+  month: 'numeric',
   day: 'numeric',
   // Intl は JS Date を「実行環境のタイムゾーン」で解釈するため、明示的に指定する。
   // 指定しないと TZ=UTC の本番環境で日付が1日ずれる。
@@ -55,8 +55,15 @@ export const toWareki = (date: string | Date | DateTime): string | null => {
 
   const era = parts.find((p) => p.type === 'era')?.value ?? '';
   const rawYear = parts.find((p) => p.type === 'year')?.value ?? '';
-  const month = parts.find((p) => p.type === 'month')?.value ?? '';
-  const day = parts.find((p) => p.type === 'day')?.value ?? '';
+  const rawMonth = parts.find((p) => p.type === 'month')?.value ?? '';
+  const rawDay = parts.find((p) => p.type === 'day')?.value ?? '';
+
+  const monthNum = parseInt(rawMonth.replace(/[^0-9]/g, ''), 10);
+  const dayNum = parseInt(rawDay.replace(/[^0-9]/g, ''), 10);
+
+  if (Number.isNaN(monthNum) || Number.isNaN(dayNum)) {
+    return null;
+  }
 
   // Node.js / Intl は 1年目を「元」「元年」「1」などで返す可能性があるため正規化
   let yearString: string;
@@ -70,7 +77,7 @@ export const toWareki = (date: string | Date | DateTime): string | null => {
     yearString = yearNum === 1 ? '元年' : `${yearNum}年`;
   }
 
-  return `${era}${yearString}${month}月${day}日`;
+  return `${era}${yearString}${monthNum}月${dayNum}日`;
 };
 
 /**

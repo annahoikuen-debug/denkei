@@ -15,7 +15,7 @@ import {
 import { TelemetryClient } from '@documenso/lib/server-only/telemetry/telemetry-client';
 import { migrateDeletedAccountServiceAccount } from '@documenso/lib/server-only/user/service-accounts/deleted-account';
 import { migrateLegacyServiceAccount } from '@documenso/lib/server-only/user/service-accounts/legacy-service-account';
-import { env, requireEnv } from '@documenso/lib/utils/env';
+import { env } from '@documenso/lib/utils/env';
 import { logger } from '@documenso/lib/utils/logger';
 import { openApiDocument } from '@documenso/trpc/server/open-api';
 import { Hono } from 'hono';
@@ -24,7 +24,6 @@ import { cors } from 'hono/cors';
 import type { RequestIdVariables } from 'hono/request-id';
 import { requestId } from 'hono/request-id';
 import type { Logger } from 'pino';
-
 import { aiRoute } from './api/ai/route';
 import { downloadRoute } from './api/download/download';
 import { filesRoute } from './api/files/files';
@@ -34,6 +33,7 @@ import { appMiddleware } from './middleware';
 import { securityHeadersMiddleware } from './security-headers';
 import { openApiTrpcServerHandler } from './trpc/hono-trpc-open-api';
 import { reactRouterTrpcServer } from './trpc/hono-trpc-remix';
+import { validateRequiredEnv } from './utils/validate-env';
 
 // Re-export so the rollup build (entry: server/router.ts) bundles
 // load-context.ts. server/main.js imports getLoadContext from the rolled-up
@@ -51,13 +51,7 @@ export interface HonoEnv {
 const basePath = (env('NEXT_PUBLIC_BASE_PATH') ?? '').replace(/\/$/, '');
 
 // Validate required environment variables on startup
-try {
-  requireEnv('NEXTAUTH_SECRET');
-  requireEnv('NEXT_PRIVATE_ENCRYPTION_KEY');
-  requireEnv('NEXT_PRIVATE_DATABASE_URL');
-} catch (err: unknown) {
-  console.error('[startup error] Missing required environment variable:', err instanceof Error ? err.message : err);
-}
+validateRequiredEnv();
 
 const app = new Hono<HonoEnv>().basePath(basePath || '/');
 

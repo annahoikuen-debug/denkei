@@ -62,37 +62,42 @@ export default function WizardStepFieldsPage() {
     envelope?.recipients.find((recipient) => recipient.role === RecipientRole.SIGNER) ?? envelope?.recipients[0];
 
   const onSend = async () => {
-    if (!envelopeId || !signer) {
+    if (!envelopeId || !signer || isSending) {
       return;
     }
 
     try {
       setIsSending(true);
 
-      // 簡易モード: 1ページ目に署名欄と日付を自動配置する(% ベースの座標)。
-      await createFields({
-        envelopeId,
-        data: [
-          {
-            type: 'SIGNATURE',
-            recipientId: signer.id,
-            page: 1,
-            positionX: 30,
-            positionY: 50,
-            width: 40,
-            height: 12,
-          },
-          {
-            type: 'DATE',
-            recipientId: signer.id,
-            page: 1,
-            positionX: 30,
-            positionY: 68,
-            width: 40,
-            height: 8,
-          },
-        ],
-      });
+      // 冪等性チェック: すでにフィールドが存在する場合は自動配置をスキップ
+      const hasExistingFields = (envelope?.fields?.length ?? 0) > 0;
+
+      if (!hasExistingFields) {
+        // 簡易モード: 1ページ目に署名欄と日付を自動配置する(% ベースの座標)。
+        await createFields({
+          envelopeId,
+          data: [
+            {
+              type: 'SIGNATURE',
+              recipientId: signer.id,
+              page: 1,
+              positionX: 30,
+              positionY: 50,
+              width: 40,
+              height: 12,
+            },
+            {
+              type: 'DATE',
+              recipientId: signer.id,
+              page: 1,
+              positionX: 30,
+              positionY: 68,
+              width: 40,
+              height: 8,
+            },
+          ],
+        });
+      }
 
       // 送信。文書のタイムゾーンは日本時間を既定とする。
       await distributeEnvelope({

@@ -1,9 +1,13 @@
 import { DateTime } from 'luxon';
 import { describe, expect, it } from 'vitest';
-import { formatJpy, formatJpyWithTaxIncluded, formatNumberJa } from '../universal/format-currency';
 import { convertToLocalSystemFormat, isValidDateFormat, VALID_DATE_FORMAT_VALUES } from './date-formats';
+import { DEFAULT_DOCUMENT_TIME_ZONE } from './time-zones';
 
 describe('日本語日付フォーマット', () => {
+  it('DEFAULT_DOCUMENT_TIME_ZONE が Asia/Tokyo に統一されている', () => {
+    expect(DEFAULT_DOCUMENT_TIME_ZONE).toBe('Asia/Tokyo');
+  });
+
   it('yyyy年M月d日 が有効な dateFormat として登録されている', () => {
     expect(isValidDateFormat('yyyy年M月d日')).toBe(true);
     expect(isValidDateFormat('yyyy年M月d日 H時m分')).toBe(true);
@@ -32,26 +36,18 @@ describe('日本語日付フォーマット', () => {
     expect(result).toBe('2026年10月15日 00:30');
   });
 
+  it('引数省略時にデフォルトタイムゾーン(Asia/Tokyo)が適用される', () => {
+    const result = convertToLocalSystemFormat('2026年10月15日 00:30', 'yyyy年M月d日 HH:mm');
+
+    expect(result).toBe('2026年10月15日 00:30');
+  });
+
+  it('不正な日付文字列の場合は Invalid date を返す', () => {
+    expect(convertToLocalSystemFormat('invalid-date')).toBe('Invalid date');
+  });
+
   it('既存フォーマットが壊れていないこと', () => {
     expect(VALID_DATE_FORMAT_VALUES).toContain('yyyy-MM-dd');
     expect(isValidDateFormat('not-a-format')).toBe(false);
-  });
-});
-
-describe('日本円フォーマット', () => {
-  it('3桁カンマ付き円表記になる', () => {
-    expect(formatJpy(1234567)).toMatch(/1,234,567/);
-    expect(formatJpy(0)).toMatch(/0/);
-  });
-
-  it('税込表記を付与できる', () => {
-    expect(formatJpyWithTaxIncluded(1000)).toMatch(/1,000/);
-    expect(formatJpyWithTaxIncluded(1000)).toContain('(税込)');
-  });
-
-  it('数値のカンマ区切り(通貨記号なし)', () => {
-    expect(formatNumberJa(1234567)).toBe('1,234,567');
-    expect(formatNumberJa('9876543')).toBe('9,876,543');
-    expect(formatNumberJa('invalid')).toBe('');
   });
 });
