@@ -1,11 +1,20 @@
 import { DateTime } from 'luxon';
 import { describe, expect, it } from 'vitest';
-import { convertToLocalSystemFormat, isValidDateFormat, VALID_DATE_FORMAT_VALUES } from './date-formats';
+import {
+  convertToLocalSystemFormat,
+  DEFAULT_DOCUMENT_DATE_FORMAT,
+  isValidDateFormat,
+  VALID_DATE_FORMAT_VALUES,
+} from './date-formats';
 import { DEFAULT_DOCUMENT_TIME_ZONE } from './time-zones';
 
 describe('日本語日付フォーマット', () => {
   it('DEFAULT_DOCUMENT_TIME_ZONE が Asia/Tokyo に統一されている', () => {
     expect(DEFAULT_DOCUMENT_TIME_ZONE).toBe('Asia/Tokyo');
+  });
+
+  it('DEFAULT_DOCUMENT_DATE_FORMAT が yyyy年M月d日 に統一されている', () => {
+    expect(DEFAULT_DOCUMENT_DATE_FORMAT).toBe('yyyy年M月d日');
   });
 
   it('yyyy年M月d日 が有効な dateFormat として登録されている', () => {

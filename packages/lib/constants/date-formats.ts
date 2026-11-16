@@ -2,14 +2,15 @@ import { DateTime } from 'luxon';
 
 import { DEFAULT_DOCUMENT_TIME_ZONE } from './time-zones';
 
-export const DEFAULT_DOCUMENT_DATE_FORMAT = 'yyyy-MM-dd hh:mm a';
+export const DEFAULT_DOCUMENT_DATE_FORMAT = 'yyyy年M月d日';
 
 export const VALID_DATE_FORMAT_VALUES = [
   DEFAULT_DOCUMENT_DATE_FORMAT,
-  'yyyy年M月d日',
   'yyyy年M月d日 H時m分',
   'yyyy年M月d日 HH:mm',
   'yyyy-MM-dd',
+  'yyyy-MM-dd HH:mm',
+  'yyyy-MM-dd hh:mm a',
   'dd/MM/yyyy',
   'dd-MM-yyyy',
   'MM/dd/yyyy',
@@ -24,7 +25,6 @@ export const VALID_DATE_FORMAT_VALUES = [
   'MM/dd/yyyy HH:mm',
   'dd.MM.yyyy',
   'dd.MM.yyyy HH:mm',
-  'yyyy-MM-dd HH:mm',
   'yy-MM-dd hh:mm a',
   'yy-MM-dd HH:mm',
   'yyyy-MM-dd HH:mm:ss',
@@ -39,9 +39,34 @@ export type ValidDateFormat = (typeof VALID_DATE_FORMAT_VALUES)[number];
 
 export const DATE_FORMATS = [
   {
+    key: 'JP_DATE',
+    label: 'YYYY年M月D日',
+    value: DEFAULT_DOCUMENT_DATE_FORMAT,
+  },
+  {
+    key: 'JP_DATETIME',
+    label: 'YYYY年M月D日 H時m分',
+    value: 'yyyy年M月d日 H時m分',
+  },
+  {
+    key: 'JP_DATETIME_24H',
+    label: 'YYYY年M月D日 HH:mm',
+    value: 'yyyy年M月d日 HH:mm',
+  },
+  {
+    key: 'YYYYMMDD',
+    label: 'YYYY-MM-DD',
+    value: 'yyyy-MM-dd',
+  },
+  {
+    key: 'yyyy-MM-dd_HH:mm',
+    label: 'YYYY-MM-DD HH:mm',
+    value: 'yyyy-MM-dd HH:mm',
+  },
+  {
     key: 'yyyy-MM-dd_HH:mm_12H',
     label: 'YYYY-MM-DD hh:mm AM/PM',
-    value: DEFAULT_DOCUMENT_DATE_FORMAT,
+    value: 'yyyy-MM-dd hh:mm a',
   },
   {
     key: 'yyyy-MM-dd_HH:mm',
@@ -162,21 +187,6 @@ export const DATE_FORMATS = [
     key: 'DayMonthYear',
     label: 'Day, Month Year',
     value: 'EEEE, MMMM dd, yyyy',
-  },
-  {
-    key: 'JP_DATE',
-    label: 'YYYY年M月D日',
-    value: 'yyyy年M月d日',
-  },
-  {
-    key: 'JP_DATETIME',
-    label: 'YYYY年M月D日 H時m分',
-    value: 'yyyy年M月d日 H時m分',
-  },
-  {
-    key: 'JP_DATETIME_24H',
-    label: 'YYYY年M月D日 HH:mm',
-    value: 'yyyy年M月d日 HH:mm',
   },
 ] satisfies {
   key: string;

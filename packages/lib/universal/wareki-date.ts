@@ -1,10 +1,10 @@
 import { DateTime } from 'luxon';
 
 /**
- * フェーズ1 ステップ12: 和暦(令和)日付ユーティリティ
+ * 和暦(明治・大正・昭和・平成・令和)日付ユーティリティ
  *
  * `Intl.DateTimeFormat('ja-JP-u-ca-japanese')` ベースの和暦変換。
- * 令和元年(2019-05-01)以降をサポート。
+ * 明治元年(1868-10-23)以降の一世一元の制に基づく近代5元号をサポート。
  */
 
 const WAREKI_FORMATTER = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
@@ -17,15 +17,24 @@ const WAREKI_FORMATTER = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', {
   timeZone: 'Asia/Tokyo',
 });
 
-const WAREKI_ERA_START = '2019-05-01';
+export const SUPPORTED_ERAS = ['明治', '大正', '昭和', '平成', '令和'] as const;
 
 /**
- * ISO 日付文字列(または Date)を和暦表記「令和X年M月D日」に変換する。
- * 令和以前の日付は対応外として null を返す。
+ * 明治改元の詔勅日(グレゴリオ暦 1868-10-23)
+ * ICU / Unicode CLDR における明治の開始日
+ */
+const MEIJI_ERA_START = '1868-10-23';
+
+/**
+ * ISO 日付文字列(または Date)を和暦表記「元号X年M月D日」に変換する。
+ * 明治・大正・昭和・平成・令和の各1年目は「元年」と表記する。
+ * 明治以前(慶応以前)の日付や無効な日付は対応外として null を返す。
  *
  * @example
  * toWareki('2026-10-15'); // '令和8年10月15日'
  * toWareki('2019-05-01'); // '令和元年5月1日'
+ * toWareki('1989-01-08'); // '平成元年1月8日'
+ * toWareki('1926-12-25'); // '昭和元年12月25日'
  */
 export const toWareki = (date: string | Date | DateTime): string | null => {
   let dt: DateTime;
@@ -47,13 +56,17 @@ export const toWareki = (date: string | Date | DateTime): string | null => {
   }
 
   const isoDate = dt.toISODate();
-  if (!isoDate || isoDate < WAREKI_ERA_START) {
+  if (!isoDate || isoDate < MEIJI_ERA_START) {
     return null;
   }
 
   const parts = WAREKI_FORMATTER.formatToParts(dt.toJSDate());
 
   const era = parts.find((p) => p.type === 'era')?.value ?? '';
+  if (!SUPPORTED_ERAS.includes(era as (typeof SUPPORTED_ERAS)[number])) {
+    return null;
+  }
+
   const rawYear = parts.find((p) => p.type === 'year')?.value ?? '';
   const rawMonth = parts.find((p) => p.type === 'month')?.value ?? '';
   const rawDay = parts.find((p) => p.type === 'day')?.value ?? '';
@@ -81,7 +94,7 @@ export const toWareki = (date: string | Date | DateTime): string | null => {
 };
 
 /**
- * 和暦対応可否を判定する(令和以降のみ true)。
+ * 和暦対応可否を判定する(明治・大正・昭和・平成・令和の期間内であれば true)。
  */
 export const isWarekiSupported = (date: string | Date | DateTime): boolean => {
   return toWareki(date) !== null;
