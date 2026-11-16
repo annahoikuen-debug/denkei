@@ -15,6 +15,31 @@
 export const INVOICE_REGISTRATION_NUMBER_REGEX = /^T\d{13}$/;
 
 /**
+ * HTML 特殊文字をエスケープして XSS (クロスサイトスクリプティング) を防止する。
+ */
+export const escapeHtml = (str: string | null | undefined): string => {
+  if (str === null || str === undefined) {
+    return '';
+  }
+  return String(str).replace(/[&<>"']/g, (match) => {
+    switch (match) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case "'":
+        return '&#39;';
+      default:
+        return match;
+    }
+  });
+};
+
+/**
  * 適格請求書発行事業者登録番号の検証 (T + 13桁数字)
  */
 export const isValidInvoiceRegistrationNumber = (regNumber: string): boolean => {
@@ -111,11 +136,21 @@ export const generateQualifiedInvoiceHtml = (props: QualifiedInvoiceProps): stri
   const registrationNumber = props.issuerRegistrationNumber || DEFAULT_ISSUER.registrationNumber;
   const issuerAddress = props.issuerAddress || DEFAULT_ISSUER.address;
 
+  // XSS 対策: ユーザー入力および設定文字列を安全にエスケープ
+  const safeInvoiceId = escapeHtml(props.invoiceId);
+  const safeIssueDate = escapeHtml(props.issueDate);
+  const safeBillingPeriod = props.billingPeriod ? escapeHtml(props.billingPeriod) : '';
+  const safeCustomerName = escapeHtml(props.customerName);
+  const safeIssuerName = escapeHtml(issuerName);
+  const safeRegistrationNumber = escapeHtml(registrationNumber);
+  const safeIssuerAddress = escapeHtml(issuerAddress);
+  const safeItemName = escapeHtml(props.itemName);
+
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <title>適格請求書 - ${props.invoiceId}</title>
+  <title>適格請求書 - ${safeInvoiceId}</title>
   <style>
     @page { size: A4; margin: 20mm; }
     body {
@@ -232,23 +267,23 @@ export const generateQualifiedInvoiceHtml = (props: QualifiedInvoiceProps): stri
       <span class="invoice-badge">インボイス制度対応 (消費税法第57条の4準拠)</span>
     </div>
     <table class="meta-table">
-      <tr><td>請求番号:</td><td><strong>${props.invoiceId}</strong></td></tr>
-      <tr><td>発行日:</td><td>${props.issueDate}</td></tr>
-      ${props.billingPeriod ? `<tr><td>対象期間:</td><td>${props.billingPeriod}</td></tr>` : ''}
+      <tr><td>請求番号:</td><td><strong>${safeInvoiceId}</strong></td></tr>
+      <tr><td>発行日:</td><td>${safeIssueDate}</td></tr>
+      ${safeBillingPeriod ? `<tr><td>対象期間:</td><td>${safeBillingPeriod}</td></tr>` : ''}
     </table>
   </div>
 
   <div class="grid">
     <div>
       <div class="customer-box">
-        <span class="customer-name">${props.customerName}</span> 御中
+        <span class="customer-name">${safeCustomerName}</span> 御中
       </div>
       <p style="font-size: 12px; color: #64748b; margin-top: 8px;">下記の通りご請求申し上げます。</p>
     </div>
     <div class="issuer-box">
-      <div style="font-weight: 700; font-size: 15px;">${issuerName}</div>
-      <div class="reg-number">登録番号: ${registrationNumber}</div>
-      <div style="color: #475569; margin-top: 4px;">${issuerAddress}</div>
+      <div style="font-weight: 700; font-size: 15px;">${safeIssuerName}</div>
+      <div class="reg-number">登録番号: ${safeRegistrationNumber}</div>
+      <div style="color: #475569; margin-top: 4px;">${safeIssuerAddress}</div>
     </div>
   </div>
 
@@ -269,7 +304,7 @@ export const generateQualifiedInvoiceHtml = (props: QualifiedInvoiceProps): stri
     </thead>
     <tbody>
       <tr>
-        <td><strong>${props.itemName}</strong></td>
+        <td><strong>${safeItemName}</strong></td>
         <td style="text-align: center;">10%</td>
         <td style="text-align: center;">1</td>
         <td style="text-align: right;">¥${tax.netAmountJpy.toLocaleString('ja-JP')}</td>

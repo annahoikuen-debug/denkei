@@ -1,3 +1,4 @@
+import { useSession } from '@documenso/lib/client-only/providers/session';
 import { DocumentAuth, type TRecipientAccessAuthTypes } from '@documenso/lib/types/document-auth';
 import { joinJapaneseName } from '@documenso/lib/universal/japanese-name';
 import { trpc } from '@documenso/trpc/react';
@@ -9,7 +10,7 @@ import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
 import { RecipientRole } from '@prisma/client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
 
@@ -53,6 +54,7 @@ export default function WizardStepRecipientsPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const team = useCurrentTeam();
+  const { user } = useSession();
   const [searchParams] = useSearchParams();
 
   const envelopeId = searchParams.get('envelopeId') ?? '';
@@ -63,9 +65,34 @@ export default function WizardStepRecipientsPage() {
   const [signingOrderMode, setSigningOrderMode] = useState<TWizardRecipient['signingOrderMode']>('counterparty-first');
   const [verificationLevel, setVerificationLevel] = useState<TWizardRecipient['verificationLevel']>('low');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mutateAsync: createRecipients, isPending: isSavingRecipients } =
-    trpc.envelope.recipient.createMany.useMutation();
+  const { data: envelope } = trpc.envelope.get.useQuery({ envelopeId }, { enabled: Boolean(envelopeId) });
+
+  const { mutateAsync: createRecipients } = trpc.envelope.recipient.createMany.useMutation();
+  const { mutateAsync: deleteRecipient } = trpc.envelope.recipient.delete.useMutation();
+
+  // ステップ3から「戻る」で戻ってきた場合、既存の入力内容をフォームに自動補完する
+  useEffect(() => {
+    if (!envelope?.recipients?.length) {
+      return;
+    }
+
+    // 先方受取人（自社メールアドレス以外、または最初の受取人）を探す
+    const target =
+      envelope.recipients.find((r) => r.email.toLowerCase() !== user?.email?.toLowerCase()) ?? envelope.recipients[0];
+
+    if (target && !email) {
+      setEmail(target.email);
+      const nameParts = (target.name || '').trim().split(/\s+/);
+      if (nameParts.length >= 2) {
+        setSei(nameParts[0]);
+        setMei(nameParts.slice(1).join(' '));
+      } else {
+        setSei(target.name || '');
+      }
+    }
+  }, [envelope, user, email]);
 
   // ステップ1を経由せずアクセスした場合はウィザードの先頭へ戻す。
   if (!envelopeId) {
@@ -103,18 +130,91 @@ export default function WizardStepRecipientsPage() {
     const fullName = joinJapaneseName({ sei: parsed.data.sei, mei: parsed.data.mei });
 
     try {
-      // 宛先(PII)はここでエンベロープに保存し、URL には載せない。
-      await createRecipients({
-        envelopeId,
-        data: [
-          {
-            email: parsed.data.email,
-            name: fullName,
+      setIsSubmitting(true);
+
+      // 既存の受取人が存在する場合、クリーンアップして再登録する（再送信時の重複エラー防止）
+      if (envelope?.recipients && envelope.recipients.length > 0) {
+        for (const r of envelope.recipients) {
+          try {
+            await deleteRecipient({ recipientId: r.id });
+          } catch {
+            // すでに削除済みの場合は無視
+          }
+        }
+      }
+
+      const counterpartyAuth = VERIFICATION_LEVEL_TO_ACCESS_AUTH[parsed.data.verificationLevel];
+
+      // 署名順モードおよび自社署名者追加設定に応じた受取人リストを構築
+      const recipientsData: {
+        email: string;
+        name: string;
+        role: RecipientRole;
+        signingOrder: number;
+        accessAuth: TRecipientAccessAuthTypes[];
+      }[] = [];
+
+      const isSameEmail = Boolean(user?.email && parsed.data.email.toLowerCase() === user.email.toLowerCase());
+
+      if (parsed.data.signingOrderMode === 'counterparty-first') {
+        // 先方 → 自社
+        recipientsData.push({
+          email: parsed.data.email,
+          name: fullName,
+          role: RecipientRole.SIGNER,
+          signingOrder: 1,
+          accessAuth: counterpartyAuth,
+        });
+        if (user?.email && !isSameEmail) {
+          recipientsData.push({
+            email: user.email,
+            name: user.name || '自社署名者',
+            role: RecipientRole.SIGNER,
+            signingOrder: 2,
+            accessAuth: [],
+          });
+        }
+      } else if (parsed.data.signingOrderMode === 'company-first') {
+        // 自社 → 先方
+        if (user?.email && !isSameEmail) {
+          recipientsData.push({
+            email: user.email,
+            name: user.name || '自社署名者',
             role: RecipientRole.SIGNER,
             signingOrder: 1,
-            accessAuth: VERIFICATION_LEVEL_TO_ACCESS_AUTH[parsed.data.verificationLevel],
-          },
-        ],
+            accessAuth: [],
+          });
+        }
+        recipientsData.push({
+          email: parsed.data.email,
+          name: fullName,
+          role: RecipientRole.SIGNER,
+          signingOrder: user?.email && !isSameEmail ? 2 : 1,
+          accessAuth: counterpartyAuth,
+        });
+      } else {
+        // 同時に署名 (parallel)
+        recipientsData.push({
+          email: parsed.data.email,
+          name: fullName,
+          role: RecipientRole.SIGNER,
+          signingOrder: 1,
+          accessAuth: counterpartyAuth,
+        });
+        if (user?.email && !isSameEmail) {
+          recipientsData.push({
+            email: user.email,
+            name: user.name || '自社署名者',
+            role: RecipientRole.SIGNER,
+            signingOrder: 1,
+            accessAuth: [],
+          });
+        }
+      }
+
+      await createRecipients({
+        envelopeId,
+        data: recipientsData,
       });
     } catch (err: unknown) {
       const errMessage = err instanceof Error ? err.message : String(err);
@@ -131,6 +231,8 @@ export default function WizardStepRecipientsPage() {
       });
 
       return;
+    } finally {
+      setIsSubmitting(false);
     }
 
     // 次ステップへは envelopeId のみを渡す(PII は URL に含めない)。
@@ -260,7 +362,7 @@ export default function WizardStepRecipientsPage() {
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
             <Trans>戻る</Trans>
           </Button>
-          <Button type="submit" data-testid="wizard-step2-next" loading={isSavingRecipients}>
+          <Button type="submit" data-testid="wizard-step2-next" loading={isSubmitting}>
             <Trans>次へ</Trans>
           </Button>
         </div>

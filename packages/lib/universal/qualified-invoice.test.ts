@@ -82,6 +82,31 @@ describe('適格請求書(インボイス制度) ユーティリティ', () => {
       expect(html).toContain('消費税法第57条の4準拠');
     });
 
+    it('XSS ペイロードを含む顧客名や品目名が安全にエスケープされる', () => {
+      const html = generateQualifiedInvoiceHtml({
+        invoiceId: 'INV-<script>alert(1)</script>',
+        issueDate: '2026-10-16',
+        billingPeriod: '2026年" onfocus="alert(2)',
+        customerName: '<script>alert("xss")</script>テスト株式会社',
+        itemName: '<img src=x onerror=alert(3)>クラウド利用料',
+        issuerName: '<b>悪意のある発行者</b>',
+        amountJpy: 10000,
+      });
+
+      // スクリプトタグやイベントハンドラが生のまま出力されていないこと
+      expect(html).not.toContain('<script>alert("xss")</script>');
+      expect(html).not.toContain('<script>alert(1)</script>');
+      expect(html).not.toContain('<img src=x onerror=alert(3)>');
+      expect(html).not.toContain('<b>悪意のある発行者</b>');
+      expect(html).not.toContain('" onfocus="');
+
+      // 安全にエスケープされた文字列が含まれていること
+      expect(html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;テスト株式会社');
+      expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+      expect(html).toContain('&lt;img src=x onerror=alert(3)&gt;クラウド利用料');
+      expect(html).toContain('&lt;b&gt;悪意のある発行者&lt;/b&gt;');
+    });
+
     it('年払い一括用の適格請求書兼領収書HTMLが正しく出力される', async () => {
       const { generateAnnualQualifiedInvoiceHtml } = await import('./qualified-invoice');
 

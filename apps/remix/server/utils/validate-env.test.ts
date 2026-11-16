@@ -32,10 +32,22 @@ describe('validateRequiredEnv', () => {
     expect(() => validateRequiredEnv({ isTest: false, exitOnFailure: false })).not.toThrow();
   });
 
+  it('DATABASE_URL のみ設定されている場合でもフォールバック代入されて合格する', () => {
+    process.env.NEXTAUTH_SECRET = 'test-secret-at-least-32-chars-long-abcdef';
+    process.env.NEXT_PRIVATE_ENCRYPTION_KEY = 'test-key-at-least-32-chars-long-abcdef';
+    delete (process.env as Record<string, string | undefined>).NEXT_PRIVATE_DATABASE_URL;
+    process.env.DATABASE_URL = 'postgresql://user:pass@railway:5432/db';
+
+    expect(() => validateRequiredEnv({ isTest: false, exitOnFailure: false })).not.toThrow();
+    expect(process.env.NEXT_PRIVATE_DATABASE_URL).toBe('postgresql://user:pass@railway:5432/db');
+  });
+
   it('必須環境変数が欠落しており exitOnFailure: false の場合、不足変数名を含む例外をスローする', () => {
     delete (process.env as Record<string, string | undefined>).NEXTAUTH_SECRET;
     process.env.NEXT_PRIVATE_ENCRYPTION_KEY = 'valid-key';
     delete (process.env as Record<string, string | undefined>).NEXT_PRIVATE_DATABASE_URL;
+    delete (process.env as Record<string, string | undefined>).DATABASE_URL;
+    delete (process.env as Record<string, string | undefined>).POSTGRES_URL;
 
     expect(() => validateRequiredEnv({ isTest: false, exitOnFailure: false })).toThrowError(
       /NEXTAUTH_SECRET.*NEXT_PRIVATE_DATABASE_URL/,
@@ -44,7 +56,7 @@ describe('validateRequiredEnv', () => {
 
   it('必須環境変数が欠落しており exitOnFailure: true の場合、process.exit(1) を呼び出す', () => {
     delete (process.env as Record<string, string | undefined>).NEXTAUTH_SECRET;
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any);
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     validateRequiredEnv({ isTest: false, exitOnFailure: true });

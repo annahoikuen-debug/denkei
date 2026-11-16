@@ -86,7 +86,9 @@ export default function WizardStepUploadPage() {
 
         {/* Quota Badge for SMB Plan */}
         <div className="flex items-center gap-2 rounded-xl border border-border/80 bg-muted/40 px-3.5 py-2 text-xs">
-          <span className="font-semibold text-foreground">Standard</span>
+          <span className="font-semibold text-foreground">
+            {quota.documents > 500 ? 'Business' : quota.documents <= 5 ? 'Free' : 'Standard'}
+          </span>
           <span className="text-muted-foreground">|</span>
           <span className="text-muted-foreground">
             <Trans>月間残枠:</Trans> <strong className="text-foreground">{remaining.documents}</strong> /{' '}

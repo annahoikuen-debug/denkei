@@ -55,4 +55,24 @@ describe('buildElectronicLedgerCsv', () => {
 
     expect(dataLine).toBe('env_3,NDA,,,,,');
   });
+
+  it('数式文字で始まる値が安全にサニタイズ(CSVインジェクション対策)される', () => {
+    const csv = buildElectronicLedgerCsv([
+      {
+        documentId: 'env_4',
+        title: '=cmd|"/C calc"!A0',
+        contractType: '+SUM(1,2)',
+        counterpartyName: '@evil_domain',
+        contractAmount: -5000,
+        contractDate: '2026-10-15',
+        completedAt: null,
+      },
+    ]);
+
+    expect(csv).toContain("'=cmd");
+    expect(csv).toContain("'+SUM");
+    expect(csv).toContain("'@evil_domain");
+    // 純粋な負数はそのまま出力されること
+    expect(csv).toContain('-5000');
+  });
 });

@@ -48,6 +48,7 @@ export default function WizardStepFieldsPage() {
     { enabled: Boolean(envelopeId) },
   );
 
+  const { mutateAsync: updateEnvelope } = trpc.envelope.update.useMutation();
   const { mutateAsync: createFields } = trpc.envelope.field.createMany.useMutation();
   const { mutateAsync: distributeEnvelope } = trpc.envelope.distribute.useMutation();
 
@@ -58,44 +59,99 @@ export default function WizardStepFieldsPage() {
     return <Navigate to={`/t/${team.url}/new/recipients`} replace />;
   }
 
-  const signer =
-    envelope?.recipients.find((recipient) => recipient.role === RecipientRole.SIGNER) ?? envelope?.recipients[0];
+  const signers = envelope?.recipients.filter((recipient) => recipient.role === RecipientRole.SIGNER) ?? [];
+  const primarySigner = signers[0];
 
   const onSend = async () => {
-    if (!envelopeId || !signer || isSending) {
+    if (!envelopeId || signers.length === 0 || isSending) {
       return;
     }
 
     try {
       setIsSending(true);
 
+      // 有効期限設定をエンベロープメタデータに反映する
+      const envelopeExpirationPeriod =
+        expirationDays === 'none'
+          ? { disabled: true as const }
+          : { unit: 'day' as const, amount: parseInt(expirationDays, 10) };
+
+      await updateEnvelope({
+        envelopeId,
+        meta: {
+          envelopeExpirationPeriod,
+        },
+      });
+
       // 冪等性チェック: すでにフィールドが存在する場合は自動配置をスキップ
       const hasExistingFields = (envelope?.fields?.length ?? 0) > 0;
 
       if (!hasExistingFields) {
-        // 簡易モード: 1ページ目に署名欄と日付を自動配置する(% ベースの座標)。
+        const fieldsData: Parameters<typeof createFields>[0]['data'] =
+          signers.length >= 2
+            ? [
+                {
+                  type: 'SIGNATURE',
+                  recipientId: signers[0].id,
+                  page: 1,
+                  positionX: 10,
+                  positionY: 55,
+                  width: 35,
+                  height: 12,
+                },
+                {
+                  type: 'DATE',
+                  recipientId: signers[0].id,
+                  page: 1,
+                  positionX: 10,
+                  positionY: 70,
+                  width: 35,
+                  height: 8,
+                },
+                {
+                  type: 'SIGNATURE',
+                  recipientId: signers[1].id,
+                  page: 1,
+                  positionX: 55,
+                  positionY: 55,
+                  width: 35,
+                  height: 12,
+                },
+                {
+                  type: 'DATE',
+                  recipientId: signers[1].id,
+                  page: 1,
+                  positionX: 55,
+                  positionY: 70,
+                  width: 35,
+                  height: 8,
+                },
+              ]
+            : [
+                {
+                  type: 'SIGNATURE',
+                  recipientId: primarySigner.id,
+                  page: 1,
+                  positionX: 30,
+                  positionY: 50,
+                  width: 40,
+                  height: 12,
+                },
+                {
+                  type: 'DATE',
+                  recipientId: primarySigner.id,
+                  page: 1,
+                  positionX: 30,
+                  positionY: 68,
+                  width: 40,
+                  height: 8,
+                },
+              ];
+
+        // 簡易モード: 署名欄と日付を自動配置する(% ベースの座標)。
         await createFields({
           envelopeId,
-          data: [
-            {
-              type: 'SIGNATURE',
-              recipientId: signer.id,
-              page: 1,
-              positionX: 30,
-              positionY: 50,
-              width: 40,
-              height: 12,
-            },
-            {
-              type: 'DATE',
-              recipientId: signer.id,
-              page: 1,
-              positionX: 30,
-              positionY: 68,
-              width: 40,
-              height: 8,
-            },
-          ],
+          data: fieldsData,
         });
       }
 
@@ -107,9 +163,10 @@ export default function WizardStepFieldsPage() {
         },
       });
 
+      const recipientEmails = signers.map((s) => s.email).join(', ');
       toast({
         title: _(msg`契約書を送信しました`),
-        description: _(msg`${signer.email} 宛に署名依頼メールを送信しました。`),
+        description: _(msg`${recipientEmails} 宛に署名依頼メールを送信しました。`),
       });
 
       void navigate(`/t/${team.url}/documents`);
@@ -159,10 +216,15 @@ export default function WizardStepFieldsPage() {
             <dd data-testid="wizard-summary-name">
               {isLoadingEnvelope ? (
                 <span className="text-muted-foreground">読み込み中...</span>
-              ) : signer ? (
-                <>
-                  {signer.name} <span className="text-muted-foreground">({signer.email})</span>
-                </>
+              ) : signers.length > 0 ? (
+                <ul className="space-y-1">
+                  {signers.map((s) => (
+                    <li key={s.id}>
+                      {s.signingOrder ? `[署名順 ${s.signingOrder}] ` : ''}
+                      {s.name} <span className="text-muted-foreground">({s.email})</span>
+                    </li>
+                  ))}
+                </ul>
               ) : (
                 <span className="text-destructive">宛先が未設定です。ステップ2へ戻って入力してください。</span>
               )}
@@ -271,7 +333,7 @@ export default function WizardStepFieldsPage() {
 
         <div className="flex gap-2">
           <Button variant="outline" asChild data-testid="wizard-advanced-mode">
-            <Link to={`/t/${team.url}/documents`}>
+            <Link to={`/t/${team.url}/documents/${envelopeId}/edit`}>
               <Trans>詳細モードで編集</Trans>
             </Link>
           </Button>
@@ -279,7 +341,7 @@ export default function WizardStepFieldsPage() {
           <Button
             data-testid="wizard-send"
             loading={isSending}
-            disabled={isSending || isLoadingEnvelope || !signer}
+            disabled={isSending || isLoadingEnvelope || signers.length === 0}
             onClick={() => void onSend()}
           >
             <Trans>送信</Trans>

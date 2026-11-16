@@ -1,4 +1,4 @@
-import { createHash, randomInt } from 'node:crypto';
+import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
 
 /**
  * フェーズ2 ステップ4: メールOTP(LOW レベル本人確認)ユーティリティ
@@ -94,7 +94,11 @@ export const verifyOtp = (input: OtpVerificationInput): OtpVerificationResult =>
     return { status: 'locked' };
   }
 
-  if (hashOtp(input.inputOtp) !== input.storedHash) {
+  const computedHash = Buffer.from(hashOtp(input.inputOtp), 'utf8');
+  const storedHash = Buffer.from(input.storedHash, 'utf8');
+
+  // タイミング攻撃耐性: timingSafeEqual による固定時間比較
+  if (computedHash.length !== storedHash.length || !timingSafeEqual(computedHash, storedHash)) {
     return { status: 'invalid' };
   }
 

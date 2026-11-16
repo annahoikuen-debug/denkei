@@ -18,12 +18,23 @@ export type ElectronicLedgerCsvRow = {
 
 const CSV_HEADERS = ['ドキュメントID', 'タイトル', '契約種別', '取引先名', '金額(円)', '締結日', '完了日時'] as const;
 
+const FORMULA_PREFIX_REGEX = /^[=+\-@\t\r]/;
+
 const escapeCsvField = (value: string | null | undefined): string => {
   if (value === null || value === undefined) {
     return '';
   }
 
-  const str = String(value);
+  let str = String(value);
+
+  // CSV インジェクション対策: 先頭が数式トリガー記号の場合に単一引用符で無害化
+  // ただし、数値のみの負数 (例: "-1000", "-50.5") は通常の数値として許可する
+  if (FORMULA_PREFIX_REGEX.test(str)) {
+    const isPureNegativeNumber = /^-?\d+(\.\d+)?$/.test(str.trim());
+    if (!isPureNegativeNumber) {
+      str = `'${str}`;
+    }
+  }
 
   // カンマ・ダブルクォート・改行を含む場合はクォート
   if (/[",\r\n]/.test(str)) {

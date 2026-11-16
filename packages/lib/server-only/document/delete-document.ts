@@ -1,6 +1,6 @@
 import { prisma } from '@documenso/prisma';
 import type { DocumentMeta, Envelope, Recipient, User } from '@prisma/client';
-import { DocumentStatus, EnvelopeType, RecipientRole, SendStatus, WebhookTriggerEvents } from '@prisma/client';
+import { EnvelopeType, RecipientRole, SendStatus, WebhookTriggerEvents } from '@prisma/client';
 
 import { AppError, AppErrorCode } from '../../errors/app-error';
 import { jobs } from '../../jobs/client';
@@ -142,48 +142,27 @@ const handleDocumentOwnerDelete = async ({ envelope, user, requestMetadata }: Ha
     meta: envelope.documentMeta,
   });
 
-  // Soft delete completed documents.
-  if (isDocumentCompleted(envelope.status)) {
-    return await prisma.$transaction(async (tx) => {
-      await createDocumentAuditLog(tx, {
-        envelopeId: envelope.id,
-        type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELETED,
-        metadata: requestMetadata,
-        data: {
-          type: 'SOFT',
-        },
-      });
+  // 電子帳簿保存法(真実性・追跡可能性)および WORM トリガー対応:
+  // 下書き・保留・完了を問わず、すべての文書削除を論理削除(deletedAt 更新)に統一する。
+  // これにより DocumentAuditLog.envelopeId が保持され、完全な追跡可能性が担保される。
+  const deleteType = isDocumentCompleted(envelope.status) ? 'SOFT' : 'HARD';
 
-      return await tx.envelope.update({
-        where: {
-          id: envelope.id,
-        },
-        data: {
-          deletedAt: new Date().toISOString(),
-        },
-      });
-    });
-  }
-
-  // Hard delete draft and pending documents.
   const deletedEnvelope = await prisma.$transaction(async (tx) => {
-    // Currently redundant since deleting a document will delete the audit logs.
-    // However may be useful if we disassociate audit logs and documents if required.
     await createDocumentAuditLog(tx, {
       envelopeId: envelope.id,
       type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_DELETED,
       metadata: requestMetadata,
       data: {
-        type: 'HARD',
+        type: deleteType,
       },
     });
 
-    return await tx.envelope.delete({
+    return await tx.envelope.update({
       where: {
         id: envelope.id,
-        status: {
-          not: DocumentStatus.COMPLETED,
-        },
+      },
+      data: {
+        deletedAt: new Date().toISOString(),
       },
     });
   });
