@@ -1,4 +1,6 @@
+import { AppError, AppErrorCode } from '@documenso/lib/errors/app-error';
 import { env } from '@documenso/lib/utils/env';
+import { logger } from '@documenso/lib/utils/logger';
 import { ResendTransport } from '@documenso/nodemailer-resend';
 import type { Transporter } from 'nodemailer';
 import { createTransport } from 'nodemailer';
@@ -64,7 +66,11 @@ const getTransport = (): Transporter => {
 
   if (transport === 'resend') {
     if (!env('NEXT_PRIVATE_RESEND_API_KEY')) {
-      throw new Error('Resend transport requires NEXT_PRIVATE_RESEND_API_KEY');
+      logger.error({ transport: 'resend', missing: 'NEXT_PRIVATE_RESEND_API_KEY' }, 'メールトランスポート設定エラー');
+      throw new AppError(AppErrorCode.MISSING_ENV_VAR, {
+        message: 'Resend transport requires NEXT_PRIVATE_RESEND_API_KEY',
+        statusCode: 500,
+      });
     }
 
     return createTransport(
@@ -76,7 +82,14 @@ const getTransport = (): Transporter => {
 
   if (transport === 'smtp-api') {
     if (!env('NEXT_PRIVATE_SMTP_HOST') || !env('NEXT_PRIVATE_SMTP_APIKEY')) {
-      throw new Error('SMTP API transport requires NEXT_PRIVATE_SMTP_HOST and NEXT_PRIVATE_SMTP_APIKEY');
+      logger.error(
+        { transport: 'smtp-api', missing: 'NEXT_PRIVATE_SMTP_HOST or NEXT_PRIVATE_SMTP_APIKEY' },
+        'メールトランスポート設定エラー',
+      );
+      throw new AppError(AppErrorCode.MISSING_ENV_VAR, {
+        message: 'SMTP API transport requires NEXT_PRIVATE_SMTP_HOST and NEXT_PRIVATE_SMTP_APIKEY',
+        statusCode: 500,
+      });
     }
 
     return createTransport({

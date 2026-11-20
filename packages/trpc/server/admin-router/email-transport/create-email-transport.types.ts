@@ -1,3 +1,4 @@
+import { ZEmailSchema } from '@documenso/lib/schemas/common';
 import { ZEmailTransportConfigSchema } from '@documenso/lib/server-only/email/email-transport-config';
 import { ZNameSchema } from '@documenso/lib/types/name';
 import { z } from 'zod';
@@ -5,7 +6,7 @@ import { z } from 'zod';
 export const ZCreateEmailTransportRequestSchema = z.object({
   name: ZNameSchema,
   fromName: ZNameSchema,
-  fromAddress: z.string().email(),
+  fromAddress: ZEmailSchema,
   config: ZEmailTransportConfigSchema,
 });
 

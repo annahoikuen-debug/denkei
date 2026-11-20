@@ -103,8 +103,9 @@ describe('assertNotPrivateUrl', () => {
     it('should silently allow when DNS lookup times out (returns null)', async () => {
       const lookup = vi.fn().mockReturnValue(new Promise(() => {}));
 
-      // withTimeout races the lookup against a 250ms timer and returns null
-      // if the lookup doesn't settle in time, so the function returns early.
+      // withTimeout races the lookup against a 250ms timer and throws a
+      // TimeoutError if the lookup doesn't settle in time. The outer catch
+      // swallows non-AppError exceptions, so the function returns early.
       await expect(assertNotPrivateUrl('https://slow.example.com', { lookup })).resolves.toBeUndefined();
     }, 10_000);
   });

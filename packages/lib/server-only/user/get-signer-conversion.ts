@@ -11,7 +11,7 @@ export const getSignerConversionMonthly = async () => {
       fn
         .sum(fn.count('Recipient.email').distinct())
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-        .over((ob) => ob.orderBy(fn('DATE_TRUNC', [sql.lit('MONTH'), 'User.createdAt']) as any))
+        .over((ob) => ob.orderBy(fn<Date>('DATE_TRUNC', [sql.lit('MONTH'), 'User.createdAt'])))
         .as('cume_count'),
     ])
     .where('Recipient.signedAt', 'is not', null)

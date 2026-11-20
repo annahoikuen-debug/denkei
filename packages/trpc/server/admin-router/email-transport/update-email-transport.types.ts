@@ -1,3 +1,4 @@
+import { ZEmailSchema } from '@documenso/lib/schemas/common';
 import {
   ZMailChannelsConfigSchema,
   ZResendConfigSchema,
@@ -24,7 +25,7 @@ export const ZUpdateEmailTransportRequestSchema = z.object({
   data: z.object({
     name: ZNameSchema,
     fromName: ZNameSchema,
-    fromAddress: z.string().email(),
+    fromAddress: ZEmailSchema,
     config: ZUpdateConfigSchema,
   }),
 });

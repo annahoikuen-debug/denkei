@@ -4,6 +4,7 @@ import type { User } from '@prisma/client';
 
 import { SALT_ROUNDS } from '../../constants/auth';
 import { AppError, AppErrorCode } from '../../errors/app-error';
+import { logger } from '../../utils/logger';
 import { createPersonalOrganisation } from '../organisation/create-organisation';
 
 export interface CreateUserOptions {
@@ -36,8 +37,7 @@ export const createUser = async ({ name, email, password, signature }: CreateUse
   });
 
   await onCreateUserHook(user).catch((err) => {
-    // Todo: (RR7) Add logging.
-    console.error(err);
+    logger.error({ err }, 'Failed to run onCreateUserHook');
   });
 
   return user;

@@ -1,8 +1,9 @@
+import { ZEmailSchema } from '@documenso/lib/schemas/common';
 import { z } from 'zod';
 
 export const ZSendTestEmailTransportRequestSchema = z.object({
   id: z.string(),
-  to: z.string().email(),
+  to: ZEmailSchema,
 });
 
 export const ZSendTestEmailTransportResponseSchema = z.void();

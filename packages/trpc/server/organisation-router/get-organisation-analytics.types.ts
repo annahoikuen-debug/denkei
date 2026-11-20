@@ -1,3 +1,4 @@
+import { ZPositiveIntSchema } from '@documenso/lib/schemas/common';
 import { z } from 'zod';
 
 import {
@@ -24,7 +25,7 @@ export type TOrganisationAnalyticsRequest = z.infer<typeof ZOrganisationAnalytic
 const ZCountSchema = z.number().int().nonnegative();
 
 const ZAnalyticsTeamSchema = z.object({
-  id: z.number().int().positive(),
+  id: ZPositiveIntSchema,
   name: z.string(),
   url: z.string(),
   avatarImageId: z.string().nullable(),
@@ -106,7 +107,7 @@ export const ZGetOrganisationAnalyticsTemplateUsageResponseSchema = z.object({
   templates: z.array(
     z.object({
       /** Legacy numeric template id (Envelope.templateId on documents). */
-      id: z.number().int().positive(),
+      id: ZPositiveIntSchema,
       /** Envelope id of the template, null when the template was deleted. */
       envelopeId: z.string().nullable(),
       title: z.string().nullable(),

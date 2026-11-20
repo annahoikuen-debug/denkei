@@ -5,7 +5,7 @@ import { DOCUMENT_AUDIT_LOG_TYPE } from '../../types/document-audit-logs';
 import { createDocumentAuditLog } from './create-document-audit-log';
 
 describe('createDocumentAuditLog', () => {
-  it('トランザクションクライアント内で Envelope の行ロック(FOR UPDATE)を実行し、直前ハッシュを引き継ぐ', async () => {
+  it('トランザクションクライアント内で Advisory Lock を取得し、直前ハッシュを引き継ぐ', async () => {
     const mockExecuteRaw = vi.fn().mockResolvedValue(1);
     const mockFindFirst = vi.fn().mockResolvedValue({ hash: 'prev_hash_12345' });
     const mockCreate = vi.fn().mockImplementation(async ({ data }) => ({
@@ -15,6 +15,7 @@ describe('createDocumentAuditLog', () => {
 
     const mockTx = {
       $executeRaw: mockExecuteRaw,
+      $executeRawUnsafe: mockExecuteRaw,
       documentAuditLog: {
         findFirst: mockFindFirst,
         create: mockCreate,
@@ -24,9 +25,10 @@ describe('createDocumentAuditLog', () => {
     const result = await createDocumentAuditLog(mockTx, {
       envelopeId: 'env_test_1',
       type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CREATED,
+      data: { title: 'Test Document' },
     });
 
-    // 行ロックが呼ばれたこと
+    // Advisory Lock が呼ばれたこと
     expect(mockExecuteRaw).toHaveBeenCalledTimes(1);
 
     // 直前ハッシュが引き継がれていること
@@ -45,6 +47,7 @@ describe('createDocumentAuditLog', () => {
 
     const mockTx = {
       $executeRaw: mockExecuteRaw,
+      $executeRawUnsafe: mockExecuteRaw,
       documentAuditLog: {
         findFirst: mockFindFirst,
         create: mockCreate,
@@ -54,6 +57,7 @@ describe('createDocumentAuditLog', () => {
     await createDocumentAuditLog(mockTx, {
       envelopeId: 'env_test_2',
       type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_CREATED,
+      data: { title: 'Test Document' },
     });
 
     const createCallData = mockCreate.mock.calls[0][0].data;
@@ -68,6 +72,7 @@ describe('createDocumentAuditLog', () => {
 
     const innerTx = {
       $executeRaw: mockExecuteRaw,
+      $executeRawUnsafe: mockExecuteRaw,
       documentAuditLog: {
         findFirst: mockFindFirst,
         create: mockCreate,
@@ -83,6 +88,13 @@ describe('createDocumentAuditLog', () => {
     await createDocumentAuditLog(mockPrisma, {
       envelopeId: 'env_test_3',
       type: DOCUMENT_AUDIT_LOG_TYPE.DOCUMENT_OPENED,
+      data: {
+        recipientEmail: 'test@test.com',
+        recipientName: 'Test User',
+        recipientId: 1,
+        recipientRole: 'SIGNER',
+        accessAuth: [],
+      },
     });
 
     expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);

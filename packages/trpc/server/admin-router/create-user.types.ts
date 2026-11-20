@@ -1,8 +1,9 @@
+import { ZEmailSchema } from '@documenso/lib/schemas/common';
 import { ZNameSchema } from '@documenso/lib/types/name';
 import { z } from 'zod';
 
 export const ZCreateUserRequestSchema = z.object({
-  email: z.string().email().min(1),
+  email: ZEmailSchema,
   name: ZNameSchema,
 });
 

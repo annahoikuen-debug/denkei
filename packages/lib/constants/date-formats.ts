@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon';
 
+import { getDateTimeFormatter } from '../utils/intl-cache';
+
 import { DEFAULT_DOCUMENT_TIME_ZONE } from './time-zones';
 
 export const DEFAULT_DOCUMENT_DATE_FORMAT = 'yyyy年M月d日';
@@ -219,4 +221,23 @@ export const convertToLocalSystemFormat = (
 
 export const isValidDateFormat = (dateFormat: unknown): dateFormat is ValidDateFormat => {
   return VALID_DATE_FORMAT_VALUES.includes(dateFormat as ValidDateFormat);
+};
+
+/**
+ * Intl.DateTimeFormat のキャッシュを使用して日付をフォーマットする。
+ * 標準的な Intl.DateTimeFormat オプションでフォーマット可能な形式の場合に使用する。
+ * Luxon のカスタムフォーマット文字列（yyyy年M月d日 など）はサポートしない。
+ *
+ * @example
+ * formatDateWithIntlCache(new Date('2026-10-15'), 'ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+ * // '2026年10月15日'
+ */
+export const formatDateWithIntlCache = (
+  date: Date | string | number,
+  locale: string = 'ja-JP',
+  options: Intl.DateTimeFormatOptions = {},
+): string => {
+  const formatter = getDateTimeFormatter(locale, options);
+  const dateObj = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+  return formatter.format(dateObj);
 };

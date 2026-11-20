@@ -20,6 +20,7 @@ import { AdminDocumentDeleteDialog } from '~/components/dialogs/admin-document-d
 import { DocumentStatus } from '~/components/general/document/document-status';
 import { AdminDocumentJobsTable } from '~/components/tables/admin-document-jobs-table';
 import { AdminDocumentLogsTable } from '~/components/tables/admin-document-logs-table';
+import type { RecipientItemProps } from '~/components/tables/admin-document-recipient-item-table';
 import { AdminDocumentRecipientsTable } from '~/components/tables/admin-document-recipients-table';
 
 import type { Route } from './+types/documents.$id';
@@ -168,7 +169,7 @@ export default function AdminDocumentDetailsPage({ loaderData }: Route.Component
         <AdminDocumentRecipientsTable
           envelopeId={envelope.id}
           isDocumentCompleted={Boolean(envelope.completedAt)}
-          recipients={envelope.recipients as any}
+          recipients={envelope.recipients as unknown as RecipientItemProps['recipient'][]}
         />
       </div>
 

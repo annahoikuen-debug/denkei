@@ -11,7 +11,7 @@ export const getUserMonthlyGrowth = async () => {
         .sum(fn.count('id'))
         // Feels like a bug in the Kysely extension but I just can not do this orderBy in a type-safe manner
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
-        .over((ob) => ob.orderBy(fn('DATE_TRUNC', [sql.lit('MONTH'), 'User.createdAt']) as any))
+        .over((ob) => ob.orderBy(fn<Date>('DATE_TRUNC', [sql.lit('MONTH'), 'User.createdAt'])))
         .as('cume_count'),
     ])
     .groupBy('month')

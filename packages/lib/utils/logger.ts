@@ -26,8 +26,11 @@ if (loggingFilePath) {
   });
 }
 
+export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+
 export const logger = pino({
-  level: 'info',
+  level: (env('LOG_LEVEL') as LogLevel) ?? 'info',
+  redact: ['req.headers.authorization', 'res.headers.authorization'],
   transport:
     transports.length > 0
       ? {
@@ -35,6 +38,10 @@ export const logger = pino({
         }
       : undefined,
 });
+
+export const withRequestId = (requestId: string) => {
+  return logger.child({ requestId });
+};
 
 export const logDocumentAccess = ({
   request,

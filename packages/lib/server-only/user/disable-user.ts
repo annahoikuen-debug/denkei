@@ -1,4 +1,5 @@
 import { AppError } from '@documenso/lib/errors/app-error';
+import { logger } from '@documenso/lib/utils/logger';
 import { prisma } from '@documenso/prisma';
 
 export type DisableUserOptions = {
@@ -63,7 +64,7 @@ export const disableUser = async ({ id }: DisableUserOptions) => {
       });
     });
   } catch (error) {
-    console.error('Error disabling user', error);
+    logger.error({ err: error }, 'Error disabling user');
     throw error;
   }
 };

@@ -1,14 +1,17 @@
 import { assertNotEmbedSession } from '@documenso/auth/server/lib/session/embed-session-restrictions';
 import { AppError, genericErrorCodeToTrpcErrorCodeMap } from '@documenso/lib/errors/app-error';
 import { getApiTokenByToken } from '@documenso/lib/server-only/public-api/get-api-token-by-token';
+import { assertRateLimit } from '@documenso/lib/server-only/rate-limit/rate-limit-middleware';
+import { apiTrpcRateLimit } from '@documenso/lib/server-only/rate-limit/rate-limits';
 import { assertUserNotDisabled } from '@documenso/lib/server-only/user/assert-user-not-disabled';
 import type { TrpcApiLog } from '@documenso/lib/types/api-logs';
 import type { ApiRequestMetadata } from '@documenso/lib/universal/extract-request-metadata';
+import { getIpAddress } from '@documenso/lib/universal/get-ip-address';
 import { alphaid } from '@documenso/lib/universal/id';
 import { isAdmin } from '@documenso/lib/utils/is-admin';
+import { logger } from '@documenso/lib/utils/logger';
 import { initTRPC, TRPCError } from '@trpc/server';
 import type { AnyZodObject } from 'zod';
-
 import { dataTransformer } from '../utils/data-transformer';
 import type { TrpcContext } from './context';
 
@@ -53,6 +56,17 @@ const t = initTRPC
       // Default unknown errors to 400, since if you're throwing an AppError it is expected
       // that you already know what you're doing.
       if (originalError instanceof AppError) {
+        // 構造化ログ出力：エラーコード、ステータスコード、メッセージをログに記録
+        logger.warn(
+          {
+            code: originalError.code,
+            statusCode: originalError.statusCode,
+            message: originalError.message,
+            userMessage: originalError.userMessage,
+          },
+          'TRPC エラーが発生しました',
+        );
+
         if (originalError.headers && ctx) {
           for (const [headerKey, headerValue] of Object.entries(originalError.headers)) {
             ctx.res.headers.append(headerKey, headerValue);
@@ -65,6 +79,16 @@ const t = initTRPC
           code: originalError.code,
           httpStatus: originalError.statusCode ?? genericErrorCodeToTrpcErrorCodeMap[originalError.code]?.status ?? 400,
         };
+      } else if (originalError instanceof Error) {
+        // 予期しないエラー（AppError 以外）は error レベルでログ出力
+        logger.error(
+          {
+            name: originalError.name,
+            message: originalError.message,
+            stack: originalError.stack,
+          },
+          '予期しない TRPC エラーが発生しました',
+        );
       }
 
       return {
@@ -402,11 +426,79 @@ export const procedureMiddleware = t.middleware(async ({ ctx, next, path }) => {
 });
 
 /**
+ * リクエストログミドルウェア (TASK-08)
+ *
+ * 全 TRPC プロシージャに対してリクエストの開始・終了時刻を記録し、
+ * レイテンシ (durationMs) を構造化ログとして出力します。
+ * これによりログ収集システム (Datadog, CloudWatch 等) で
+ * リクエスト数、エラー率、レイテンシのメトリクス化が可能になります。
+ */
+export const requestLogMiddleware = t.middleware(async ({ ctx, next, path, type }) => {
+  const startTime = Date.now();
+
+  const result = await next();
+
+  const durationMs = Date.now() - startTime;
+
+  ctx.logger.info({
+    path,
+    type,
+    durationMs,
+    position: 'trpcRequest',
+  });
+
+  return result;
+});
+
+/**
+ * レート制限ミドルウェア (TASK-03)
+ *
+ * トリPC 全プロシージャに対して IP ベースのレート制限を適用します。
+ * `apiTrpcRateLimit` (1分間 100 リクエスト) を使用し、
+ * 制限超過時は `assertRateLimit` で AppError をスローします。
+ */
+export const rateLimitMiddleware = t.middleware(async ({ ctx, next }) => {
+  let ip: string;
+
+  try {
+    ip = getIpAddress(ctx.req);
+  } catch {
+    ip = 'unknown';
+  }
+
+  const result = await apiTrpcRateLimit.check({ ip });
+
+  // 制限ヘッダーをレスポンスに設定 (Hono context を経由しないため、AppError ヘッダー経由で通知)
+  if (result.isLimited) {
+    assertRateLimit(result);
+  }
+
+  return await next({
+    ctx: {
+      ...ctx,
+      logger: ctx.logger.child({
+        rateLimitRemaining: result.remaining,
+        rateLimitReset: result.reset.toISOString(),
+      }),
+    },
+  });
+});
+
+/**
  * Routers and Procedures
  */
 export const router = t.router;
-export const procedure = t.procedure.use(procedureMiddleware);
-export const authenticatedProcedure = t.procedure.use(authenticatedMiddleware);
+// procedureMiddleware の後に rateLimitMiddleware を適用
+// requestLogMiddleware は常に最初に適用し、ベースの TrpcContext に対してログ出力を行う
+// バリデーションは各プロシージャの input (ZodSchema) で自動適用される
+export const procedure = t.procedure.use(requestLogMiddleware).use(procedureMiddleware).use(rateLimitMiddleware);
+export const authenticatedProcedure = t.procedure
+  .use(requestLogMiddleware)
+  .use(authenticatedMiddleware)
+  .use(rateLimitMiddleware);
 // While this is functionally the same as `procedure`, it's useful for indicating purpose
-export const maybeAuthenticatedProcedure = t.procedure.use(maybeAuthenticatedMiddleware);
-export const adminProcedure = t.procedure.use(adminMiddleware);
+export const maybeAuthenticatedProcedure = t.procedure
+  .use(requestLogMiddleware)
+  .use(maybeAuthenticatedMiddleware)
+  .use(rateLimitMiddleware);
+export const adminProcedure = t.procedure.use(requestLogMiddleware).use(adminMiddleware).use(rateLimitMiddleware);

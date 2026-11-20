@@ -212,7 +212,7 @@ export const TemplatesTable = ({
                 templateId={row.original.id}
                 templateSigningOrder={row.original.templateMeta?.signingOrder}
                 documentDistributionMethod={row.original.templateMeta?.distributionMethod}
-                automationSettings={row.original.automationSettings as any}
+                automationSettings={row.original.automationSettings}
                 recipients={row.original.recipients}
                 documentRootPath={documentRootPath}
               />

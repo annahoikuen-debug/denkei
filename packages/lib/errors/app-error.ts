@@ -231,25 +231,23 @@ export class AppError extends Error {
    *
    * @param error An unknown type.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static parseError(error: any): AppError {
+  static parseError(error: unknown): AppError {
     if (error instanceof AppError) {
       return error;
     }
 
     // Handle TRPC errors.
-    if (error?.name === 'TRPCClientError') {
-      const parsedJsonError = AppError.parseFromJSON(error.data?.appError);
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'TRPCClientError') {
+      const parsedJsonError = AppError.parseFromJSON((error as { data?: { appError?: unknown } }).data?.appError);
 
       const fallbackError = new AppError(AppErrorCode.UNKNOWN_ERROR, {
-        message: error?.message,
+        message: (error as { message?: string }).message,
       });
 
       return parsedJsonError || fallbackError;
     }
 
     // Handle completely unknown errors.
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const { code, message, userMessage, statusCode } = error as {
       code: unknown;
       message: unknown;
@@ -303,31 +301,35 @@ export class AppError extends Error {
   /**
    * Convert an AppError into a JSON string containing the relevant information.
    *
-   * @param appError The AppError to stringify.
+   * @param appError The AppError to convert to JSON string.
    * @returns A JSON string representing the AppError.
    */
   static toJSONString(appError: AppError): string {
     return JSON.stringify(AppError.toJSON(appError));
   }
 
-  static parseFromJSON(value: unknown): AppError | null {
-    try {
-      const parsed = ZAppErrorJsonSchema.safeParse(value);
-
-      if (!parsed.success) {
-        return null;
-      }
-
-      const { message, userMessage, statusCode } = parsed.data;
-
-      return new AppError(parsed.data.code, {
-        message,
-        userMessage,
-        statusCode,
-      });
-    } catch {
+  /**
+   * Parse a JSON string back into an AppError.
+   *
+   * @param json A JSON string representing an AppError.
+   * @returns An AppError instance.
+   */
+  static parseFromJSON(json: unknown): AppError | null {
+    if (!json || typeof json !== 'object') {
       return null;
     }
+
+    const parsed = ZAppErrorJsonSchema.safeParse(json);
+
+    if (!parsed.success) {
+      return null;
+    }
+
+    return new AppError(parsed.data.code, {
+      message: parsed.data.message,
+      userMessage: parsed.data.userMessage,
+      statusCode: parsed.data.statusCode,
+    });
   }
 
   static toRestAPIError(err: unknown): {

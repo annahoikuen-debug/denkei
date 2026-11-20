@@ -24,8 +24,8 @@ describe('formatJpy', () => {
     expect(formatJpy(Number.NaN)).toBe('');
     expect(formatJpy(Number.POSITIVE_INFINITY)).toBe('');
     expect(formatJpy(Number.NEGATIVE_INFINITY)).toBe('');
-    expect(formatJpy(null as any)).toBe('');
-    expect(formatJpy(undefined as any)).toBe('');
+    expect(formatJpy(null)).toBe('');
+    expect(formatJpy(undefined)).toBe('');
   });
 });
 
@@ -37,8 +37,8 @@ describe('formatJpyWithTaxIncluded', () => {
   });
 
   it('無効な値の場合は空文字列を返す', () => {
-    expect(formatJpyWithTaxIncluded(null as any)).toBe('');
-    expect(formatJpyWithTaxIncluded(undefined as any)).toBe('');
+    expect(formatJpyWithTaxIncluded(null)).toBe('');
+    expect(formatJpyWithTaxIncluded(undefined)).toBe('');
     expect(formatJpyWithTaxIncluded(Number.NaN)).toBe('');
   });
 });

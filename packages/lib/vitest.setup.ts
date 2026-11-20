@@ -1,5 +1,7 @@
 // vitest v4 で vi.stubEnv / vi.unstubAllEnvs がネイティブでサポートされている環境では
 // ポリフィルは不要だが、一部環境で未定義となる場合があるため安全側に倒して実装する。
+// 実行時の `vi` は Vitest の実際のインスタンスを参照するため、この型拡張は
+// 型補完のみを目的とする（循環参照回避のため typeof vitestVi は使用しない）。
 
 const originalEnv = { ...process.env };
 
@@ -19,10 +21,13 @@ const unstubAllEnvs = () => {
 
 export { stubEnv, unstubAllEnvs };
 
-// vi グローバルに追加（型チェック回避のため any として代入）
 declare global {
-  const vi: any;
+  var vi: {
+    stubEnv?: typeof stubEnv;
+    unstubAllEnvs?: typeof unstubAllEnvs;
+  };
 }
+
 if (typeof globalThis.vi !== 'undefined' && globalThis.vi) {
   if (!globalThis.vi.stubEnv) {
     globalThis.vi.stubEnv = stubEnv;

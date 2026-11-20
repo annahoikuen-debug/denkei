@@ -12,8 +12,57 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    name: Lint (Biome)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: ./.github/actions/node-install
+
+      - name: Run Biome lint
+        run: npm run lint
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: ./.github/actions/node-install
+
+      - name: Copy env
+        run: cp .env.example .env
+
+      - name: Run TypeScript type check
+        run: npx tsc --noEmit -p apps/remix/tsconfig.json
+
+  test_unit:
+    name: Unit Tests (Vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: ./.github/actions/node-install
+
+      - name: Run unit tests
+        run: npm run test --workspace=@documenso/lib
+
   build_app:
     name: Build App
+    needs: [lint, typecheck, test_unit]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -32,6 +81,7 @@ jobs:
 
   build_docker:
     name: Build Docker Image
+    needs: [lint, typecheck, test_unit]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

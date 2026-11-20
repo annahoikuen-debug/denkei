@@ -378,6 +378,8 @@ model Session {
 
   @@index([userId])
   @@index([sessionToken])
+  // Phase 2 TASK-05: セッションクエリの最適化 (userId + expiresAt)
+  @@index([userId, expiresAt], map: "Session_userId_expiresAt_idx")
 }
 
 // Short-lived, nonce-keyed relay of a secret between two browsing contexts.
@@ -510,6 +512,8 @@ model Envelope {
   @@index([teamId])
   @@index([folderId])
   @@index([createdAt])
+  // Phase 2 TASK-05: 文書一覧クエリの最適化 (作成日時順ソート)
+  @@index([status, createdAt], map: "Envelope_status_createdAt_idx")
 }
 
 model EnvelopeItem {
@@ -554,6 +558,8 @@ model DocumentAuditLog {
   envelope Envelope? @relation(fields: [envelopeId], references: [id], onDelete: SetNull)
 
   @@index([envelopeId])
+  // Phase 2 TASK-05: 監査ログクエリの最適化 (envelopeId + createdAt DESC)
+  @@index([envelopeId, createdAt], map: "DocumentAuditLog_envelopeId_createdAt_idx")
 }
 
 /// フェーズ2 ステップ3: 署名者本人確認(メールOTP/Firebaseメール認証)の一時検証トークン。
@@ -727,6 +733,8 @@ model Recipient {
   @@index([nextReminderAt])
   @@index([email(ops: raw("gin_trgm_ops"))], map: "Recipient_email_trgm_idx", type: Gin)
   @@index([name(ops: raw("gin_trgm_ops"))], map: "Recipient_name_trgm_idx", type: Gin)
+  // Phase 2 TASK-05: 受取人クエリの最適化 (envelopeId + signingStatus)
+  @@index([envelopeId, signingStatus], map: "Recipient_envelopeId_signingStatus_idx")
 }
 
 enum FieldType {

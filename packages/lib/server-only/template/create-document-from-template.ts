@@ -793,12 +793,10 @@ export const createDocumentFromTemplate = async ({
               }
             }
 
-            if (hasMetaMerge) {
-              payload.fieldMeta = metaObj as any;
-              if (metaObj.text && !payload.customText) {
-                payload.customText = metaObj.text as string;
-                payload.inserted = true;
-              }
+            payload.fieldMeta = metaObj as unknown as typeof payload.fieldMeta;
+            if (metaObj.text && !payload.customText) {
+              payload.customText = metaObj.text as string;
+              payload.inserted = true;
             }
           }
 

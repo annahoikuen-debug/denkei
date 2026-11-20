@@ -66,7 +66,7 @@ export const getMonthlyActiveUsers = async () => {
         .sum(fn.count('userId').distinct())
         .over((ob) =>
           // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
-          ob.orderBy(fn('DATE_TRUNC', [sql.lit('MONTH'), 'UserSecurityAuditLog.createdAt']) as any),
+          ob.orderBy(fn<Date>('DATE_TRUNC', [sql.lit('MONTH'), 'UserSecurityAuditLog.createdAt'])),
         )
         .as('cume_count'),
     ])

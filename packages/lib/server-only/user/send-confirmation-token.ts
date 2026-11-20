@@ -1,9 +1,9 @@
 import { prisma } from '@documenso/prisma';
 import crypto from 'crypto';
 import { DateTime } from 'luxon';
-
 import { USER_SIGNUP_VERIFICATION_TOKEN_IDENTIFIER } from '../../constants/email';
 import { ONE_HOUR } from '../../constants/time';
+import { logger } from '../../utils/logger';
 import { sendConfirmationEmail } from '../auth/send-confirmation-email';
 import { getMostRecentEmailVerificationToken } from './get-most-recent-email-verification-token';
 
@@ -59,7 +59,7 @@ export const sendConfirmationToken = async ({ email, force = false }: SendConfir
 
     return { success: true };
   } catch (err) {
-    console.log(err);
+    logger.error({ err }, 'Failed to send the confirmation email');
     throw new Error(`Failed to send the confirmation email`);
   }
 };

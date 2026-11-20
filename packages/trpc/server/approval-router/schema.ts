@@ -1,15 +1,16 @@
+import { ZNonEmptyStringSchema, ZPositiveIntSchema } from '@documenso/lib/schemas/common';
 import { z } from 'zod';
 
 export const ZApproveEnvelopeRequestSchema = z.object({
-  envelopeId: z.string().min(1),
-  recipientId: z.number().int().positive(),
+  envelopeId: ZNonEmptyStringSchema,
+  recipientId: ZPositiveIntSchema,
 });
 
 export type TApproveEnvelopeRequest = z.infer<typeof ZApproveEnvelopeRequestSchema>;
 
 export const ZRejectEnvelopeRequestSchema = z.object({
-  envelopeId: z.string().min(1),
-  recipientId: z.number().int().positive(),
+  envelopeId: ZNonEmptyStringSchema,
+  recipientId: ZPositiveIntSchema,
   reason: z.string().trim().min(1, '差し戻し理由は必須です').max(500),
 });
 

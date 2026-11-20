@@ -1,0 +1,216 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90me:/Denkei/denkei/packages/lib[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+[31mNo test files found, exiting with code 1
+[39m
+[2mfilter: [22m[33m;[2m, [22mecho[2m, [22mEXIT:$?[39m
+[2minclude: [22m[33m**/*.test.ts[39m
+[2mexclude:  [22m[33m**/node_modules/**[2m, [22m**/.git/**[39m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |       0 |        0 |       0 |       0 |                   
+ constants         |       0 |        0 |       0 |       0 |                   
+  app.ts           |       0 |        0 |       0 |       0 | 5-157             
+  auth-handoff.ts  |       0 |      100 |     100 |       0 | 4-81              
+  auth.ts          |       0 |        0 |       0 |       0 | 6-207             
+  autosign.ts      |       0 |      100 |     100 |       0 | 3                 
+  billing.ts       |       0 |        0 |       0 |       0 | 4-15              
+  branding.ts      |       0 |      100 |     100 |       0 | 11-21             
+  cookies.ts       |       0 |      100 |     100 |       0 | 1                 
+  crypto.ts        |       0 |      100 |     100 |       0 | 3-5               
+  date-formats.ts  |       0 |        0 |       0 |       0 | 7-242             
+  ...-templates.ts |       0 |      100 |     100 |       0 | 2-3               
+  ...audit-logs.ts |       0 |      100 |     100 |       0 | 3                 
+  document-auth.ts |       0 |      100 |     100 |       0 | 12                
+  ...conversion.ts |       0 |        0 |       0 |       0 | 4-89              
+  ...visibility.ts |       0 |      100 |     100 |       0 | 12                
+  document.ts      |       0 |      100 |     100 |       0 | 15-58             
+  email.ts         |       0 |        0 |     100 |       0 | 3-18              
+  embed-auth.ts    |       0 |        0 |       0 |       0 | 14-111            
+  ...expiration.ts |       0 |        0 |       0 |       0 | 5-60              
+  ...e-reminder.ts |       0 |        0 |       0 |       0 | 5-114             
+  feature-flags.ts |       0 |        0 |       0 |       0 | 14-94             
+  i18n.ts          |       0 |      100 |       0 |       0 | 25-73             
+  ...-shortcuts.ts |       0 |      100 |     100 |       0 | 1-3               
+  locales.ts       |       0 |      100 |     100 |       0 | 3-13              
+  ...anslations.ts |       0 |      100 |     100 |       0 | 9-15              
+  organisations.ts |       0 |      100 |       0 |       0 | 3-132             
+  ...iewer-i18n.ts |       0 |      100 |     100 |       0 | 5                 
+  pdf-viewer.ts    |       0 |        0 |       0 |       0 | 2-16              
+  pdf.ts           |       0 |        0 |       0 |       0 | 3-26              
+  plans.ts         |       0 |        0 |       0 |       0 | 46-306            
+  ...ient-roles.ts |       0 |      100 |     100 |       0 | 5-131             
+  signatures.ts    |       0 |      100 |       0 |       0 | 1-4               
+  ...anslations.ts |       0 |      100 |     100 |       0 | 5-11              
+  teams.ts         |       0 |      100 |     100 |       0 | 3-54              
+  template.ts      |       0 |      100 |       0 |       0 | 3-10              
+  theme.ts         |       0 |      100 |     100 |       0 | 22-58             
+  time-zones.ts    |       0 |      100 |     100 |       0 | 3-5               
+  time.ts          |       0 |      100 |     100 |       0 | 3-11              
+  trpc.ts          |       0 |      100 |     100 |       0 | 4-21              
+ errors            |       0 |        0 |       0 |       0 |                   
+  app-error-ja.ts  |       0 |        0 |       0 |       0 | 10-64             
+  app-error.ts     |       0 |        0 |       0 |       0 | 7-370             
+  user-exists.ts   |       0 |      100 |       0 |       0 | 3                 
+ types             |       0 |        0 |       0 |       0 |                   
+  api-logs.ts      |       0 |        0 |       0 |       0 |                   
+  csc-session.ts   |       0 |      100 |     100 |       0 | 10-25             
+  css-vars.ts      |       0 |      100 |     100 |       0 | 9-11              
+  ...recipients.ts |       0 |      100 |     100 |       0 | 6-14              
+  ...audit-logs.ts |       0 |        0 |       0 |       0 | 13-847            
+  document-auth.ts |       0 |        0 |       0 |       0 | 14-225            
+  ...ment-email.ts |       0 |        0 |       0 |       0 | 5-83              
+  ...orm-values.ts |       0 |      100 |     100 |       0 | 3                 
+  document-meta.ts |       0 |        0 |       0 |       0 | 19-139            
+  ...visibility.ts |       0 |      100 |     100 |       0 | 4-5               
+  document.ts      |       0 |      100 |     100 |       0 | 18-135            
+  email-domain.ts  |       0 |      100 |     100 |       0 | 11-30             
+  ...ase-schema.ts |       0 |      100 |     100 |       0 | 5-20              
+  ...se-schemas.ts |       0 |        0 |       0 |       0 | 6-11              
+  ...ate-schema.ts |       0 |        0 |       0 |       0 | 6-15              
+  ...ign-schema.ts |       0 |        0 |       0 |       0 | 6-15              
+  ...ent-schema.ts |       0 |        0 |       0 |       0 | 6-15              
+  ...attachment.ts |       0 |      100 |     100 |       0 | 3                 
+  ...ope-editor.ts |       0 |      100 |     100 |       0 | 19-250            
+  envelope.ts      |       0 |      100 |     100 |       0 | 16-119            
+  field-meta.ts    |       0 |        0 |       0 |       0 | 6-417             
+  field.ts         |       0 |        0 |       0 |       0 | 31-182            
+  fields.ts        |       0 |        0 |       0 |       0 |                   
+  folder-type.ts   |       0 |      100 |     100 |       0 | 3-8               
+  ...ent-status.ts |       0 |      100 |       0 |       0 | 3-5               
+  license.ts       |       0 |      100 |     100 |       0 | 6-93              
+  ...-variables.ts |       0 |        0 |       0 |       0 | 13-109            
+  name.ts          |       0 |        0 |       0 |       0 | 3-64              
+  ...tion-email.ts |       0 |      100 |     100 |       0 | 5-37              
+  organisation.ts  |       0 |      100 |     100 |       0 | 5-47              
+  recipient.ts     |       0 |      100 |     100 |       0 | 14-135            
+  search-params.ts |       0 |      100 |       0 |       0 | 12-66             
+  ...ture-level.ts |       0 |        0 |       0 |       0 | 16-33             
+  subscription.ts  |       0 |        0 |       0 |       0 | 9-184             
+  ...automation.ts |       0 |        0 |       0 |       0 | 20-77             
+  template.ts      |       0 |      100 |     100 |       0 | 19-127            
+  ...uth-method.ts |       0 |      100 |     100 |       0 | 6-15              
+  webauthn.ts      |       0 |      100 |     100 |       0 | 3-27              
+  ...ok-payload.ts |       0 |        0 |       0 |       0 | 22-141            
+ universal         |       0 |        0 |       0 |       0 |                   
+  base64.ts        |       0 |        0 |       0 |       0 |                   
+  ...iagnostics.ts |       0 |        0 |       0 |       0 | 34-64             
+  ...liance-kit.ts |       0 |        0 |       0 |       0 | 28-167            
+  ...arty-guide.ts |       0 |        0 |       0 |       0 | 21-114            
+  crypto.ts        |       0 |      100 |       0 |       0 | 11-31             
+  ...d-progress.ts |       0 |        0 |       0 |       0 | 27-124            
+  ...ledger-csv.ts |       0 |        0 |       0 |       0 | 19-72             
+  ...-retention.ts |       0 |        0 |       0 |       0 | 9-46              
+  ...t-metadata.ts |       0 |        0 |       0 |       0 | 5-58              
+  ...d-checkbox.ts |       0 |        0 |       0 |       0 | 1-20              
+  ...and-forget.ts |       0 |      100 |       0 |       0 | 8-10              
+  ...t-currency.ts |       0 |        0 |       0 |       0 | 6-75              
+  ...ter-intent.ts |       0 |      100 |       0 |       0 | 1-2               
+  get-base-url.ts  |       0 |        0 |       0 |       0 | 5-16              
+  ...ip-address.ts |       0 |        0 |       0 |       0 | 1-38              
+  id.ts            |       0 |        0 |       0 |       0 | 7-40              
+  japanese-name.ts |       0 |        0 |       0 |       0 | 20-52             
+  ...hly-period.ts |       0 |      100 |       0 |       0 | 2-6               
+  ...-checklist.ts |       0 |        0 |       0 |       0 | 25-86             
+  ...it-changes.ts |       0 |        0 |       0 |       0 | 11-25             
+  ...ed-invoice.ts |       0 |        0 |       0 |       0 | 15-149            
+  quota-usage.ts   |       0 |        0 |       0 |       0 | 1-56              
+  ...er-content.ts |       0 |        0 |       0 |       0 | 16-255            
+  seal-image.ts    |       0 |        0 |       0 |       0 | 15-338            
+  ...help-guide.ts |       0 |      100 |     100 |       0 | 17                
+  sleep.ts         |       0 |      100 |       0 |       0 | 1                 
+  ...onvertions.ts |       0 |      100 |       0 |       0 | 2                 
+  wareki-date.ts   |       0 |        0 |       0 |       0 | 10-100            
+ ...field-renderer |       0 |        0 |       0 |       0 |                   
+  ...low-layout.ts |       0 |        0 |       0 |       0 | 76-334            
+  ...nvas-style.ts |       0 |        0 |       0 |       0 | 11-167            
+  ...eric-items.ts |       0 |        0 |       0 |       0 | 8-183             
+  ...d-renderer.ts |       0 |        0 |       0 |       0 | 7-211             
+  ...kbox-field.ts |       0 |        0 |       0 |       0 | 18-212            
+  ...down-field.ts |       0 |        0 |       0 |       0 | 24-186            
+  render-field.ts  |       0 |      100 |       0 |       0 | 15-69             
+  ...text-field.ts |       0 |        0 |       0 |       0 | 23-259            
+  ...grid-lines.ts |       0 |        0 |       0 |       0 | 3-318             
+  ...adio-field.ts |       0 |        0 |       0 |       0 | 17-197            
+  ...ture-field.ts |       0 |        0 |       0 |       0 | 15-322            
+ universal/stripe  |       0 |        0 |       0 |       0 |                   
+  ...uman-price.ts |       0 |        0 |       0 |       0 | 1-5               
+ universal/upload  |       0 |        0 |       0 |       0 |                   
+  delete-file.ts   |       0 |      100 |       0 |       0 | 11-20             
+  ...ile.server.ts |       0 |        0 |       0 |       0 | 12-49             
+  get-file.ts      |       0 |        0 |       0 |       0 | 18-71             
+  ...ile.server.ts |       0 |        0 |       0 |       0 | 22-109            
+  put-file.ts      |       0 |        0 |       0 |       0 | 22-55             
+  ...er-actions.ts |       0 |      100 |       0 |       0 | 3-30              
+  update-file.ts   |       0 |        0 |       0 |       0 | 13-53             
+ ...load/providers |       0 |        0 |       0 |       0 |                   
+  ...b-provider.ts |       0 |        0 |       0 |       0 | 21-98             
+  index.ts         |       0 |        0 |       0 |       0 | 9-26              
+  s3-provider.ts   |       0 |        0 |       0 |       0 | 14-121            
+  ...e-provider.ts |       0 |        0 |       0 |       0 |                   
+ universal/webhook |       0 |      100 |       0 |       0 |                   
+  ...event-name.ts |       0 |      100 |       0 |       0 | 1-2               
+ utils             |       0 |        0 |       0 |       0 |                   
+  ...ds-helpers.ts |       0 |        0 |       0 |       0 | 7-49              
+  authenticator.ts |       0 |      100 |       0 |       0 | 7-11              
+  avatars.ts       |       0 |        0 |       0 |       0 | 3-8               
+  billing.ts       |       0 |        0 |       0 |       0 | 11-57             
+  debugger.ts      |       0 |        0 |       0 |       0 | 6-30              
+  ...audit-logs.ts |       0 |        0 |       0 |       0 | 40-682            
+  document-auth.ts |       0 |        0 |       0 |       0 | 22-61             
+  document.ts      |       0 |        0 |       0 |       0 | 12-158            
+  ...ing-colors.ts |       0 |        0 |       0 |       0 | 12-89             
+  email-domains.ts |       0 |      100 |       0 |       0 | 1-16              
+  embed-config.ts  |       0 |        0 |       0 |       0 | 4-25              
+  env.ts           |       0 |        0 |       0 |       0 | 15-50             
+  ...e-download.ts |       0 |        0 |       0 |       0 | 25-91             
+  ...pe-signing.ts |       0 |        0 |       0 |       0 | 33-247            
+  envelope.ts      |       0 |        0 |       0 |       0 | 8-283             
+  ...ds-overlap.ts |       0 |        0 |       0 |       0 | 20-122            
+  fields.ts        |       0 |        0 |       0 |       0 | 11-121            
+  ...lder-count.ts |       0 |        0 |       0 |       0 | 2-4               
+  i18n.ts          |       0 |        0 |       0 |       0 | 10-93             
+  intl-cache.ts    |       0 |        0 |       0 |       0 | 12-63             
+  is-admin.ts      |       0 |      100 |       0 |       0 | 4                 
+  is-http-url.ts   |       0 |        0 |       0 |       0 | 1-31              
+  ...-return-to.ts |       0 |        0 |       0 |       0 | 6-59              
+  logger.ts        |       0 |        0 |       0 |       0 | 7-66              
+  ...r-document.ts |       0 |        0 |       0 |       0 | 10-34             
+  ...ing-colors.ts |       0 |        0 |       0 |       0 | 22-45             
+  ...ion-portal.ts |       0 |      100 |       0 |       0 | 3-12              
+  ...ons-claims.ts |       0 |      100 |       0 |       0 | 7-11              
+  organisations.ts |       0 |        0 |       0 |       0 | 15-120            
+  params.ts        |       0 |        0 |       0 |       0 | 6-29              
+  ...c-profiles.ts |       0 |        0 |       0 |       0 | 3-8               
+  ...-formatter.ts |       0 |        0 |       0 |       0 | 3-11              
+  ...ent-groups.ts |       0 |        0 |       0 |       0 | 33-485            
+  ...nt-queries.ts |       0 |        0 |       0 |       0 | 11-90             
+  recipients.ts    |       0 |        0 |       0 |       0 | 17-299            
+  remember.ts      |       0 |        0 |       0 |       0 | 7-17              
+  ...l-template.ts |       0 |        0 |       0 |       0 | 1-11              
+  ...anding-css.ts |       0 |        0 |       0 |       0 | 6-322             
+  settings-nav.ts  |       0 |        0 |       0 |       0 | 70-304            
+  ...s-switcher.ts |       0 |        0 |       0 |       0 | 29-56             
+  slugify.ts       |       0 |        0 |       0 |       0 |                   
+  ...tics-range.ts |       0 |        0 |       0 |       0 | 10-173            
+  ...o-branding.ts |       0 |        0 |       0 |       0 | 7-34              
+  teams.ts         |       0 |        0 |       0 |       0 | 16-248            
+  templates.ts     |       0 |        0 |       0 |       0 | 10-107            
+  timeout.ts       |       0 |        0 |       0 |       0 | 5-32              
+  ...rification.ts |       0 |        0 |       0 |       0 | 10-20             
+  ...th-methods.ts |       0 |        0 |       0 |       0 | 20-52             
+  zod.ts           |       0 |        0 |       0 |       0 | 12-37             
+ utils/images      |       0 |        0 |       0 |       0 |                   
+  avatar.ts        |       0 |      100 |       0 |       0 | 3-9               
+  logo.ts          |       0 |      100 |       0 |       0 | 3-18              
+  ...mini-image.ts |       0 |        0 |       0 |       0 | 3-15              
+  svg-to-png.ts    |       0 |      100 |       0 |       0 | 3-4               
+-------------------|---------|----------|---------|---------|-------------------
+ERROR: Coverage for lines (0%) does not meet global threshold (80%)
+ERROR: Coverage for functions (0%) does not meet global threshold (80%)
+ERROR: Coverage for statements (0%) does not meet global threshold (80%)
+ERROR: Coverage for branches (0%) does not meet global threshold (80%)

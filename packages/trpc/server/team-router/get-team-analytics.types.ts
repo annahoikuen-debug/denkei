@@ -1,3 +1,4 @@
+import { ZPositiveIntSchema } from '@documenso/lib/schemas/common';
 import { IANAZone } from 'luxon';
 import { z } from 'zod';
 
@@ -35,7 +36,7 @@ export type TAnalyticsRangeFields = z.infer<typeof ZAnalyticsRangeFieldsSchema>;
 
 /** Base request shared by every team analytics procedure. */
 export const ZTeamAnalyticsRequestSchema = ZAnalyticsRangeFieldsSchema.extend({
-  teamId: z.number().int().positive(),
+  teamId: ZPositiveIntSchema,
 });
 
 export type TTeamAnalyticsRequest = z.infer<typeof ZTeamAnalyticsRequestSchema>;

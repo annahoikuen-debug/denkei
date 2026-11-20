@@ -806,6 +806,25 @@ timedatectl status | grep -i synchronized
 
 `synchronized: no` の場合は `systemd-timesyncd` / `chronyd` を有効化してください。時刻の大幅なずれは署名時刻の証明力を損ないます。
 
+### レート制限監視（TRPC API）
+
+TRPC 全プロシージャに適用されるレート制限（1 分間 100 リクエスト / IP）の誤検知を監視し、正当なユーザー操作が阻害されないよう対応する。
+
+#### 監視対象メトリクス
+
+- `TOO_MANY_REQUESTS`（HTTP 429）の発生率
+- TRPC path 別の 429 集計（`ctx.logger` の `rateLimitRemaining` を参照）
+
+#### アラート条件
+
+429 発生率が 1 時間で 0.5% を超過した場合にアラートを発報する。
+
+#### 対応手順
+
+1. 対象 path の特定：`ctx.logger` の `rateLimitRemaining` を確認し、429 が多発するエンドポイントを特定する。
+2. `apiTrpcRateLimit` の上限調整、または path 別除外の検討を行う。
+3. 必要に応じて環境変数化（例: `TRPC_RATE_LIMIT_MAX`）を検討する（将来タスク）。
+
 ---
 
 ## 14. トラブルシューティング

@@ -41,8 +41,7 @@ export const getAutomationSettings = (
  */
 export const getMergeVariables = (settings: TTemplateAutomationSettings): TMergeVariableList => {
   // mergeVariables は ZMergeVariableListSchema で個別検証する(既定値で安全に落ちる)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = (settings.mergeVariables ?? []) as any[];
+  const raw = (settings.mergeVariables ?? []) as TMergeVariableList;
 
   return raw.filter(
     (v): v is TMergeVariableList[number] =>
@@ -53,8 +52,6 @@ export const getMergeVariables = (settings: TTemplateAutomationSettings): TMerge
 /**
  * 自動化設定を保存用に正規化する(保存前に検証し、不正時は null を返す)。
  */
-export const normalizeAutomationSettings = (input: unknown): TTemplateAutomationSettings | null => {
-  const parsed = ZTemplateAutomationSettingsSchema.safeParse(input);
-
-  return parsed.success ? parsed.data : null;
+export const normalizeAutomationSettings = (settings: Partial<TTemplateAutomationSettings>) => {
+  return ZTemplateAutomationSettingsSchema.safeParse(settings);
 };
