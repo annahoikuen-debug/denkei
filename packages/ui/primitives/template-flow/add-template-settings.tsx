@@ -20,6 +20,7 @@ import {
   DocumentGlobalAuthActionTooltip,
 } from '@documenso/ui/components/document/document-global-auth-action-select';
 import { DocumentSendEmailMessageHelper } from '@documenso/ui/components/document/document-send-email-message-helper';
+import { DocumentSignatureSettingsTooltip } from '@documenso/ui/components/document/document-signature-settings-tooltip';
 import {
   DocumentVisibilitySelect,
   DocumentVisibilityTooltip,
@@ -43,7 +44,6 @@ import { match } from 'ts-pattern';
 
 import { DocumentEmailCheckboxes } from '../../components/document/document-email-checkboxes';
 import { DocumentReadOnlyFields, mapFieldsWithRecipients } from '../../components/document/document-read-only-fields';
-import { DocumentSignatureSettingsTooltip } from '../../components/document/document-signature-settings-tooltip';
 import { Combobox } from '../combobox';
 import {
   DocumentFlowFormContainerActions,
@@ -57,6 +57,7 @@ import { Input } from '../input';
 import { MultiSelectCombobox } from '../multi-select-combobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../select';
 import { useStep } from '../stepper';
+import { Switch } from '../switch';
 import { Textarea } from '../textarea';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../tooltip';
 import type { TAddTemplateSettingsFormSchema } from './add-template-settings.types';
@@ -100,6 +101,11 @@ export const AddTemplateSettingsFormPartial = ({
       visibility: template.visibility || '',
       globalAccessAuth: documentAuthOption?.globalAccessAuth || [],
       globalActionAuth: documentAuthOption?.globalActionAuth || [],
+      signingOrderLock: {
+        locked: template.automationSettings?.signingOrderLock?.locked ?? false,
+        order: template.automationSettings?.signingOrderLock?.order,
+      },
+      requireEmailOtp: template.automationSettings?.requireEmailOtp ?? false,
       meta: {
         subject: template.templateMeta?.subject ?? '',
         message: template.templateMeta?.message ?? '',
@@ -705,6 +711,101 @@ export const AddTemplateSettingsFormPartial = ({
 
                           <FormControl>
                             <Input className="bg-background" {...field} maxLength={255} onBlur={handleAutoSave} />
+                          </FormControl>
+
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="signingOrderLock.locked"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex flex-row items-center">
+                            <Trans>署名順を固定する</Trans>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <InfoIcon className="mx-2 h-4 w-4" />
+                              </TooltipTrigger>
+
+                              <TooltipContent className="max-w-xs text-muted-foreground">
+                                <Trans>オンにすると、受取人の署名順序を変更できなくなります。</Trans>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
+
+                          <FormControl>
+                            <Switch checked={field.value as boolean} onCheckedChange={field.onChange} />
+                          </FormControl>
+
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="signingOrderLock.order"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex flex-row items-center">
+                            <Trans>署名順序</Trans>
+                          </FormLabel>
+
+                          <FormControl>
+                            <Select
+                              {...field}
+                              disabled={!form.watch('signingOrderLock.locked')}
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                void handleAutoSave();
+                              }}
+                            >
+                              <SelectTrigger className="bg-background">
+                                <SelectValue />
+                              </SelectTrigger>
+
+                              <SelectContent>
+                                <SelectItem value="counterparty-first">
+                                  <Trans>取引先優先</Trans>
+                                </SelectItem>
+                                <SelectItem value="company-first">
+                                  <Trans>自社優先</Trans>
+                                </SelectItem>
+                                <SelectItem value="parallel">
+                                  <Trans>並列</Trans>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="requireEmailOtp"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex flex-row items-center">
+                            <Trans>メールOTPを必須にする</Trans>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <InfoIcon className="mx-2 h-4 w-4" />
+                              </TooltipTrigger>
+
+                              <TooltipContent className="max-w-xs text-muted-foreground">
+                                <Trans>オンにすると、署名前にメールOTP認証が必須になります。</Trans>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
+
+                          <FormControl>
+                            <Switch checked={field.value as boolean} onCheckedChange={field.onChange} />
                           </FormControl>
 
                           <FormMessage />

@@ -56,18 +56,27 @@ export default function WizardStepRecipientsPage() {
   const team = useCurrentTeam();
   const { user } = useSession();
   const [searchParams] = useSearchParams();
-
   const envelopeId = searchParams.get('envelopeId') ?? '';
 
   const [sei, setSei] = useState('');
   const [mei, setMei] = useState('');
   const [email, setEmail] = useState('');
-  const [signingOrderMode, setSigningOrderMode] = useState<TWizardRecipient['signingOrderMode']>('counterparty-first');
+
+  const { data: envelope } = trpc.envelope.get.useQuery({ envelopeId }, { enabled: Boolean(envelopeId) });
+
+  const signingOrderLockLocked = Boolean(
+    (envelope?.automationSettings as { signingOrderLock?: { locked?: boolean } } | undefined)?.signingOrderLock?.locked,
+  );
+
+  const [signingOrderMode, setSigningOrderMode] = useState<TWizardRecipient['signingOrderMode']>(
+    signingOrderLockLocked
+      ? (((envelope?.automationSettings as { signingOrderLock?: { order?: string } })?.signingOrderLock?.order ??
+          'counterparty-first') as TWizardRecipient['signingOrderMode'])
+      : 'counterparty-first',
+  );
   const [verificationLevel, setVerificationLevel] = useState<TWizardRecipient['verificationLevel']>('low');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { data: envelope } = trpc.envelope.get.useQuery({ envelopeId }, { enabled: Boolean(envelopeId) });
 
   const { mutateAsync: createRecipients } = trpc.envelope.recipient.createMany.useMutation();
   const { mutateAsync: deleteRecipient } = trpc.envelope.recipient.delete.useMutation();
@@ -332,6 +341,7 @@ export default function WizardStepRecipientsPage() {
         <div>
           <Label>
             <Trans>署名順</Trans>
+            {signingOrderLockLocked && <span className="text-muted-foreground text-xs"> (固定済み)</span>}
           </Label>
           <div className="mt-2 flex flex-col gap-2">
             {(
@@ -347,10 +357,15 @@ export default function WizardStepRecipientsPage() {
                   name="signingOrderMode"
                   value={option.value}
                   checked={signingOrderMode === option.value}
-                  onChange={() => setSigningOrderMode(option.value)}
+                  onChange={() => {
+                    if (!signingOrderLockLocked) {
+                      setSigningOrderMode(option.value);
+                    }
+                  }}
+                  disabled={signingOrderLockLocked}
                   data-testid={`wizard-order-${option.value}`}
                 />
-                <span>{option.label}</span>
+                <span className={signingOrderLockLocked ? 'text-muted-foreground' : ''}>{option.label}</span>
               </label>
             ))}
           </div>

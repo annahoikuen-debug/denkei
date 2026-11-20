@@ -36,6 +36,7 @@ export const ZEnvelopeSchema = EnvelopeSchema.pick({
   teamId: true,
   folderId: true,
   templateId: true,
+  automationSettings: true,
 }).extend({
   documentMeta: DocumentMetaSchema.pick({
     signingOrder: true,

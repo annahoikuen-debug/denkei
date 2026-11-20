@@ -5,6 +5,7 @@ import { DEFAULT_DOCUMENT_TIME_ZONE } from '@documenso/lib/constants/time-zones'
 import { ZDocumentAccessAuthTypesSchema, ZDocumentActionAuthTypesSchema } from '@documenso/lib/types/document-auth';
 import { ZDocumentEmailSettingsSchema } from '@documenso/lib/types/document-email';
 import { ZDocumentMetaDateFormatSchema, ZDocumentMetaTimezoneSchema } from '@documenso/lib/types/document-meta';
+import { ZTemplateSigningOrderLockSchema } from '@documenso/lib/types/template-automation';
 import { isHttpUrl } from '@documenso/lib/utils/is-http-url';
 import { zEmail } from '@documenso/lib/utils/zod';
 import { msg } from '@lingui/core/macro';
@@ -22,6 +23,8 @@ export const ZAddTemplateSettingsFormSchema = z.object({
     .optional()
     .default([]),
   globalActionAuth: z.array(ZDocumentActionAuthTypesSchema).optional().default([]),
+  signingOrderLock: ZTemplateSigningOrderLockSchema.default({ locked: false }),
+  requireEmailOtp: z.boolean().default(false),
   meta: z.object({
     subject: z.string(),
     message: z.string(),
