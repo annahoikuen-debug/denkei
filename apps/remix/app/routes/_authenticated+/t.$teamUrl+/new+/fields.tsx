@@ -332,6 +332,31 @@ export default function WizardStepFieldsPage() {
         </Button>
 
         <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              if (!envelopeId) {
+                return;
+              }
+              try {
+                await updateEnvelope({ envelopeId });
+                toast({
+                  title: _(msg`下書きを保存しました`),
+                  description: _(msg`後で「続ける」から再開できます。`),
+                });
+              } catch (err: unknown) {
+                const errMessage = err instanceof Error ? err.message : String(err);
+                toast({
+                  title: _(msg`下書き保存に失敗しました`),
+                  description: _(msg`${errMessage}`),
+                  variant: 'destructive',
+                });
+              }
+            }}
+          >
+            <Trans>下書き保存</Trans>
+          </Button>
           <Button variant="outline" asChild data-testid="wizard-advanced-mode">
             <Link to={`/t/${team.url}/documents/${envelopeId}/edit`}>
               <Trans>詳細モードで編集</Trans>

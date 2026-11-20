@@ -80,6 +80,7 @@ export default function WizardStepRecipientsPage() {
 
   const { mutateAsync: createRecipients } = trpc.envelope.recipient.createMany.useMutation();
   const { mutateAsync: deleteRecipient } = trpc.envelope.recipient.delete.useMutation();
+  const { mutateAsync: updateEnvelope } = trpc.envelope.update.useMutation();
 
   // ステップ3から「戻る」で戻ってきた場合、既存の入力内容をフォームに自動補完する
   useEffect(() => {
@@ -376,6 +377,31 @@ export default function WizardStepRecipientsPage() {
         <div className="flex justify-between">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
             <Trans>戻る</Trans>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              if (!envelopeId) {
+                return;
+              }
+              try {
+                await updateEnvelope({ envelopeId });
+                toast({
+                  title: _(msg`下書きを保存しました`),
+                  description: _(msg`後で「続ける」から再開できます。`),
+                });
+              } catch (err: unknown) {
+                const errMessage = err instanceof Error ? err.message : String(err);
+                toast({
+                  title: _(msg`下書き保存に失敗しました`),
+                  description: _(msg`${errMessage}`),
+                  variant: 'destructive',
+                });
+              }
+            }}
+          >
+            <Trans>下書き保存</Trans>
           </Button>
           <Button type="submit" data-testid="wizard-step2-next" loading={isSubmitting}>
             <Trans>次へ</Trans>

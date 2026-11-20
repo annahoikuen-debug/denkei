@@ -1,4 +1,3 @@
-import { useLimits } from '@documenso/ee/server-only/limits/provider/client';
 import { trpc } from '@documenso/trpc/react';
 import { Button } from '@documenso/ui/primitives/button';
 import { DocumentDropzone } from '@documenso/ui/primitives/document-dropzone';
@@ -6,10 +5,10 @@ import { useToast } from '@documenso/ui/primitives/use-toast';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
-import { EnvelopeType } from '@prisma/client';
+import { DocumentStatus, EnvelopeType } from '@prisma/client';
 import { ScaleIcon, UploadCloudIcon } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { PlanLimitUpgradeDialog } from '~/components/dialogs/plan-limit-upgrade-dialog';
 import { useCurrentTeam } from '~/providers/team';
@@ -20,11 +19,29 @@ export default function WizardStepUploadPage() {
   const navigate = useNavigate();
   const team = useCurrentTeam();
   const { quota, remaining, refreshLimits } = useLimits();
+  const [searchParams] = useSearchParams();
+  const envelopeId = searchParams.get('envelopeId') ?? '';
+
+  const { data: envelope } = trpc.envelope.get.useQuery({ envelopeId }, { enabled: Boolean(envelopeId) });
 
   const [isUploading, setIsUploading] = useState(false);
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
   const { mutateAsync: createEnvelope } = trpc.envelope.create.useMutation();
+
+  // ドラフトから再開する場合、既存データに応じて適切なステップへリダイレクトする
+  useEffect(() => {
+    if (!envelopeId || !envelope) {
+      return;
+    }
+
+    if (envelope.status === DocumentStatus.DRAFT) {
+      const hasRecipients = envelope.recipients && envelope.recipients.length > 0;
+      void navigate(`/t/${team.url}/new/${hasRecipients ? 'fields' : 'recipients'}?envelopeId=${envelopeId}`, {
+        replace: true,
+      });
+    }
+  }, [envelopeId, envelope, team.url, navigate]);
 
   const onDropPdf = async (files: File[]) => {
     if (!files.length) {

@@ -15,14 +15,7 @@ import { DownloadIcon, ShieldCheckIcon, XIcon } from 'lucide-react';
 import { useQueryStates } from 'nuqs';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-
-import { EnvelopesBulkCancelDialog } from '~/components/dialogs/envelopes-bulk-cancel-dialog';
-import { EnvelopesBulkDeleteDialog } from '~/components/dialogs/envelopes-bulk-delete-dialog';
-import {
-  type EnvelopeBulkDownloadItem,
-  EnvelopesBulkDownloadDialog,
-} from '~/components/dialogs/envelopes-bulk-download-dialog';
-import { EnvelopesBulkMoveDialog } from '~/components/dialogs/envelopes-bulk-move-dialog';
+import type { EnvelopeBulkDownloadItem } from '~/components/dialogs/envelopes-bulk-download-dialog';
 import { DocumentSearch } from '~/components/general/document/document-search';
 import { EnvelopeDropZoneWrapper } from '~/components/general/envelope/envelope-drop-zone-wrapper';
 import { FolderGrid } from '~/components/general/folder/folder-grid';
@@ -33,7 +26,6 @@ import { DocumentsTableEmptyState } from '~/components/tables/documents-table-em
 import { DocumentsTablePeriodFilter } from '~/components/tables/documents-table-period-filter';
 import { DocumentsTableSenderFilter } from '~/components/tables/documents-table-sender-filter';
 import { DocumentsTableStatusFilter } from '~/components/tables/documents-table-status-filter';
-import { EnvelopesTableBulkActionBar } from '~/components/tables/envelopes-table-bulk-action-bar';
 import { useCurrentTeam } from '~/providers/team';
 import { documentsSearchParams } from '~/utils/documents-search-params';
 import { appMetaTags } from '~/utils/meta';
@@ -110,6 +102,19 @@ export default function DocumentsPage() {
       contractAmount: findDocumentSearchParams.contractAmount ?? undefined,
       contractDateFrom: findDocumentSearchParams.contractDateFrom ?? undefined,
       contractDateTo: findDocumentSearchParams.contractDateTo ?? undefined,
+    },
+    {
+      ...SKIP_QUERY_BATCH_META,
+    },
+  );
+
+  // 下書き一覧（DRAFTステータスの封筒のみを取得）
+  const { data: draftData, isLoading: isDraftsLoading } = trpc.document.findDocumentsInternal.useQuery(
+    {
+      status: ExtendedDocumentStatus.DRAFT,
+      page: 1,
+      perPage: 10,
+      folderId,
     },
     {
       ...SKIP_QUERY_BATCH_META,
@@ -281,93 +286,57 @@ export default function DocumentsPage() {
           </Button>
         </div>
 
-        <div className="mt-8">
-          <div>
-            {data && data.count === 0 ? (
-              <DocumentsTableEmptyState status={findDocumentSearchParams.status ?? ExtendedDocumentStatus.ALL} />
-            ) : (
-              <DocumentsTable
-                data={data}
-                isLoading={isLoading}
-                isLoadingError={isLoadingError}
-                onMoveDocument={(envelopeId) => {
-                  setDocumentToMove(envelopeId);
-                  setIsMovingDocument(true);
-                }}
-                enableSelection
-                rowSelection={rowSelection}
-                onRowSelectionChange={setRowSelection}
-              />
-            )}
-          </div>
+        <div>
+          {data && data.count === 0 ? (
+            <DocumentsTableEmptyState status={findDocumentSearchParams.status ?? ExtendedDocumentStatus.ALL} />
+          ) : (
+            <DocumentsTable
+              data={data}
+              isLoading={isLoading}
+              isLoadingError={isLoadingError}
+              onMoveDocument={(envelopeId) => {
+                setDocumentToMove(envelopeId);
+                setIsMovingDocument(true);
+              }}
+              enableSelection
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+            />
+          )}
         </div>
+      </div>
 
-        {documentToMove && (
-          <EnvelopesBulkMoveDialog
-            envelopeIds={[documentToMove]}
-            envelopeType={EnvelopeType.DOCUMENT}
-            open={isMovingDocument}
-            currentFolderId={folderId}
-            onOpenChange={(open) => {
-              setIsMovingDocument(open);
+      {/* 下書きセクション */}
+      <div className="mt-12">
+        <h3 className="mb-4 font-semibold text-2xl">
+          <Trans>下書き</Trans>
+        </h3>
 
-              if (!open) {
-                setDocumentToMove(null);
-              }
+        {isDraftsLoading ? (
+          <div className="flex animate-pulse items-center gap-2 py-4">
+            <span className="shimmer relative h-6 w-24 rounded-full bg-border" />
+          </div>
+        ) : draftData?.data?.length === 0 ? (
+          <div className="py-4 text-muted-foreground text-sm">
+            <Trans>下書き文書はありません</Trans>
+          </div>
+        ) : (
+          <DocumentsTable
+            data={draftData}
+            isLoading={false}
+            isLoadingError={false}
+            onMoveDocument={(envelopeId) => {
+              setDocumentToMove(envelopeId);
+              setIsMovingDocument(true);
             }}
-            onSuccess={(destinationFolderId) =>
-              navigate(destinationFolderId ? `${documentsPath}/f/${destinationFolderId}` : documentsPath)
-            }
+            enableSelection={false}
+            rowSelection={EMPTY_ROW_SELECTION}
+            onRowSelectionChange={() => {}}
+            onContinueDraft={(envelopeId) => {
+              void navigate(`/t/${team.url}/new?envelopeId=${envelopeId}`);
+            }}
           />
         )}
-
-        <EnvelopesTableBulkActionBar
-          selectedCount={selectedEnvelopeIds.length}
-          onDownloadClick={() => setIsBulkDownloadDialogOpen(true)}
-          onMoveClick={() => setIsBulkMoveDialogOpen(true)}
-          onDeleteClick={() => setIsBulkDeleteDialogOpen(true)}
-          onCancelClick={() => setIsBulkCancelDialogOpen(true)}
-          onClearSelection={() => setRowSelection({})}
-        />
-
-        <EnvelopesBulkDownloadDialog
-          envelopes={selectedEnvelopesForDownload}
-          open={isBulkDownloadDialogOpen}
-          onOpenChange={setIsBulkDownloadDialogOpen}
-          onSuccess={(successfulEnvelopeIds) => {
-            setRowSelection((prev) => {
-              const next = { ...prev };
-              for (const id of successfulEnvelopeIds) {
-                delete next[id];
-              }
-              return next;
-            });
-          }}
-        />
-
-        <EnvelopesBulkMoveDialog
-          envelopeIds={selectedEnvelopeIds}
-          envelopeType={EnvelopeType.DOCUMENT}
-          open={isBulkMoveDialogOpen}
-          currentFolderId={folderId}
-          onOpenChange={setIsBulkMoveDialogOpen}
-          onSuccess={() => setRowSelection({})}
-        />
-
-        <EnvelopesBulkDeleteDialog
-          envelopeIds={selectedEnvelopeIds}
-          envelopeType={EnvelopeType.DOCUMENT}
-          open={isBulkDeleteDialogOpen}
-          onOpenChange={setIsBulkDeleteDialogOpen}
-          onSuccess={() => setRowSelection({})}
-        />
-
-        <EnvelopesBulkCancelDialog
-          envelopeIds={selectedEnvelopeIds}
-          open={isBulkCancelDialogOpen}
-          onOpenChange={setIsBulkCancelDialogOpen}
-          onSuccess={() => setRowSelection({})}
-        />
       </div>
     </EnvelopeDropZoneWrapper>
   );

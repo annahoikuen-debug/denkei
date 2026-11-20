@@ -1,9 +1,9 @@
 import { useUpdateSearchParams } from '@documenso/lib/client-only/hooks/use-update-search-params';
 import { useSession } from '@documenso/lib/client-only/providers/session';
-import { isDocumentCompleted } from '@documenso/lib/utils/document';
 import { findRecipientByEmail } from '@documenso/lib/utils/recipients';
 import { formatDocumentsPath } from '@documenso/lib/utils/teams';
 import type { TFindDocumentsResponse } from '@documenso/trpc/server/document-router/find-documents.types';
+import { Button } from '@documenso/ui/primitives/button';
 import { Checkbox } from '@documenso/ui/primitives/checkbox';
 import type { DataTableColumnDef, RowSelectionState } from '@documenso/ui/primitives/data-table';
 import { DataTable } from '@documenso/ui/primitives/data-table';
@@ -12,6 +12,7 @@ import { Skeleton } from '@documenso/ui/primitives/skeleton';
 import { TableCell } from '@documenso/ui/primitives/table';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
+import { Trans } from '@lingui/react/macro';
 import { Loader } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useMemo, useTransition } from 'react';
@@ -33,6 +34,7 @@ export type DocumentsTableProps = {
   enableSelection?: boolean;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: (selection: RowSelectionState) => void;
+  onContinueDraft?: (envelopeId: string) => void;
 };
 
 type DocumentsTableRow = TFindDocumentsResponse['data'][number];
@@ -45,6 +47,7 @@ export const DocumentsTable = ({
   enableSelection,
   rowSelection,
   onRowSelectionChange,
+  onContinueDraft,
 }: DocumentsTableProps) => {
   const { _, i18n } = useLingui();
 
@@ -111,21 +114,29 @@ export const DocumentsTable = ({
       },
       {
         header: _(msg`Actions`),
-        cell: ({ row }) =>
-          (!row.original.deletedAt || isDocumentCompleted(row.original.status)) && (
+        cell: ({ row }) => {
+          const isDraft = row.original.status === 'DRAFT';
+
+          return (
             <div className="flex items-center gap-x-4">
               <DocumentsTableActionButton row={row.original} />
               <DocumentsTableActionDropdown
                 row={row.original}
                 onMoveDocument={onMoveDocument ? () => onMoveDocument(row.original.envelopeId) : undefined}
               />
+              {isDraft && onContinueDraft && (
+                <Button variant="outline" size="sm" onClick={() => onContinueDraft(row.original.envelopeId)}>
+                  <Trans>続ける</Trans>
+                </Button>
+              )}
             </div>
-          ),
+          );
+        },
       },
     );
 
     return cols;
-  }, [team, onMoveDocument, enableSelection]);
+  }, [team, onMoveDocument, enableSelection, onContinueDraft]);
 
   const onPaginationChange = (page: number, perPage: number) => {
     startTransition(() => {
